@@ -1,0 +1,6 @@
+{
+  "name": "Sunday League 2026",
+  "description": "3D local amateur soccer league app with real-time match statistics, standings, live scores, team admin tools, and interactive 3D stadium transitions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

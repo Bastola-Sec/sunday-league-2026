@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background-color: #05080c;
+    color: #e2e8f0;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Chakra Petch', sans-serif;
+  }
+}
+
+/* Cadillac F1 & Professional Sports Glassmorphism & High-End Aesthetic */
+.glass-panel-f1 {
+  background: rgba(5, 8, 12, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(183, 206, 236, 0.22);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(183, 206, 236, 0.15);
+}
+
+.glass-card-f1 {
+  background: linear-gradient(135deg, rgba(18, 32, 48, 0.7) 0%, rgba(5, 8, 12, 0.85) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(183, 206, 236, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-f1:hover {
+  border-color: rgba(76, 120, 126, 0.6);
+  box-shadow: 0 12px 35px rgba(76, 120, 126, 0.25), 0 0 15px rgba(76, 120, 126, 0.3);
+}
+
+.f1-header {
+  font-family: 'Chakra Petch', sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+}
+
+.f1-sub-header {
+  font-family: 'Chakra Petch', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+/* Neon Teal Accent Glows */
+.neon-teal-glow {
+  box-shadow: 0 0 20px rgba(76, 120, 126, 0.5), 0 0 40px rgba(76, 120, 126, 0.2);
+}
+
+.neon-teal-text {
+  color: #4C787E;
+  text-shadow: 0 0 12px rgba(76, 120, 126, 0.6);
+}
+
+.platinum-border {
+  border-color: rgba(183, 206, 236, 0.3);
+}
+
+/* Glowing Live Dot */
+.live-dot-container {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+}
+
+.live-dot-ping {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  background-color: #4C787E;
+  opacity: 0.75;
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.live-dot-core {
+  position: relative;
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  background-color: #4C787E;
+  box-shadow: 0 0 10px #4C787E, 0 0 20px #4C787E;
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(5, 8, 12, 0.8);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(183, 206, 236, 0.3);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #4C787E;
+}

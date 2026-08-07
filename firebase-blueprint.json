@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0",
+  "entities": {
+    "teams": {
+      "title": "Teams",
+      "description": "Sunday league football clubs with rosters, stats, and extended details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "shortName": { "type": "string" },
+        "logo": { "type": "string" },
+        "color": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "secondaryColor": { "type": "string" },
+        "rank": { "type": "number" },
+        "points": { "type": "number" },
+        "played": { "type": "number" },
+        "won": { "type": "number" },
+        "drawn": { "type": "number" },
+        "lost": { "type": "number" },
+        "goalsFor": { "type": "number" },
+        "goalsAgainst": { "type": "number" },
+        "goalDifference": { "type": "number" },
+        "motto": { "type": "string" },
+        "homeStadium": { "type": "string" },
+        "manager": { "type": "string" },
+        "adminName": { "type": "string" },
+        "adminCode": { "type": "string" },
+        "adminEmail": { "type": "string" },
+        "founded": { "type": "string" },
+        "stadiumCapacity": { "type": "string" },
+        "nickname": { "type": "string" },
+        "headCoach": { "type": "string" },
+        "bio": { "type": "string" },
+        "clubCulture": { "type": "string" },
+        "achievements": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "roster": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      },
+      "required": ["id", "name", "shortName"]
+    },
+    "matches": {
+      "title": "Matches",
+      "description": "Fixtures, live scores, and events",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "homeTeamId": { "type": "string" },
+        "awayTeamId": { "type": "string" },
+        "homeScore": { "type": "number" },
+        "awayScore": { "type": "number" },
+        "status": { "type": "string" },
+        "isLive": { "type": "boolean" },
+        "startTime": { "type": "string" },
+        "venue": { "type": "string" },
+        "gameweek": { "type": "number" },
+        "events": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      },
+      "required": ["id", "homeTeamId", "awayTeamId"]
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Broadcast alerts and goal updates",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "teamId": { "type": "string" },
+        "type": { "type": "string" }
+      },
+      "required": ["id", "title", "message"]
+    }
+  },
+  "securityRules": "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}"
+}
