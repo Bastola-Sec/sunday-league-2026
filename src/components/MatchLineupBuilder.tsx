@@ -1097,12 +1097,12 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
                 onClick={handleSubmitOfficialLineup}
                 className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-xl cursor-pointer border ${
                   isLineupSubmitted
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border-emerald-300/50'
+                    ? 'bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 hover:brightness-110 text-white border-emerald-300/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
                     : 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 hover:brightness-110 text-slate-950 border-amber-200 font-extrabold animate-pulse'
                 }`}
               >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>{isLineupSubmitted ? '✅ LINEUP SUBMITTED (UPDATE)' : '🚀 SUBMIT MATCH LINEUP'}</span>
+                <CheckCircle2 className="w-4 h-4 text-white" />
+                <span>{isLineupSubmitted ? '🔄 RESUBMIT & UPDATE LINEUP' : '🚀 SUBMIT MATCH LINEUP'}</span>
               </button>
             )}
         </div>
