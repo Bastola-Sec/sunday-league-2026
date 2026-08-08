@@ -8,6 +8,7 @@ export interface Player3DAvatarProps {
     isCaptain?: boolean;
     position?: string;
     imageUrl?: string;
+    videoUrl?: string;
     overallRating?: number;
   };
   teamId: string;
@@ -30,11 +31,13 @@ export const Player3DAvatar: React.FC<Player3DAvatarProps> = ({
 }) => {
   const safePlayer = player || { id: 'p0', name: 'Player', number: 10, position: 'MID' };
 
-  // Use uploaded photo if provided by admin, otherwise fall back to team default avatar
+  // Use uploaded photo or video if provided, otherwise fall back to team default avatar
   const activePhoto =
     safePlayer.imageUrl && safePlayer.imageUrl.trim() !== ''
       ? safePlayer.imageUrl
       : getTeamDefaultAvatar(teamId);
+
+  const hasVideo = Boolean(safePlayer.videoUrl && safePlayer.videoUrl.trim() !== '');
 
   let badgeGradient = 'from-rose-600 via-red-600 to-rose-950';
   let borderGlowColor = 'border-rose-500/40 shadow-[0_0_20px_rgba(225,29,72,0.3)]';
@@ -51,22 +54,35 @@ export const Player3DAvatar: React.FC<Player3DAvatarProps> = ({
   // Hero Showcase Card View (for Player Profile Modal / Full Cards)
   if (size === 'hero' || size === 'lg') {
     return (
-      <div className={`relative flex items-center justify-center select-none group ${className}`}>
-        <div className={`relative w-full max-w-[210px] aspect-[3/4] rounded-3xl overflow-hidden border-2 ${borderGlowColor} bg-[#060b13] flex flex-col items-center justify-end p-2 transition-transform duration-300 group-hover:scale-[1.02]`}>
+      <div className={`relative flex items-center justify-center select-none group w-full ${className}`}>
+        <div className={`relative w-full aspect-[3/4] rounded-3xl overflow-hidden border-2 ${borderGlowColor} bg-[#060b13] flex flex-col items-center justify-end p-2 transition-transform duration-300 group-hover:scale-[1.01]`}>
           
-          {/* Ambient Image Background Blur */}
+          {/* Ambient Image/Video Background Blur */}
           <div
             className="absolute inset-0 opacity-30 bg-center bg-cover mix-blend-overlay filter blur-md"
             style={{ backgroundImage: `url(${activePhoto})` }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#040810] via-transparent to-[#040810]/60" />
 
-          {/* Player Photo Avatar */}
-          <img
-            src={activePhoto}
-            alt={safePlayer.name}
-            className="relative z-10 w-full h-full object-cover object-top rounded-2xl drop-shadow-[0_12px_24px_rgba(0,0,0,0.8)] transition-transform duration-500 group-hover:scale-105"
-          />
+          {/* Player Media (Direct Video Reel or Photo Avatar) */}
+          {hasVideo ? (
+            <div className="absolute inset-0 z-10 w-full h-full rounded-2xl overflow-hidden bg-black flex items-center justify-center">
+              <video
+                src={safePlayer.videoUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover rounded-2xl"
+              />
+            </div>
+          ) : (
+            <img
+              src={activePhoto}
+              alt={safePlayer.name}
+              className="relative z-10 w-full h-full object-cover object-top rounded-2xl drop-shadow-[0_12px_24px_rgba(0,0,0,0.8)] transition-transform duration-500 group-hover:scale-105"
+            />
+          )}
 
           {/* Top Left Shirt Number Badge */}
           <div className={`absolute top-3 left-3 z-20 px-2.5 py-1 rounded-xl bg-gradient-to-r ${badgeGradient} border border-white/30 text-white font-black text-xs shadow-lg backdrop-blur-md flex items-center gap-1`}>

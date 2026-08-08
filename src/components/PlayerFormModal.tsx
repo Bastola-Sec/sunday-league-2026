@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, User, Save, Upload, Star, Shield, Award, Camera, Sparkles } from 'lucide-react';
+import { X, User, Save, Upload, Star, Shield, Award, Camera, Sparkles, Video, CheckCircle2, Loader2 } from 'lucide-react';
 import { Player } from '../types';
 
 interface PlayerFormModalProps {
@@ -30,7 +30,13 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
   const [signatureTrait, setSignatureTrait] = useState('');
   const [preferredFoot, setPreferredFoot] = useState('Right');
   const [imageUrl, setImageUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
   const [bio, setBio] = useState('');
+
+  // Video Upload Progress & Completion States
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   useEffect(() => {
     if (playerToEdit) {
@@ -46,7 +52,9 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
       setSignatureTrait(playerToEdit.signatureTrait || '');
       setPreferredFoot(playerToEdit.preferredFoot || 'Right');
       setImageUrl(playerToEdit.imageUrl || '');
+      setVideoUrl(playerToEdit.videoUrl || '');
       setBio(playerToEdit.bio || '');
+      setUploadSuccess(Boolean(playerToEdit.videoUrl));
     } else {
       setName('');
       setNumber(10);
@@ -60,7 +68,9 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
       setSignatureTrait('');
       setPreferredFoot('Right');
       setImageUrl('');
+      setVideoUrl('');
       setBio('');
+      setUploadSuccess(false);
     }
   }, [playerToEdit, isOpen]);
 
@@ -70,6 +80,30 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
       const reader = new FileReader();
       reader.onloadend = () => {
         setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsVideoUploading(true);
+      setUploadProgress(10);
+      setUploadSuccess(false);
+
+      const reader = new FileReader();
+      reader.onprogress = (evt) => {
+        if (evt.lengthComputable) {
+          const pct = Math.round((evt.loaded / evt.total) * 100);
+          setUploadProgress(pct);
+        }
+      };
+      reader.onloadend = () => {
+        setVideoUrl(reader.result as string);
+        setUploadProgress(100);
+        setIsVideoUploading(false);
+        setUploadSuccess(true);
       };
       reader.readAsDataURL(file);
     }
@@ -96,6 +130,7 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
       signatureTrait: signatureTrait.trim() || undefined,
       preferredFoot: preferredFoot || 'Right',
       imageUrl: imageUrl.trim() || undefined,
+      videoUrl: videoUrl.trim() || undefined,
       bio: bio.trim() || undefined,
       matchesPlayed: playerToEdit?.matchesPlayed ?? 0,
       lastMatchesStats: playerToEdit?.lastMatchesStats || [0, 1, 0, 1, 0],
@@ -313,12 +348,79 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
               </div>
             </div>
 
-            {imageUrl && (
-              <div className="flex items-center gap-3 p-2 rounded-xl bg-[#0a1420] border border-teal-500/30">
-                <img src={imageUrl} alt="Preview" className="w-10 h-10 rounded-full object-cover border border-teal-400" />
-                <span className="text-xs text-teal-300 font-bold">Player Photo Attached Successfully!</span>
+            {/* Mini Action Video Intro Reel Upload */}
+            <div className="p-3.5 rounded-2xl bg-[#07131e] border border-rose-500/30 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-black text-rose-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Video className="w-4 h-4 text-rose-400 animate-pulse" />
+                  <span>Player Intro Video Reel (Camera / Video File)</span>
+                </label>
+                <span className="text-[9px] px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">
+                  DIRECT VIDEO
+                </span>
               </div>
-            )}
+
+              <div className="flex items-center justify-between gap-3">
+                <label className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:brightness-110 text-white font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all">
+                  <Video className="w-4 h-4 text-white" />
+                  <span>{videoUrl ? 'Change / Record New Video' : '📹 Record Camera / Upload Video File'}</span>
+                  <input type="file" accept="video/*" capture="environment" onChange={handleVideoUpload} className="hidden" />
+                </label>
+
+                {videoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVideoUrl('');
+                      setUploadSuccess(false);
+                    }}
+                    className="px-3 py-2.5 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-500/50 text-rose-300 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Remove Video
+                  </button>
+                )}
+              </div>
+
+              {/* Progress Loading Bar */}
+              {isVideoUploading && (
+                <div className="p-3 rounded-xl bg-amber-950/50 border border-amber-500/50 space-y-1.5 animate-pulse">
+                  <div className="flex justify-between items-center text-xs font-extrabold text-amber-300">
+                    <span className="flex items-center gap-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                      <span>Reading Video File...</span>
+                    </span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-black/60 rounded-full overflow-hidden p-0.5 border border-amber-500/30">
+                    <div className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-200" style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Completed Success Box */}
+              {!isVideoUploading && videoUrl && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-950/60 border-2 border-emerald-500/60 shadow-lg shadow-emerald-950/40">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-emerald-400 shrink-0 relative bg-black shadow-md">
+                    <video src={videoUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1.5 text-emerald-400 font-black text-xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                      <span>VIDEO UPLOAD COMPLETE!</span>
+                    </div>
+                    <span className="text-[10px] text-emerald-200/90 font-bold block mt-0.5">
+                      Preview ready above! Click <span className="text-amber-300 font-extrabold">Save Changes</span> below to apply.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {!isVideoUploading && !videoUrl && (
+                <p className="text-[10px] text-gray-400 font-medium">
+                  If no video is uploaded, player card will default to team avatar photo.
+                </p>
+              )}
+            </div>
 
             {/* Bio Notes */}
             <div>

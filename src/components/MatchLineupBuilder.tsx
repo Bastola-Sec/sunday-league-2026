@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Users, ShieldCheck, CheckCircle2, Sparkles, UserCheck, RefreshCw, Zap, Shield, Lock, Unlock, Clock, Eye, Maximize2, Layers, SlidersHorizontal, ChevronDown, Award } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, PanInfo } from 'motion/react';
+import { Users, ShieldCheck, CheckCircle2, Sparkles, UserCheck, RefreshCw, Zap, Shield, Lock, Unlock, Clock, Eye, Maximize2, Layers, SlidersHorizontal, ChevronDown, Award, RotateCcw, Move } from 'lucide-react';
 import { Match, Team, AdminUser, Player } from '../types';
 import { TeamLogo } from './TeamLogos';
 
@@ -39,7 +40,7 @@ export const FORMATIONS_8V8: Record<string, FormationPreset> = {
     description: 'Standard 8v8 balance with a solid defensive back 3 and active midfield width.',
     tactics: 'Maintains solid central defensive cover while wingers track back to aid fullbacks.',
     positions: [
-      { num: 1, top: '86%', left: '48%', role: 'GK', label: 'Goalkeeper' },
+      { num: 1, top: '86%', left: '48%', role: 'CB', label: 'Defender' },
       { num: 3, top: '70%', left: '20%', role: 'LB', label: 'Left Back' },
       { num: 4, top: '74%', left: '48%', role: 'CB', label: 'Center Back' },
       { num: 2, top: '70%', left: '76%', role: 'RB', label: 'Right Back' },
@@ -58,7 +59,7 @@ export const FORMATIONS_8V8: Record<string, FormationPreset> = {
     description: 'Aggressive twin-striker partnership designed to pin down opposition center-backs.',
     tactics: 'Dual forwards overlap channels while two central midfielders hold midfield structure.',
     positions: [
-      { num: 1, top: '86%', left: '48%', role: 'GK', label: 'Goalkeeper' },
+      { num: 1, top: '86%', left: '48%', role: 'CB', label: 'Defender' },
       { num: 3, top: '70%', left: '20%', role: 'LB', label: 'Left Back' },
       { num: 4, top: '74%', left: '48%', role: 'CB', label: 'Center Back' },
       { num: 2, top: '70%', left: '76%', role: 'RB', label: 'Right Back' },
@@ -77,7 +78,7 @@ export const FORMATIONS_8V8: Record<string, FormationPreset> = {
     description: 'High-octane offensive layout pushing wide wingers forward for early crosses.',
     tactics: 'Sacrifices a third defender for extra width. High risk, high goal reward style.',
     positions: [
-      { num: 1, top: '86%', left: '48%', role: 'GK', label: 'Goalkeeper' },
+      { num: 1, top: '86%', left: '48%', role: 'CB', label: 'Defender' },
       { num: 3, top: '72%', left: '32%', role: 'LCB', label: 'Left CB' },
       { num: 5, top: '72%', left: '64%', role: 'RCB', label: 'Right CB' },
       { num: 8, top: '48%', left: '20%', role: 'LM', label: 'Left Wing' },
@@ -96,7 +97,7 @@ export const FORMATIONS_8V8: Record<string, FormationPreset> = {
     description: 'Dominate possession with a 4-man midfield box that controls game tempo.',
     tactics: 'Overwhelms opposition in central pitch with numerical superiority and quick passing.',
     positions: [
-      { num: 1, top: '86%', left: '48%', role: 'GK', label: 'Goalkeeper' },
+      { num: 1, top: '86%', left: '48%', role: 'CB', label: 'Defender' },
       { num: 3, top: '72%', left: '34%', role: 'LCB', label: 'Left CB' },
       { num: 5, top: '72%', left: '62%', role: 'RCB', label: 'Right CB' },
       { num: 11, top: '48%', left: '16%', role: 'LM', label: 'Left Mid' },
@@ -115,7 +116,7 @@ export const FORMATIONS_8V8: Record<string, FormationPreset> = {
     description: 'Heavy 3-man forward press designed to force defensive turnovers near opponent goal.',
     tactics: 'Single defensive midfielder holds the line while 3 forwards suffocate build-up play.',
     positions: [
-      { num: 1, top: '86%', left: '48%', role: 'GK', label: 'Goalkeeper' },
+      { num: 1, top: '86%', left: '48%', role: 'CB', label: 'Defender' },
       { num: 3, top: '72%', left: '22%', role: 'LB', label: 'Left Back' },
       { num: 4, top: '75%', left: '48%', role: 'CB', label: 'Center Back' },
       { num: 2, top: '72%', left: '74%', role: 'RB', label: 'Right Back' },
@@ -134,7 +135,7 @@ export const FORMATIONS_8V8: Record<string, FormationPreset> = {
     description: 'Solid 4-man backline with double-pivot protection for defending leads or counter-attacks.',
     tactics: 'Impenetrable back four shuts down wide attacks while lone striker exploits fast breaks.',
     positions: [
-      { num: 1, top: '86%', left: '48%', role: 'GK', label: 'Goalkeeper' },
+      { num: 1, top: '86%', left: '48%', role: 'CB', label: 'Defender' },
       { num: 3, top: '72%', left: '18%', role: 'LB', label: 'Left Back' },
       { num: 4, top: '74%', left: '38%', role: 'LCB', label: 'Left CB' },
       { num: 5, top: '74%', left: '58%', role: 'RCB', label: 'Right CB' },
@@ -178,13 +179,46 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
     }
   }, [isTeamAdmin, assignedTeamId, isAssignedTeamInMatch, selectedTeamId]);
 
-  // Local state for selected player IDs and Formation
   const [startingIds, setStartingIds] = useState<string[]>([]);
   const [subIds, setSubIds] = useState<string[]>([]);
   const [selectedFormation, setSelectedFormation] = useState<string>('3-3-1');
-  const [pitchView3D, setPitchView3D] = useState<boolean>(true);
   const [pitchZoom, setPitchZoom] = useState<boolean>(false);
   const [highlightedPlayerId, setHighlightedPlayerId] = useState<string | null>(null);
+
+  // Interactive Drag & Drop Custom Formation State
+  const pitchRef = useRef<HTMLDivElement>(null);
+  const [customPositions, setCustomPositions] = useState<{ [key: number]: { top: string; left: string } }>({});
+  const [isDraggingNode, setIsDraggingNode] = useState<number | null>(null);
+
+  const hasCustomPositions = Object.keys(customPositions).length > 0;
+
+  const handleDragEnd = (idx: number, presetPos: FormationPos, info: PanInfo) => {
+    setIsDraggingNode(null);
+    if (!pitchRef.current) return;
+
+    const rect = pitchRef.current.getBoundingClientRect();
+    const width = rect.width || 320;
+    const height = rect.height || 370;
+
+    const currentPos = customPositions[idx] || { top: presetPos.top, left: presetPos.left };
+    const startLeftPct = parseFloat(currentPos.left) || 50;
+    const startTopPct = parseFloat(currentPos.top) || 50;
+
+    // Exact 2D 1-to-1 pixel delta mapping
+    const deltaLeftPct = (info.offset.x / width) * 100;
+    const deltaTopPct = (info.offset.y / height) * 100;
+
+    const newLeftPct = Math.max(6, Math.min(94, startLeftPct + deltaLeftPct));
+    const newTopPct = Math.max(6, Math.min(94, startTopPct + deltaTopPct));
+
+    setCustomPositions((prev) => ({
+      ...prev,
+      [idx]: {
+        top: `${newTopPct.toFixed(1)}%`,
+        left: `${newLeftPct.toFixed(1)}%`,
+      },
+    }));
+  };
 
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [isForceUnlocked, setIsForceUnlocked] = useState<boolean>(false);
@@ -379,6 +413,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
   const handleFormationSelect = (formationId: string) => {
     if (isScreenLocked) return;
     setSelectedFormation(formationId);
+    setCustomPositions({});
     handlePersist(startingIds, subIds, formationId);
   };
 
@@ -691,26 +726,35 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           <div className="px-3.5 py-2 rounded-2xl bg-[#13283b]/90 border border-white/15 backdrop-blur-md shadow-lg flex items-center gap-2">
             <TeamLogo teamId={activeTeam?.id || ''} size={20} />
             <div>
-              <span className="block text-[10px] text-teal-300 font-bold uppercase tracking-wider leading-none mb-0.5">
-                Tactical Pitch ({selectedFormation})
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="block text-[10px] text-teal-300 font-bold uppercase tracking-wider leading-none">
+                  Tactical Pitch ({selectedFormation})
+                </span>
+                {hasCustomPositions && (
+                  <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[9px] font-black uppercase flex items-center gap-1">
+                    <Sparkles className="w-2.5 h-2.5 text-amber-300 animate-spin" /> Custom Formation
+                  </span>
+                )}
+              </div>
               <span className="text-xs font-black text-white tracking-wider uppercase">
                 {activeTeam?.name} • {startingIds.length}/8 Starting Players
               </span>
             </div>
           </div>
 
-          {/* View Toggles */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPitchView3D((prev) => !prev)}
-              className="px-3 py-1.5 rounded-xl bg-[#13283b]/90 hover:bg-[#1d3a54] border border-white/15 text-white backdrop-blur-md text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
-              title="Toggle 3D Isometric Pitch / 2D Tactical View"
-            >
-              <Layers className="w-3.5 h-3.5 text-teal-400" />
-              <span>{pitchView3D ? '3D Isometric' : '2D Tactical'}</span>
-            </button>
+          {/* View Toggles, Zoom & Reset Custom */}
+          <div className="flex items-center gap-1.5">
+            {hasCustomPositions && (
+              <button
+                type="button"
+                onClick={() => setCustomPositions({})}
+                className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 backdrop-blur-md text-xs font-bold flex items-center gap-1 transition-all shadow-md cursor-pointer"
+                title="Reset to standard preset formation"
+              >
+                <RotateCcw className="w-3 h-3 text-amber-300" />
+                <span>Reset Layout</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -725,16 +769,19 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
 
         {/* Pitch Surface Container */}
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+          {/* Drag Helper Banner */}
+          {!isScreenLocked && (
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1 rounded-full bg-[#050c14]/85 border border-teal-400/40 text-teal-200 text-[10px] font-extrabold backdrop-blur-md flex items-center gap-1.5 shadow-lg pointer-events-none animate-pulse">
+              <Move className="w-3 h-3 text-teal-300" />
+              <span>Drag any player node on pitch to customize formation</span>
+            </div>
+          )}
+
           <div
-            className="w-[320px] h-[370px] relative rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] border-2 border-emerald-300/40 transition-transform duration-500"
+            ref={pitchRef}
+            className="w-[320px] h-[370px] relative rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] border-2 border-emerald-300/40 transition-transform duration-300"
             style={{
-              transform: pitchView3D
-                ? pitchZoom
-                  ? 'perspective(900px) rotateX(42deg) rotateZ(-6deg) scale(1.1)'
-                  : 'perspective(900px) rotateX(55deg) rotateZ(-14deg) scale(0.92)'
-                : pitchZoom
-                  ? 'scale(1.05)'
-                  : 'scale(0.9)',
+              transform: pitchZoom ? 'scale(1.05)' : 'scale(1.0)',
               background:
                 'repeating-linear-gradient(0deg, #1c502d 0px, #1c502d 24px, #236137 24px, #236137 48px)',
             }}
@@ -755,42 +802,54 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
             <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-20 h-4 border-2 border-white bg-white/20 rounded-b-sm pointer-events-none" />
 
             {/* FORMATION PLAYER NODES ON PITCH */}
-            {activeFormationPreset.positions.map((pos, idx) => {
+            {activeFormationPreset.positions.map((presetPos, idx) => {
               const playerInSlot = startingPlayersList[idx];
+              const pos = customPositions[idx] || { top: presetPos.top, left: presetPos.left };
               const isHighlighted = playerInSlot && highlightedPlayerId === playerInSlot.id;
+              const isDraggingCurrent = isDraggingNode === idx;
 
               return (
-                <div
-                  key={`pitch-slot-${selectedFormation}-${idx}`}
+                <motion.div
+                  key={`pitch-slot-${selectedFormation}-${idx}-${pos.top}-${pos.left}`}
+                  drag={!isScreenLocked}
+                  dragElastic={0}
+                  dragMomentum={false}
+                  onDragStart={() => setIsDraggingNode(idx)}
+                  onDragEnd={(_, info) => handleDragEnd(idx, presetPos, info)}
                   onMouseEnter={() => playerInSlot && setHighlightedPlayerId(playerInSlot.id)}
                   onMouseLeave={() => setHighlightedPlayerId(null)}
-                  className="absolute transform -translate-x-1/2 -translate-y-1/2 z-10 transition-all duration-300 cursor-pointer group"
+                  className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-shadow group ${
+                    isScreenLocked ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+                  } ${isDraggingCurrent ? 'z-40 scale-110' : 'z-10'}`}
                   style={{ top: pos.top, left: pos.left }}
                 >
                   {/* Base Pitch Ring */}
                   <div
-                    className={`w-8 h-8 rounded-full border shadow-lg transition-all ${playerInSlot
-                        ? isHighlighted
+                    className={`w-8 h-8 rounded-full border shadow-lg transition-all ${
+                      playerInSlot
+                        ? isDraggingCurrent
+                          ? 'bg-amber-400/60 border-amber-300 shadow-[0_0_25px_#f59e0b] scale-125'
+                          : isHighlighted
                           ? 'bg-amber-400/40 border-amber-300 shadow-[#F59E0B] scale-125'
                           : 'bg-[#4B7CEC]/40 border-[#4B7CEC] shadow-[#4B7CEC] animate-pulse'
                         : 'bg-slate-800/80 border-dashed border-gray-400/60 shadow-inner'
-                      }`}
+                    }`}
                   />
 
-                  {/* 3D / Standing Jersey Overlay */}
+                  {/* Standing Jersey Overlay */}
                   <div
-                    className="absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center group-hover:scale-125 transition-transform"
-                    style={{
-                      transform: pitchView3D ? 'rotateZ(14deg) rotateX(-55deg)' : 'none',
-                    }}
+                    className={`absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center transition-transform ${
+                      isDraggingCurrent ? 'scale-125' : 'group-hover:scale-125'
+                    }`}
                   >
                     {playerInSlot ? (
                       <>
                         <div
-                          className={`w-9 h-10 border border-white/70 rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${isHome
+                          className={`w-9 h-10 border border-white/70 rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${
+                            isHome
                               ? 'from-[#4B7CEC] to-[#2B54B8]'
                               : 'from-[#EF4444] to-[#991B1B]'
-                            }`}
+                          }`}
                         >
                           <div className="absolute top-0 w-4 h-1.5 bg-white/80 rounded-b-full" />
                           <span className="text-white font-black text-xs tracking-tight drop-shadow-md mt-1">
@@ -801,21 +860,29 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
                               C
                             </span>
                           )}
+                          {!isScreenLocked && (
+                            <div className="absolute top-0.5 right-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                              <Move className="w-2.5 h-2.5 text-white/90" />
+                            </div>
+                          )}
                         </div>
                         <span
-                          className={`text-[9px] font-bold text-white bg-black/85 px-1.5 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md border ${isHighlighted ? 'border-amber-400 text-amber-300' : 'border-[#4B7CEC]/50'
-                            }`}
+                          className={`text-[9px] font-bold text-white bg-black/85 px-1.5 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md border ${
+                            isDraggingCurrent || isHighlighted
+                              ? 'border-amber-400 text-amber-300'
+                              : 'border-[#4B7CEC]/50'
+                          }`}
                         >
-                          {playerInSlot.name.split(' ')[0]} ({pos.role})
+                          {playerInSlot.name.split(' ')[0]}
                         </span>
                       </>
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-black/70 border border-dashed border-teal-400/70 text-teal-300 flex flex-col items-center justify-center shadow-md">
-                        <span className="text-[8px] font-mono font-bold">{pos.role}</span>
+                        <span className="text-[9px] font-mono font-black">#{presetPos.num || idx + 1}</span>
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
@@ -823,9 +890,12 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
 
         {/* Bottom Bar Info Overlay */}
         <div className="relative z-20 flex items-center justify-between mt-auto">
-          <div className="px-3 py-1.5 rounded-xl bg-[#13283b]/85 border border-white/10 text-[10px] text-gray-300 backdrop-blur-md">
+          <div className="px-3 py-1.5 rounded-xl bg-[#13283b]/85 border border-white/10 text-[10px] text-gray-300 backdrop-blur-md flex items-center gap-1.5">
             <span>Positioning: </span>
-            <strong className="text-white">{activeFormationPreset.name}</strong>
+            <strong className="text-white font-extrabold">{activeFormationPreset.name}</strong>
+            {hasCustomPositions && (
+              <span className="text-amber-300 font-bold ml-1"> (Customized)</span>
+            )}
           </div>
 
             {!isScreenLocked && (

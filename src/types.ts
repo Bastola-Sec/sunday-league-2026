@@ -9,6 +9,7 @@ export interface Player {
   redCards: number;
   isCaptain?: boolean;
   imageUrl?: string;
+  videoUrl?: string;
   matchesPlayed?: number;
   bio?: string;
   signatureTrait?: string;

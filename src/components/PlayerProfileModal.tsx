@@ -59,15 +59,17 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   const roster = team?.roster && team.roster.length > 0 ? team.roster : player ? [player] : [];
   const initialIndex = player ? roster.findIndex((p) => p.id === player.id) : 0;
   const [activePlayerIndex, setActivePlayerIndex] = useState(initialIndex >= 0 ? initialIndex : 0);
+  const [localPlayerOverride, setLocalPlayerOverride] = useState<Player | null>(null);
 
   useEffect(() => {
+    setLocalPlayerOverride(null);
     if (player && team?.roster) {
       const idx = team.roster.findIndex((p) => p.id === player.id);
       if (idx >= 0) setActivePlayerIndex(idx);
     }
   }, [player, team]);
 
-  const currentPlayer = roster[activePlayerIndex] || player;
+  const currentPlayer = localPlayerOverride || roster[activePlayerIndex] || player;
 
   const [isLiked, setIsLiked] = useState(false);
   const [showTacticalFlip, setShowTacticalFlip] = useState(false);
@@ -295,14 +297,13 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               </div>
 
               {/* Player Image / 3D Character Presentation */}
-              <div className="relative my-2 flex items-center justify-center min-h-[190px]">
+              <div className="relative my-2 flex items-center justify-center w-full flex-1">
                 <Player3DAvatar
                   player={currentPlayer}
                   teamId={team?.id || currentPlayer?.teamId || ''}
                   size="hero"
-                  className="w-full max-w-[210px]"
+                  className="w-full max-w-full"
                 />
-
               </div>
 
               {/* Tactical Flip Action Toggle */}
@@ -775,6 +776,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             isOpen={isPlayerFormOpen}
             onClose={() => setIsPlayerFormOpen(false)}
             onSave={(savedPlayer) => {
+              setLocalPlayerOverride(savedPlayer);
               if (!team || !onUpdateRoster) return;
               const exists = roster.some((p) => p.id === savedPlayer.id);
               let updatedRoster: Player[];

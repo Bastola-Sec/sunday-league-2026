@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Activity, Calendar, MapPin, Clock, ArrowRight, Zap, Radio, BellRing, AlertTriangle, RotateCcw, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Activity, Calendar, MapPin, Clock, ArrowRight, Zap, Radio, BellRing, AlertTriangle, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { Match, Team } from '../types';
 import { TeamLogo } from './TeamLogos';
 import { WeatherWidget } from './WeatherWidget';
@@ -42,10 +42,8 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
   const getTeam = (id: string) => teams.find((t) => t.id === id);
 
   const [timeLeft, setTimeLeft] = useState({ days: 2, hours: 14, minutes: 35, seconds: 48 });
-  const [isForceDelayed, setIsForceDelayed] = useState(false);
 
   useEffect(() => {
-    if (isForceDelayed) return;
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
@@ -56,7 +54,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [isForceDelayed]);
+  }, []);
 
   // Helper to extract exact scheduled Kickoff Date
   const getKickoffDate = (m?: Match): Date | null => {
@@ -95,7 +93,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
   const nextKickoffDate = nextMatch ? getKickoffDate(nextMatch) : null;
   const isPastKickoffTime = nextKickoffDate ? Date.now() > nextKickoffDate.getTime() : false;
-  const isTimeUp = isForceDelayed || isPastKickoffTime || (timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0);
+  const isTimeUp = isPastKickoffTime || (timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0);
   const isDelayed = isTimeUp && (!nextMatch || (!nextMatch.isLive && nextMatch.status !== '1st_half' && nextMatch.status !== '2nd_half'));
 
   return (
@@ -352,22 +350,6 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                 )}
               </span>
 
-              {/* Simulation button to test Delayed alert */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsForceDelayed((prev) => !prev);
-                }}
-                className={`text-[10px] px-2.5 py-1 rounded-full border font-bold flex items-center gap-1 cursor-pointer transition-all ${
-                  isForceDelayed
-                    ? 'bg-red-500/20 text-red-300 border-red-500/50 shadow-md shadow-red-900/40'
-                    : 'bg-[#05080c] text-[#B7CEEC] border-[#B7CEEC]/30 hover:border-[#4C787E]'
-                }`}
-                title="Click to test Delayed state when countdown reaches 00:00"
-              >
-                <RotateCcw className="w-3 h-3 text-[#4C787E]" />
-                {isForceDelayed ? 'Reset Timer' : 'Test 00:00 Delay'}
-              </button>
             </div>
 
             {nextMatch && (

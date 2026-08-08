@@ -277,7 +277,7 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
     switch (formation) {
       case '2-3-2':
         return [
-          { num: 1, top: '86%', left: '48%', role: 'GK' },
+          { num: 1, top: '86%', left: '48%', role: 'CB' },
           { num: 3, top: '72%', left: '32%', role: 'CB' },
           { num: 5, top: '72%', left: '64%', role: 'CB' },
           { num: 8, top: '48%', left: '20%', role: 'LM' },
@@ -288,7 +288,7 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
         ];
       case '3-2-2':
         return [
-          { num: 1, top: '86%', left: '48%', role: 'GK' },
+          { num: 1, top: '86%', left: '48%', role: 'CB' },
           { num: 3, top: '70%', left: '20%', role: 'LB' },
           { num: 4, top: '74%', left: '48%', role: 'CB' },
           { num: 2, top: '70%', left: '76%', role: 'RB' },
@@ -299,7 +299,7 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
         ];
       case '2-4-1':
         return [
-          { num: 1, top: '86%', left: '48%', role: 'GK' },
+          { num: 1, top: '86%', left: '48%', role: 'CB' },
           { num: 3, top: '72%', left: '34%', role: 'CB' },
           { num: 5, top: '72%', left: '62%', role: 'CB' },
           { num: 11, top: '48%', left: '16%', role: 'LM' },
@@ -310,7 +310,7 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
         ];
       case '3-1-3':
         return [
-          { num: 1, top: '86%', left: '48%', role: 'GK' },
+          { num: 1, top: '86%', left: '48%', role: 'CB' },
           { num: 3, top: '72%', left: '22%', role: 'LB' },
           { num: 4, top: '75%', left: '48%', role: 'CB' },
           { num: 2, top: '72%', left: '74%', role: 'RB' },
@@ -321,7 +321,7 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
         ];
       case '4-2-1':
         return [
-          { num: 1, top: '86%', left: '48%', role: 'GK' },
+          { num: 1, top: '86%', left: '48%', role: 'CB' },
           { num: 3, top: '72%', left: '18%', role: 'LB' },
           { num: 4, top: '74%', left: '38%', role: 'LCB' },
           { num: 5, top: '74%', left: '58%', role: 'RCB' },
@@ -333,7 +333,7 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
       case '3-3-1':
       default:
         return [
-          { num: 1, top: '86%', left: '48%', role: 'GK' },
+          { num: 1, top: '86%', left: '48%', role: 'CB' },
           { num: 3, top: '70%', left: '20%', role: 'LB' },
           { num: 4, top: '74%', left: '48%', role: 'CB' },
           { num: 2, top: '70%', left: '76%', role: 'RB' },
@@ -584,11 +584,9 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                     <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
                       {/* Tilted Isometric Pitch Surface */}
                       <div
-                        className="w-[320px] h-[370px] relative rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.8)] border-2 border-emerald-300/40 transition-transform duration-500"
+                        className="w-[320px] h-[370px] relative rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.8)] border-2 border-emerald-300/40 transition-transform duration-300"
                         style={{
-                          transform: pitchZoom
-                            ? 'perspective(900px) rotateX(42deg) rotateZ(-6deg) scale(1.1)'
-                            : 'perspective(900px) rotateX(55deg) rotateZ(-14deg) scale(0.92)',
+                          transform: pitchZoom ? 'scale(1.05)' : 'scale(1.0)',
                           background:
                             'repeating-linear-gradient(0deg, #1c502d 0px, #1c502d 24px, #236137 24px, #236137 48px)',
                         }}
@@ -638,9 +636,6 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                               {/* 3D Vertical Standing Jersey */}
                               <div
                                 className="absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center group-hover:scale-125 transition-transform"
-                                style={{
-                                  transform: 'rotateZ(14deg) rotateX(-55deg)',
-                                }}
                               >
                                 <div
                                   className={`w-9 h-10 border border-white/60 rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${
@@ -656,11 +651,11 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                                   </span>
                                 </div>
                                 <span
-                                  className={`text-[9px] font-bold text-white bg-black/80 px-1.5 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md opacity-90 group-hover:opacity-100 border ${
+                                  className={`text-[9px] font-extrabold text-white bg-black/80 px-2 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md opacity-90 group-hover:opacity-100 border ${
                                     isHome ? 'border-[#4B7CEC]/40' : 'border-rose-500/40'
                                   }`}
                                 >
-                                  {playerInRoster ? playerInRoster.name.split(' ')[0] : pos.role}
+                                  {playerInRoster ? playerInRoster.name.split(' ')[0] : `#${idx + 1}`}
                                 </span>
                               </div>
                             </div>

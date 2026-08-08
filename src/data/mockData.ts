@@ -46,7 +46,7 @@ export const INITIAL_TEAMS: Team[] = [
       { id: 'j4', name: 'Shahil', number: 4, position: 'MID', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
       { id: 'j5', name: 'Gobind Thapa', number: 5, position: 'DEF', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
       { id: 'j6', name: 'Rohit Thapa', number: 6, position: 'MID', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
-      { id: 'j7', name: 'Samir', number: 12, position: 'GK', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
+      { id: 'j7', name: 'Samir', number: 12, position: 'DEF', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
       { id: 'j8', name: 'Ashish Bartaula', number: 8, position: 'FWD', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
       { id: 'j9', name: 'Suliz Basnet', number: 9, position: 'DEF', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
       { id: 'j10', name: 'Subash Thokar', number: 10, position: 'MID', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
@@ -96,7 +96,7 @@ export const INITIAL_TEAMS: Team[] = [
       { id: 'm3', name: 'Bimal Magar', number: 9, position: 'FWD', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
       { id: 'm4', name: 'Bijay Badal', number: 4, position: 'DEF', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
       { id: 'm5', name: 'Bijay Devkota', number: 8, position: 'MID', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
-      { id: 'm6', name: 'Sudip Giri', number: 12, position: 'GK', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
+      { id: 'm6', name: 'Sudip Giri', number: 12, position: 'DEF', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
       { id: 'm7', name: 'Diwakar Shrestha', number: 5, position: 'DEF', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
       { id: 'm8', name: 'Roshan Acharya', number: 10, position: 'MID', goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
     ]

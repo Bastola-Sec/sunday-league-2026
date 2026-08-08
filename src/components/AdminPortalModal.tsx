@@ -1288,7 +1288,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                         }`}
                     >
                       <Radio className="w-4 h-4 text-teal-300" />
-                      <span>LIVE MATCH TELEMETRY</span>
+                      <span>LIVE MATCH</span>
                     </button>
 
                     <button
@@ -1305,15 +1305,19 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                       <span>Squad Rosters</span>
                     </button>
 
-                    {/* Active secondary tab badge if one is selected */}
-                    {['club', 'broadcast', 'database'].includes(activeTab) && (
-                      <span className="px-2.5 py-1 rounded-lg bg-[#4C787E]/30 text-[#B7CEEC] border border-[#4C787E]/60 text-[11px] font-mono flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#4C787E] animate-pulse" />
-                        {activeTab === 'club' && 'Club Profile'}
-                        {activeTab === 'broadcast' && 'Broadcast'}
-                        {activeTab === 'database' && 'Firestore Sync'}
-                      </span>
-                    )}
+                    <button
+                      onClick={() => {
+                        setActiveTab('club');
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className={`px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${activeTab === 'club'
+                        ? 'bg-gradient-to-r from-[#4C787E] to-[#122e3d] text-white shadow-[0_0_18px_rgba(76,120,126,0.4)] border border-[#B7CEEC]/50 font-black f1-sub-header tracking-widest uppercase'
+                        : 'text-gray-400 hover:text-white hover:bg-[#03060a] border border-transparent'
+                        }`}
+                    >
+                      <Building2 className="w-4 h-4 text-teal-300" />
+                      <span>Club Profile</span>
+                    </button>
                   </div>
 
                   {/* 3-Dots Menu Button */}
@@ -1417,11 +1421,11 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                   {/* TAB 1: LIVE MATCH EVENT RECORDING PORTAL */}
                   {activeTab === 'matches' && (
                     <div className="space-y-6">
-                      {/* USER STORY 2: SELECT FIXTURE FOR LIVE RECORDING */}
+                      {/* SELECT FIXTURE FOR LIVE MATCH */}
                       <div>
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="text-xs font-black uppercase tracking-widest text-[#B7CEEC] f1-sub-header flex items-center gap-2">
-                            <span>1. SELECT FIXTURE FOR LIVE TELEMETRY</span>
+                            <span>1. SELECT FIXTURE FOR LIVE MATCH</span>
                             <span className="px-2 py-0.5 rounded-full bg-[#4C787E]/20 text-teal-300 text-[10px] font-mono border border-[#4C787E]/40">
                               {visibleMatches.length} Fixtures
                             </span>
@@ -1431,68 +1435,129 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {visibleMatches.map((m, idx) => {
-                            const isSelected = editingMatchId === m.id;
-                            const hTeam = teams.find((t) => t.id === m.homeTeamId);
-                            const aTeam = teams.find((t) => t.id === m.awayTeamId);
-                            const matchStatus = m.status || (m.isFinished ? 'ended' : m.isLive ? '1st_half' : 'scheduled');
+                        {(() => {
+                          const nextMatchObj = visibleMatches.find((m) => !m.isFinished && m.status !== 'ended');
+                          const nextMatchId = nextMatchObj?.id;
 
-                            return (
-                              <button
-                                key={`vis-match-${m.id}-${idx}`}
-                                onClick={() => handleSelectMatchFixture(m)}
-                                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer hover:scale-[1.01] relative overflow-hidden backdrop-blur-md ${isSelected
-                                  ? 'bg-[#091422] border-[#B7CEEC] ring-2 ring-[#4C787E]/60 shadow-[0_0_25px_rgba(76,120,126,0.35)]'
-                                  : 'bg-[#040810]/90 border-[#B7CEEC]/20 text-gray-300 hover:border-[#4C787E]/60 hover:shadow-[0_0_18px_rgba(76,120,126,0.2)]'
-                                  }`}
-                              >
-                                <div className="flex items-center justify-between text-[11px] mb-2">
-                                  {/* USER STORY 9: MATCH STATUS VISIBILITY WITH LIVE PULSING DOT */}
-                                  <span
-                                    className={`px-2.5 py-0.5 rounded-full font-black text-[10px] uppercase tracking-wider flex items-center gap-1.5 ${matchStatus === '1st_half' || matchStatus === '2nd_half'
-                                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
-                                      : matchStatus === 'halftime'
-                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                                        : matchStatus === 'ended'
-                                          ? 'bg-slate-800 text-gray-300 border border-slate-700'
-                                          : 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
-                                      }`}
+                          return (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                              {visibleMatches.map((m, idx) => {
+                                const isSelected = editingMatchId === m.id;
+                                const hTeam = teams.find((t) => t.id === m.homeTeamId);
+                                const aTeam = teams.find((t) => t.id === m.awayTeamId);
+                                const isEnded = m.isFinished || m.status === 'ended';
+                                const isLive = m.isLive || m.status === '1st_half' || m.status === '2nd_half' || m.status === 'halftime';
+                                const isNext = !isEnded && !isLive && m.id === nextMatchId;
+
+                                // Match Status Badge Styling
+                                let badgeBg = 'bg-teal-500/20 text-teal-300 border-teal-500/40';
+                                let badgeText = `⚪ UPCOMING (${m.startTime})`;
+
+                                if (isEnded) {
+                                  badgeBg = 'bg-slate-800/90 text-emerald-400 border-emerald-500/40 shadow-sm';
+                                  badgeText = `🏁 FULL TIME`;
+                                } else if (m.status === '1st_half' || m.status === '2nd_half') {
+                                  badgeBg = 'bg-rose-500/25 text-rose-300 border-rose-500/50 shadow-[0_0_12px_rgba(244,63,94,0.4)] animate-pulse';
+                                  badgeText = `🔴 LIVE ${m.status === '1st_half' ? '1ST HALF' : '2ND HALF'} (${m.minute}')`;
+                                } else if (m.status === 'halftime') {
+                                  badgeBg = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+                                  badgeText = `⏸️ HALFTIME (${m.minute}')`;
+                                } else if (isNext) {
+                                  badgeBg = 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-slate-950 border-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.5)] font-black animate-pulse';
+                                  badgeText = `🔥 NEXT MATCH (${m.startTime})`;
+                                }
+
+                                // Goal Scorers Summary for Completed Matches
+                                const goalEvents = (m.events || []).filter((e) => e.type === 'goal');
+                                const homeScorers = goalEvents.filter((e) => e.teamId === m.homeTeamId).map((e) => `${e.player} ${e.minute}'`).join(', ');
+                                const awayScorers = goalEvents.filter((e) => e.teamId === m.awayTeamId).map((e) => `${e.player} ${e.minute}'`).join(', ');
+
+                                return (
+                                  <button
+                                    key={`vis-match-${m.id}-${idx}`}
+                                    onClick={() => handleSelectMatchFixture(m)}
+                                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer hover:scale-[1.01] relative overflow-hidden backdrop-blur-md flex flex-col justify-between ${
+                                      isSelected
+                                        ? 'bg-[#091422] border-[#B7CEEC] ring-2 ring-[#4C787E]/60 shadow-[0_0_25px_rgba(76,120,126,0.35)]'
+                                        : isNext
+                                        ? 'bg-gradient-to-br from-[#0e1d2c] via-[#08121c] to-[#040810] border-amber-400/60 shadow-[0_0_20px_rgba(245,158,11,0.2)]'
+                                        : 'bg-[#040810]/90 border-[#B7CEEC]/20 text-gray-300 hover:border-[#4C787E]/60 hover:shadow-[0_0_18px_rgba(76,120,126,0.2)]'
+                                    }`}
                                   >
-                                    {(matchStatus === '1st_half' || matchStatus === '2nd_half') && (
-                                      <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                                    {/* Status Badge & Venue */}
+                                    <div className="flex items-center justify-between text-[11px] mb-2.5">
+                                      <span className={`px-2.5 py-1 rounded-full font-black text-[10px] uppercase tracking-wider flex items-center gap-1.5 border ${badgeBg}`}>
+                                        {isLive && (
+                                          <span className="relative flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                                          </span>
+                                        )}
+                                        {badgeText}
                                       </span>
+                                      <span className="text-[#B7CEEC] font-bold text-[10px] uppercase tracking-wider">{m.venue}</span>
+                                    </div>
+
+                                    {/* Scoreboard Row */}
+                                    <div className="flex items-center justify-between my-1">
+                                      <div className="flex items-center gap-2 flex-1">
+                                        <TeamLogo teamId={m.homeTeamId} size={26} />
+                                        <span className={`font-black text-xs sm:text-sm uppercase tracking-wider ${isEnded && m.homeScore > m.awayScore ? 'text-amber-300' : 'text-white'}`}>
+                                          {hTeam?.shortName || hTeam?.name}
+                                        </span>
+                                      </div>
+
+                                      <div className={`px-3.5 py-1 rounded-xl border font-black text-sm shadow-inner font-mono shrink-0 mx-2 ${
+                                        isEnded
+                                          ? 'bg-slate-900/90 border-emerald-500/50 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                                          : isLive
+                                          ? 'bg-rose-950/80 border-rose-500/50 text-rose-300 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
+                                          : 'bg-[#020509] border-[#B7CEEC]/30 text-white'
+                                      }`}>
+                                        {m.homeScore} - {m.awayScore}
+                                      </div>
+
+                                      <div className="flex items-center gap-2 flex-1 justify-end">
+                                        <span className={`font-black text-xs sm:text-sm uppercase tracking-wider text-right ${isEnded && m.awayScore > m.homeScore ? 'text-amber-300' : 'text-white'}`}>
+                                          {aTeam?.shortName || aTeam?.name}
+                                        </span>
+                                        <TeamLogo teamId={m.awayTeamId} size={26} />
+                                      </div>
+                                    </div>
+
+                                    {/* Full Time Completed Stats & Scorers Summary */}
+                                    {isEnded && (
+                                      <div className="mt-3 pt-2 border-t border-[#B7CEEC]/15 flex flex-col gap-1 text-[10px] text-gray-300">
+                                        {(homeScorers || awayScorers) ? (
+                                          <div className="flex items-center justify-between gap-2 text-[10px]">
+                                            <span className="text-emerald-300 font-semibold truncate max-w-[48%]">
+                                              {homeScorers ? `⚽ ${homeScorers}` : ''}
+                                            </span>
+                                            <span className="text-emerald-300 font-semibold truncate max-w-[48%] text-right">
+                                              {awayScorers ? `⚽ ${awayScorers}` : ''}
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center justify-between text-[10px] text-gray-400 font-mono">
+                                            <span>Possession: {m.possessionHome || 50}% - {m.possessionAway || 50}%</span>
+                                            <span>Shots: {(m.shotsHome || 0) + (m.shotsAway || 0)}</span>
+                                          </div>
+                                        )}
+                                        <div className="flex items-center justify-between pt-0.5 text-[9px]">
+                                          <span className="text-teal-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                                            <Activity className="w-3 h-3 text-teal-300" />
+                                            <span>Full Match Statistics & Events</span>
+                                          </span>
+                                          <span className="text-gray-400 font-mono">Final Result</span>
+                                        </div>
+                                      </div>
                                     )}
-                                    {matchStatus === '1st_half' && `LIVE 1ST HALF (${m.minute}')`}
-                                    {matchStatus === '2nd_half' && `LIVE 2ND HALF (${m.minute}')`}
-                                    {matchStatus === 'halftime' && `⏸️ HALFTIME (${m.minute}')`}
-                                    {matchStatus === 'ended' && `🏁 FULL TIME (${m.homeScore} - ${m.awayScore})`}
-                                    {matchStatus === 'scheduled' && `⚪ PRE-MATCH (${m.startTime})`}
-                                  </span>
-                                  <span className="text-[#B7CEEC] font-semibold text-[10px] uppercase tracking-wider">{m.venue}</span>
-                                </div>
-
-                                <div className="flex items-center justify-between mt-2">
-                                  <div className="flex items-center gap-2">
-                                    <TeamLogo teamId={m.homeTeamId} size={24} />
-                                    <span className="font-extrabold text-xs text-white uppercase tracking-wider">{hTeam?.shortName}</span>
-                                  </div>
-
-                                  <div className="px-3.5 py-1 rounded-xl bg-[#020509] border border-[#B7CEEC]/30 font-black text-sm text-white shadow-inner font-mono">
-                                    {m.homeScore} - {m.awayScore}
-                                  </div>
-
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-extrabold text-xs text-white uppercase tracking-wider">{aTeam?.shortName}</span>
-                                    <TeamLogo teamId={m.awayTeamId} size={24} />
-                                  </div>
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* SELECTED FIXTURE RECORDING CONSOLE POPUP MODAL */}

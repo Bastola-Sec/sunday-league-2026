@@ -318,17 +318,6 @@ export default function App() {
     }
   };
 
-  // Helper to adjust standings
-  const updateStandingsFromMatches = (homeScore: number, awayScore: number) => {
-    setTeams((prev) =>
-      prev.map((t) => {
-        if (t.id === 'momo-strikers') {
-          return { ...t, goalsFor: t.goalsFor + 1, points: t.points + (homeScore > awayScore ? 0 : 0) };
-        }
-        return t;
-      })
-    );
-  };
 
   // Update Roster Admin
   const handleUpdateRoster = (teamId: string, updatedRoster: Player[]) => {
@@ -336,6 +325,18 @@ export default function App() {
       prev.map((t) => (t.id === teamId ? { ...t, roster: updatedRoster, squadCount: updatedRoster.length } : t))
     );
     saveTeamRosterToFirestore(teamId, updatedRoster);
+
+    // Sync active player profile overlay if open
+    if (selectedPlayerForProfile) {
+      const updatedP = updatedRoster.find((p) => p.id === selectedPlayerForProfile.id);
+      if (updatedP) {
+        setSelectedPlayerForProfile(updatedP);
+      }
+    }
+
+    if (selectedTeamForPlayer && selectedTeamForPlayer.id === teamId) {
+      setSelectedTeamForPlayer((prev) => (prev ? { ...prev, roster: updatedRoster, squadCount: updatedRoster.length } : null));
+    }
   };
 
   // Update Club Details (motto, manager, head coach, bio, etc.)
