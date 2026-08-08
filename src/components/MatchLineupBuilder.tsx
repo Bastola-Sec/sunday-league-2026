@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, PanInfo } from 'motion/react';
+import { motion, AnimatePresence, PanInfo } from 'motion/react';
 import { Users, ShieldCheck, CheckCircle2, Sparkles, UserCheck, RefreshCw, Zap, Shield, Lock, Unlock, Clock, Eye, Maximize2, Layers, SlidersHorizontal, ChevronDown, Award, RotateCcw, Move } from 'lucide-react';
 import { Match, Team, AdminUser, Player } from '../types';
 import { TeamLogo } from './TeamLogos';
@@ -324,6 +324,8 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
   };
 
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [justSubmittedTime, setJustSubmittedTime] = useState<string | null>(null);
   const [isForceUnlocked, setIsForceUnlocked] = useState<boolean>(false);
   const [nowTime, setNowTime] = useState<number>(Date.now());
   const [wasAutoLockedBy8HourRule, setWasAutoLockedBy8HourRule] = useState<boolean>(false);
@@ -515,11 +517,13 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
   const isLineupSubmitted = isHome ? Boolean(match.homeLineupSubmitted) : Boolean(match.awayLineupSubmitted);
 
   const handleSubmitOfficialLineup = () => {
-    if (!onUpdateFullMatch || isScreenLocked) return;
+    if (!onUpdateFullMatch || isScreenLocked || isSubmitting) return;
     if (startingIds.length < targetSlots) {
       alert(`Starting Lineup Required: You currently have ${startingIds.length}/${targetSlots} players selected. Please select ${targetSlots} starting players before submitting.`);
       return;
     }
+
+    setIsSubmitting(true);
 
     const updatePayload: Partial<Match> = isHome
       ? {
@@ -539,9 +543,14 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           awayLineupSubmitted: true,
         };
 
-    onUpdateFullMatch(match.id, updatePayload);
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+    setTimeout(() => {
+      onUpdateFullMatch(match.id, updatePayload);
+      setIsSubmitting(false);
+      setSavedSuccess(true);
+      const now = new Date();
+      setJustSubmittedTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      setTimeout(() => setSavedSuccess(false), 5000);
+    }, 400);
   };
 
   const handleToggleMatchFormat = (newFmt: '7v7' | '8v8') => {
@@ -696,16 +705,42 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
               ⚡ 8v8 Format
             </button>
           </div>
-
-          {/* Saved Success Notification Pill */}
-          {savedSuccess && (
-            <span className="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-xs font-bold animate-pulse flex items-center gap-1.5 shadow-lg">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              Lineup Synced!
-            </span>
-          )}
         </div>
       </div>
+
+      {/* SUCCESS CONFIRMATION TOAST BANNER */}
+      <AnimatePresence>
+        {savedSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -15, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -15, scale: 0.95 }}
+            className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/95 via-teal-900/95 to-emerald-950/95 border-2 border-emerald-400 text-emerald-200 text-xs font-bold flex items-center justify-between gap-3 shadow-[0_0_35px_rgba(16,185,129,0.5)] backdrop-blur-xl animate-pulse"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-300 text-slate-950 flex items-center justify-center font-black shrink-0 shadow-lg">
+                <CheckCircle2 className="w-6 h-6 text-slate-950" />
+              </div>
+              <div>
+                <h5 className="font-extrabold text-white text-xs uppercase tracking-wider flex items-center gap-2">
+                  <span>🎉 OFFICIAL MATCH LINEUP SUBMITTED & SYNCED!</span>
+                  {justSubmittedTime && (
+                    <span className="text-[10px] font-mono text-emerald-300 bg-emerald-900/60 px-2 py-0.5 rounded border border-emerald-500/40">
+                      {justSubmittedTime}
+                    </span>
+                  )}
+                </h5>
+                <p className="text-[11px] text-emerald-200/90 font-medium">
+                  {activeTeam?.name} starting lineup ({targetSlots} players), bench, and 2D formation layout live-synced across Match Center & Team Management.
+                </p>
+              </div>
+            </div>
+            <span className="px-3 py-1 rounded-xl bg-emerald-500/30 text-emerald-300 text-[10px] font-black uppercase tracking-wider border border-emerald-400/50 shrink-0">
+              Live Synced ✓
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 8-HOUR PRE-GAME LINEUP AUTO-REVIEW & SCREEN LOCK STATUS BANNER */}
       <div className={`p-4 rounded-2xl border transition-all ${isScreenLocked
@@ -1092,18 +1127,49 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           </div>
 
             {!isScreenLocked && (
-              <button
-                type="button"
-                onClick={handleSubmitOfficialLineup}
-                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-xl cursor-pointer border ${
-                  isLineupSubmitted
-                    ? 'bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 hover:brightness-110 text-white border-emerald-300/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-                    : 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 hover:brightness-110 text-slate-950 border-amber-200 font-extrabold animate-pulse'
-                }`}
-              >
-                <CheckCircle2 className="w-4 h-4 text-white" />
-                <span>{isLineupSubmitted ? '🔄 RESUBMIT & UPDATE LINEUP' : '🚀 SUBMIT MATCH LINEUP'}</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {justSubmittedTime && !savedSuccess && (
+                  <span className="text-[10px] text-emerald-400 font-bold hidden sm:inline-block">
+                    ✓ Last synced at {justSubmittedTime}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSubmitOfficialLineup}
+                  disabled={isSubmitting}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-2xl cursor-pointer border ${
+                    isSubmitting
+                      ? 'bg-amber-500/30 text-amber-200 border-amber-400/50 cursor-wait'
+                      : savedSuccess
+                      ? 'bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 text-slate-950 border-emerald-200 font-extrabold shadow-[0_0_30px_rgba(16,185,129,0.8)] scale-105 animate-bounce'
+                      : isLineupSubmitted
+                      ? 'bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 hover:brightness-110 text-white border-emerald-300/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                      : 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 hover:brightness-110 text-slate-950 border-amber-200 font-extrabold animate-pulse'
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Sparkles className="w-4 h-4 text-amber-300 animate-spin" />
+                      <span>SYNCING TO MATCH CENTER...</span>
+                    </>
+                  ) : savedSuccess ? (
+                    <>
+                      <CheckCircle2 className="w-4.5 h-4.5 text-slate-950" />
+                      <span>✅ LINEUP RESUBMITTED & SYNCED!</span>
+                    </>
+                  ) : isLineupSubmitted ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 text-white" />
+                      <span>🔄 RESUBMIT & UPDATE LINEUP</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-slate-950" />
+                      <span>🚀 SUBMIT MATCH LINEUP</span>
+                    </>
+                  )}
+                </button>
+              </div>
             )}
         </div>
       </div>
