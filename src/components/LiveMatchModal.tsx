@@ -526,20 +526,17 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                 let activeStartingList: Player[] = [];
                 let activeBenchList: Player[] = [];
 
+                const currentFormat = match.matchFormat || '7v7';
+                const targetSlots = currentFormat === '7v7' ? 7 : 8;
+
                 if (selectedLineupTeam) {
                   const teamRoster = selectedLineupTeam.roster || [];
                   if (matchStartingIds && matchStartingIds.length > 0) {
                     activeStartingList = matchStartingIds
                       .map((id) => teamRoster.find((p) => p.id === id))
                       .filter((p): p is Player => Boolean(p));
-                    if (activeStartingList.length < 8) {
-                      const remaining = teamRoster.filter(
-                        (p) => !activeStartingList.some((sp) => sp.id === p.id)
-                      );
-                      activeStartingList = [...activeStartingList, ...remaining.slice(0, 8 - activeStartingList.length)];
-                    }
                   } else {
-                    activeStartingList = teamRoster.slice(0, 8);
+                    activeStartingList = teamRoster.slice(0, targetSlots);
                   }
 
                   if (matchSubIds && matchSubIds.length > 0) {
@@ -658,61 +655,67 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-16 h-6 border border-b-0 border-white/40 pointer-events-none" />
                         <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-20 h-4 border-2 border-white bg-white/20 rounded-b-sm pointer-events-none" />
 
-                        {/* SELECTED TEAM 8 PLAYERS ON PITCH */}
-                        {formationCoords.map((pos, idx) => {
-                          const playerInRoster = activeStartingList[idx];
-                          const playerNum = playerInRoster?.number || pos.num;
-                          const isHome = lineupTeamId === match.homeTeamId;
+                        {/* SELECTED TEAM PLAYERS ON PITCH */}
+                        {(() => {
+                          const customPositions = isHomeSelected ? match.homeCustomPositions : match.awayCustomPositions;
 
-                          return (
-                            <div
-                              key={`jersey-node-${selectedLineupTeam?.id}-${idx}`}
-                              onClick={() =>
-                                playerInRoster &&
-                                selectedLineupTeam &&
-                                onSelectPlayer &&
-                                onSelectPlayer(playerInRoster, selectedLineupTeam)
-                              }
-                              className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group z-10 transition-all duration-300"
-                              style={{ top: pos.top, left: pos.left }}
-                            >
-                              {/* Glowing Ring Base on Pitch */}
-                              <div
-                                className={`w-8 h-8 rounded-full border shadow-lg animate-pulse ${
-                                  isHome
-                                    ? 'bg-[#4B7CEC]/30 border-[#4B7CEC] shadow-[#4B7CEC]'
-                                    : 'bg-rose-500/30 border-rose-500 shadow-[#EF4444]'
-                                }`}
-                              />
+                          return formationCoords.map((pos, idx) => {
+                            const playerInRoster = activeStartingList[idx];
+                            const playerNum = playerInRoster?.number || pos.num;
+                            const isHome = lineupTeamId === match.homeTeamId;
 
-                              {/* 3D Vertical Standing Jersey */}
+                            const nodePos = (customPositions && customPositions[idx]) ? customPositions[idx] : { top: pos.top, left: pos.left };
+
+                            return (
                               <div
-                                className="absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center group-hover:scale-125 transition-transform"
+                                key={`jersey-node-${selectedLineupTeam?.id}-${idx}`}
+                                onClick={() =>
+                                  playerInRoster &&
+                                  selectedLineupTeam &&
+                                  onSelectPlayer &&
+                                  onSelectPlayer(playerInRoster, selectedLineupTeam)
+                                }
+                                className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group z-10 transition-all duration-300"
+                                style={{ top: nodePos.top, left: nodePos.left }}
                               >
+                                {/* Glowing Ring Base on Pitch */}
                                 <div
-                                  className={`w-9 h-10 border border-white/60 rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${
+                                  className={`w-8 h-8 rounded-full border shadow-lg animate-pulse ${
                                     isHome
-                                      ? 'from-[#4B7CEC] to-[#2B54B8]'
-                                      : 'from-[#EF4444] to-[#991B1B]'
+                                      ? 'bg-[#4B7CEC]/30 border-[#4B7CEC] shadow-[#4B7CEC]'
+                                      : 'bg-rose-500/30 border-rose-500 shadow-[#EF4444]'
                                   }`}
+                                />
+
+                                {/* 3D Vertical Standing Jersey */}
+                                <div
+                                  className="absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center group-hover:scale-125 transition-transform"
                                 >
-                                  {/* Jersey Collar */}
-                                  <div className="absolute top-0 w-4 h-1.5 bg-white/80 rounded-b-full" />
-                                  <span className="text-white font-black text-xs tracking-tight drop-shadow-md mt-1">
-                                    {playerNum}
+                                  <div
+                                    className={`w-9 h-10 border border-white/60 rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${
+                                      isHome
+                                        ? 'from-[#4B7CEC] to-[#2B54B8]'
+                                        : 'from-[#EF4444] to-[#991B1B]'
+                                    }`}
+                                  >
+                                    {/* Jersey Collar */}
+                                    <div className="absolute top-0 w-4 h-1.5 bg-white/80 rounded-b-full" />
+                                    <span className="text-white font-black text-xs tracking-tight drop-shadow-md mt-1">
+                                      {playerNum}
+                                    </span>
+                                  </div>
+                                  <span
+                                    className={`text-[9px] font-extrabold text-white bg-black/80 px-2 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md opacity-90 group-hover:opacity-100 border ${
+                                      isHome ? 'border-[#4B7CEC]/40' : 'border-rose-500/40'
+                                    }`}
+                                  >
+                                    {playerInRoster ? playerInRoster.name.split(' ')[0] : `#${idx + 1}`}
                                   </span>
                                 </div>
-                                <span
-                                  className={`text-[9px] font-extrabold text-white bg-black/80 px-2 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md opacity-90 group-hover:opacity-100 border ${
-                                    isHome ? 'border-[#4B7CEC]/40' : 'border-rose-500/40'
-                                  }`}
-                                >
-                                  {playerInRoster ? playerInRoster.name.split(' ')[0] : `#${idx + 1}`}
-                                </span>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          });
+                        })()}
                       </div>
                     </div>
 
@@ -755,13 +758,13 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Starting Roster Grid List (Exactly 8 Players per Team) */}
+                  {/* Starting Roster Grid List */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-xs font-black uppercase text-[#B7CEEC] flex items-center gap-1.5">
-                        <span>{selectedLineupTeam?.name} Starting 8</span>
+                        <span>{selectedLineupTeam?.name} Starting {activeStartingList.length}</span>
                         <span className="px-2 py-0.5 rounded-full bg-[#4C787E]/30 text-[10px] text-amber-300 border border-[#4C787E]/50 font-bold">
-                          8v8 Format
+                          {currentFormat} Format
                         </span>
                       </h4>
                       <span className="text-[10px] text-gray-400 font-normal">

@@ -312,13 +312,15 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
     const newLeftPct = Math.max(6, Math.min(94, startLeftPct + deltaLeftPct));
     const newTopPct = Math.max(6, Math.min(94, startTopPct + deltaTopPct));
 
-    setCustomPositions((prev) => ({
-      ...prev,
+    const updatedPositions = {
+      ...customPositions,
       [idx]: {
         top: `${newTopPct.toFixed(1)}%`,
         left: `${newLeftPct.toFixed(1)}%`,
       },
-    }));
+    };
+    setCustomPositions(updatedPositions);
+    handlePersist(startingIds, subIds, selectedFormation, formatType, updatedPositions);
   };
 
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
@@ -423,14 +425,26 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
     const savedStarting = isHome ? match.homeStartingPlayerIds : match.awayStartingPlayerIds;
     const savedSubs = isHome ? match.homeSubstitutePlayerIds : match.awaySubstitutePlayerIds;
     const savedFormation = isHome ? match.homeFormation : match.awayFormation;
+    const savedCustomPos = isHome ? match.homeCustomPositions : match.awayCustomPositions;
+    const savedFormat = match.matchFormat;
 
-    const activeMap = formatType === '7v7' ? FORMATIONS_7V7 : FORMATIONS_8V8;
-    const defaultForm = formatType === '7v7' ? '3-2-1' : '3-3-1';
+    if (savedFormat && (savedFormat === '7v7' || savedFormat === '8v8')) {
+      setFormatType(savedFormat);
+    }
+
+    const activeMap = (savedFormat || formatType) === '7v7' ? FORMATIONS_7V7 : FORMATIONS_8V8;
+    const defaultForm = (savedFormat || formatType) === '7v7' ? '3-2-1' : '3-3-1';
 
     if (savedFormation && activeMap[savedFormation]) {
       setSelectedFormation(savedFormation);
     } else {
       setSelectedFormation(defaultForm);
+    }
+
+    if (savedCustomPos && Object.keys(savedCustomPos).length > 0) {
+      setCustomPositions(savedCustomPos);
+    } else {
+      setCustomPositions({});
     }
 
     if (savedStarting && savedStarting.length > 0) {
@@ -451,7 +465,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
       const defaultStart = sorted.slice(0, targetSlots).map((p) => p.id);
       setSubIds(sorted.filter((p) => !defaultStart.includes(p.id)).map((p) => p.id));
     }
-  }, [match, selectedTeamId, activeTeam, isHome, formatType, targetSlots]);
+  }, [match, selectedTeamId, activeTeam, isHome]);
 
   const formatCountdownStr = (ms: number) => {
     if (ms <= 0) return '00h 00m 00s';
@@ -463,24 +477,33 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
   };
 
   // Persist starting lineup, bench, and formation to parent state & Firestore
-  const handlePersist = (newStarting: string[], newSubs: string[], formationChoice?: string, newFormat?: '7v7' | '8v8') => {
+  const handlePersist = (
+    newStarting: string[],
+    newSubs: string[],
+    formationChoice?: string,
+    newFormat?: '7v7' | '8v8',
+    customPosOverride?: { [key: number]: { top: string; left: string } }
+  ) => {
     if (isScreenLocked) return;
     if (!onUpdateFullMatch) return;
 
     const currentFormation = formationChoice || selectedFormation;
     const fmt = newFormat || formatType;
+    const posToSave = customPosOverride !== undefined ? customPosOverride : customPositions;
 
     const updatePayload = isHome
       ? {
         homeStartingPlayerIds: newStarting,
         homeSubstitutePlayerIds: newSubs,
         homeFormation: currentFormation,
+        homeCustomPositions: posToSave,
         matchFormat: fmt,
       }
       : {
         awayStartingPlayerIds: newStarting,
         awaySubstitutePlayerIds: newSubs,
         awayFormation: currentFormation,
+        awayCustomPositions: posToSave,
         matchFormat: fmt,
       };
 
@@ -503,6 +526,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           homeStartingPlayerIds: startingIds,
           homeSubstitutePlayerIds: subIds,
           homeFormation: selectedFormation,
+          homeCustomPositions: customPositions,
           matchFormat: formatType,
           homeLineupSubmitted: true,
         }
@@ -510,6 +534,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           awayStartingPlayerIds: startingIds,
           awaySubstitutePlayerIds: subIds,
           awayFormation: selectedFormation,
+          awayCustomPositions: customPositions,
           matchFormat: formatType,
           awayLineupSubmitted: true,
         };

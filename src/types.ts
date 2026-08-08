@@ -126,6 +126,8 @@ export interface Match {
   awaySubstitutePlayerIds?: string[];
   homeFormation?: string;
   awayFormation?: string;
+  homeCustomPositions?: { [key: number]: { top: string; left: string } };
+  awayCustomPositions?: { [key: number]: { top: string; left: string } };
   matchFormat?: '7v7' | '8v8';
   seasonNumber?: number;
   homeLineupSubmitted?: boolean;
