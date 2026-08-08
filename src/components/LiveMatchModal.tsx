@@ -627,7 +627,7 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                           Tactical Lineup ({selectedFormation})
                         </span>
                         <span className="text-xs font-black text-white tracking-wider uppercase">
-                          {selectedLineupTeam?.name} • 8 Players
+                          {selectedLineupTeam?.name} • {activeStartingList.length} Players
                         </span>
                       </div>
                     </div>
