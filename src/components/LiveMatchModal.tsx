@@ -7,7 +7,6 @@ import {
   Plus,
   Radio,
   ArrowRight,
-  Play,
   Maximize2,
   Target,
   Swords,
@@ -719,12 +718,7 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Center Interactive Play Button Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                      <div className="w-14 h-14 rounded-full bg-[#203a4c]/80 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-2xl pointer-events-auto cursor-pointer hover:scale-110 transition-transform">
-                        <Play className="w-6 h-6 text-white fill-white ml-0.5" />
-                      </div>
-                    </div>
+
 
                     {/* Bottom Overlay Controls */}
                     <div className="relative z-20 flex items-end justify-between mt-auto">
