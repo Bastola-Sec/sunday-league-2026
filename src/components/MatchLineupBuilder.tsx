@@ -737,7 +737,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
               ) : (
                 <span className="px-3.5 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 text-xs font-bold border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
                   <Lock className="w-3.5 h-3.5 text-rose-400" />
-                  Lineup Locked • Contact League Commissioner for Emergency Changes
+                  Lineup Locked
                 </span>
               )
             ) : isForceUnlocked ? (
