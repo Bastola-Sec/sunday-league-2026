@@ -890,7 +890,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
                 )}
               </div>
               <span className="text-xs font-black text-white tracking-wider uppercase">
-                {activeTeam?.name} • {startingIds.length}/8 Starting Players
+                {activeTeam?.name} • {startingIds.length}/{targetSlots} Starting Players
               </span>
             </div>
           </div>
@@ -1068,15 +1068,15 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
         </div>
       </div>
 
-      {/* Starting 8 & Bench Counter Summary */}
+      {/* Starting Squad & Bench Counter Summary */}
       <div className="grid grid-cols-2 gap-3">
         <div className="p-3 rounded-xl bg-[#09131e] border border-emerald-500/30 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-emerald-400 uppercase block">Starting 8 Lineup</span>
-            <span className="text-lg font-black text-white">{startingIds.length} / 8 Selected</span>
+            <span className="text-[10px] font-bold text-emerald-400 uppercase block">Starting {targetSlots} Lineup</span>
+            <span className="text-lg font-black text-white">{startingIds.length} / {targetSlots} Selected</span>
           </div>
           <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs border border-emerald-500/40">
-            8v8
+            {formatType}
           </div>
         </div>
 
