@@ -126,6 +126,7 @@ export interface Match {
   awaySubstitutePlayerIds?: string[];
   homeFormation?: string;
   awayFormation?: string;
+  matchFormat?: '7v7' | '8v8';
   seasonNumber?: number;
   homeLineupSubmitted?: boolean;
   awayLineupSubmitted?: boolean;

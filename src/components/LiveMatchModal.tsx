@@ -272,9 +272,62 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
     setSelectedPlayerName('');
   };
 
-  // Coordinates for 8v8 3D pitch formations (percentage top & left on field for selected team)
-  const get8v8FormationCoordinates = (formation: string) => {
+  // Coordinates for 7v7 / 8v8 tactical pitch formations
+  const getFormationCoordinates = (formation: string) => {
     switch (formation) {
+      // 7v7 Formations
+      case '3-2-1':
+        return [
+          { num: 1, top: '85%', left: '48%', role: 'CB' },
+          { num: 3, top: '70%', left: '22%', role: 'LB' },
+          { num: 2, top: '70%', left: '74%', role: 'RB' },
+          { num: 6, top: '48%', left: '36%', role: 'LCM' },
+          { num: 8, top: '48%', left: '60%', role: 'RCM' },
+          { num: 10, top: '34%', left: '48%', role: 'AM' },
+          { num: 9, top: '22%', left: '48%', role: 'ST' },
+        ];
+      case '2-3-1':
+        return [
+          { num: 1, top: '85%', left: '36%', role: 'LCB' },
+          { num: 4, top: '85%', left: '60%', role: 'RCB' },
+          { num: 8, top: '52%', left: '20%', role: 'LM' },
+          { num: 6, top: '56%', left: '48%', role: 'CM' },
+          { num: 7, top: '52%', left: '76%', role: 'RM' },
+          { num: 10, top: '36%', left: '48%', role: 'AM' },
+          { num: 9, top: '22%', left: '48%', role: 'ST' },
+        ];
+      case '3-1-2':
+        return [
+          { num: 1, top: '85%', left: '48%', role: 'CB' },
+          { num: 3, top: '70%', left: '22%', role: 'LB' },
+          { num: 2, top: '70%', left: '74%', role: 'RB' },
+          { num: 6, top: '52%', left: '48%', role: 'CM' },
+          { num: 8, top: '36%', left: '32%', role: 'LS' },
+          { num: 10, top: '36%', left: '64%', role: 'RS' },
+          { num: 9, top: '22%', left: '48%', role: 'ST' },
+        ];
+      case '2-2-2':
+        return [
+          { num: 1, top: '85%', left: '36%', role: 'LCB' },
+          { num: 4, top: '85%', left: '60%', role: 'RCB' },
+          { num: 3, top: '68%', left: '24%', role: 'LB' },
+          { num: 2, top: '68%', left: '72%', role: 'RB' },
+          { num: 6, top: '48%', left: '36%', role: 'LCM' },
+          { num: 8, top: '48%', left: '60%', role: 'RCM' },
+          { num: 9, top: '24%', left: '48%', role: 'ST' },
+        ];
+      case '1-4-1':
+        return [
+          { num: 1, top: '85%', left: '48%', role: 'CB' },
+          { num: 3, top: '72%', left: '28%', role: 'LCB' },
+          { num: 2, top: '72%', left: '68%', role: 'RCB' },
+          { num: 8, top: '50%', left: '18%', role: 'LM' },
+          { num: 6, top: '52%', left: '48%', role: 'CM' },
+          { num: 7, top: '50%', left: '78%', role: 'RM' },
+          { num: 9, top: '24%', left: '48%', role: 'ST' },
+        ];
+
+      // 8v8 Formations
       case '2-3-2':
         return [
           { num: 1, top: '86%', left: '48%', role: 'CB' },
@@ -333,19 +386,18 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
       case '3-3-1':
       default:
         return [
-          { num: 1, top: '86%', left: '48%', role: 'CB' },
-          { num: 3, top: '70%', left: '20%', role: 'LB' },
-          { num: 4, top: '74%', left: '48%', role: 'CB' },
-          { num: 2, top: '70%', left: '76%', role: 'RB' },
-          { num: 8, top: '48%', left: '24%', role: 'LM' },
-          { num: 6, top: '52%', left: '48%', role: 'CM' },
-          { num: 7, top: '48%', left: '72%', role: 'RM' },
-          { num: 9, top: '24%', left: '48%', role: 'ST' },
+          { num: 1, top: '85%', left: '48%', role: 'CB' },
+          { num: 3, top: '70%', left: '22%', role: 'LB' },
+          { num: 2, top: '70%', left: '74%', role: 'RB' },
+          { num: 6, top: '48%', left: '36%', role: 'LCM' },
+          { num: 8, top: '48%', left: '60%', role: 'RCM' },
+          { num: 10, top: '34%', left: '48%', role: 'AM' },
+          { num: 9, top: '22%', left: '48%', role: 'ST' },
         ];
     }
   };
 
-  const formationCoords = get8v8FormationCoordinates(selectedFormation);
+  const formationCoords = getFormationCoordinates(selectedFormation);
 
   return (
     <AnimatePresence>

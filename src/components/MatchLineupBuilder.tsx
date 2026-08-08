@@ -30,6 +30,99 @@ export interface FormationPreset {
   positions: FormationPos[];
 }
 
+export const FORMATIONS_7V7: Record<string, FormationPreset> = {
+  '3-2-1': {
+    id: '3-2-1',
+    name: '3-2-1 (Balanced 7v7)',
+    badge: 'BALANCED',
+    badgeBg: 'bg-teal-500/20 border-teal-500/40',
+    badgeText: 'text-teal-300',
+    description: 'Solid 7v7 structure with a defensive back 3, dual central midfielders, and a lone target striker.',
+    tactics: 'Provides strong defensive stability while two central midfielders support attack.',
+    positions: [
+      { num: 1, top: '85%', left: '48%', role: 'CB', label: 'Center Back' },
+      { num: 3, top: '70%', left: '22%', role: 'LB', label: 'Left Back' },
+      { num: 2, top: '70%', left: '74%', role: 'RB', label: 'Right Back' },
+      { num: 6, top: '48%', left: '36%', role: 'LCM', label: 'Left Mid' },
+      { num: 8, top: '48%', left: '60%', role: 'RCM', label: 'Right Mid' },
+      { num: 10, top: '34%', left: '48%', role: 'AM', label: 'Attacking Mid' },
+      { num: 9, top: '22%', left: '48%', role: 'ST', label: 'Striker' },
+    ],
+  },
+  '2-3-1': {
+    id: '2-3-1',
+    name: '2-3-1 (Midfield Overload)',
+    badge: 'MIDFIELD ENGINE',
+    badgeBg: 'bg-amber-500/20 border-amber-500/40',
+    badgeText: 'text-amber-300',
+    description: 'Controls 7v7 pitch width with 3 active midfielders feeding a single forward.',
+    tactics: 'Pushes wingers high while center mid anchors defense and distribution.',
+    positions: [
+      { num: 1, top: '85%', left: '36%', role: 'LCB', label: 'Left CB' },
+      { num: 4, top: '85%', left: '60%', role: 'RCB', label: 'Right CB' },
+      { num: 8, top: '52%', left: '20%', role: 'LM', label: 'Left Wing' },
+      { num: 6, top: '56%', left: '48%', role: 'CM', label: 'Center Mid' },
+      { num: 7, top: '52%', left: '76%', role: 'RM', label: 'Right Wing' },
+      { num: 10, top: '36%', left: '48%', role: 'AM', label: 'Attacking Mid' },
+      { num: 9, top: '22%', left: '48%', role: 'ST', label: 'Striker' },
+    ],
+  },
+  '3-1-2': {
+    id: '3-1-2',
+    name: '3-1-2 (Dual Attack)',
+    badge: 'TWIN STRIKE',
+    badgeBg: 'bg-rose-500/20 border-rose-500/40',
+    badgeText: 'text-rose-300',
+    description: 'Strong defensive spine with 2 strikers up front to pressure opposition defense.',
+    tactics: 'Dual forwards press high while lone central midfielder holds position.',
+    positions: [
+      { num: 1, top: '85%', left: '48%', role: 'CB', label: 'Center Back' },
+      { num: 3, top: '70%', left: '22%', role: 'LB', label: 'Left Back' },
+      { num: 2, top: '70%', left: '74%', role: 'RB', label: 'Right Back' },
+      { num: 6, top: '52%', left: '48%', role: 'CM', label: 'Central Pivot' },
+      { num: 8, top: '36%', left: '32%', role: 'LS', label: 'Left Striker' },
+      { num: 10, top: '36%', left: '64%', role: 'RS', label: 'Right Striker' },
+      { num: 9, top: '22%', left: '48%', role: 'ST', label: 'Target Man' },
+    ],
+  },
+  '2-2-2': {
+    id: '2-2-2',
+    name: '2-2-2 (Box Formation)',
+    badge: 'BOX TACTICS',
+    badgeBg: 'bg-indigo-500/20 border-indigo-500/40',
+    badgeText: 'text-indigo-300',
+    description: 'Symmetrical 7v7 setup balancing 2 defenders, 2 midfielders, and 2 strikers.',
+    tactics: 'High fluid mobility; pairs rotate between defense, midfield, and forward lines.',
+    positions: [
+      { num: 1, top: '85%', left: '36%', role: 'LCB', label: 'Left Defender' },
+      { num: 4, top: '85%', left: '60%', role: 'RCB', label: 'Right Defender' },
+      { num: 3, top: '68%', left: '24%', role: 'LB', label: 'Left Back' },
+      { num: 2, top: '68%', left: '72%', role: 'RB', label: 'Right Back' },
+      { num: 6, top: '48%', left: '36%', role: 'LCM', label: 'Left Engine' },
+      { num: 8, top: '48%', left: '60%', role: 'RCM', label: 'Right Engine' },
+      { num: 9, top: '24%', left: '48%', role: 'ST', label: 'Striker' },
+    ],
+  },
+  '1-4-1': {
+    id: '1-4-1',
+    name: '1-4-1 (Diamond Overload)',
+    badge: 'WING PRESS',
+    badgeBg: 'bg-purple-500/20 border-purple-500/40',
+    badgeText: 'text-purple-300',
+    description: 'Extreme midfield pressure with 4 midfielders creating passing triangles.',
+    tactics: 'Overwhelms center pitch while wingers stretch opposition wide.',
+    positions: [
+      { num: 1, top: '85%', left: '48%', role: 'CB', label: 'Sweeper' },
+      { num: 3, top: '72%', left: '28%', role: 'LCB', label: 'Left Stopper' },
+      { num: 2, top: '72%', left: '68%', role: 'RCB', label: 'Right Stopper' },
+      { num: 8, top: '50%', left: '18%', role: 'LM', label: 'Left Wing' },
+      { num: 6, top: '52%', left: '48%', role: 'CM', label: 'Center Mid' },
+      { num: 7, top: '50%', left: '78%', role: 'RM', label: 'Right Wing' },
+      { num: 9, top: '24%', left: '48%', role: 'ST', label: 'Striker' },
+    ],
+  },
+};
+
 export const FORMATIONS_8V8: Record<string, FormationPreset> = {
   '3-3-1': {
     id: '3-3-1',
@@ -179,9 +272,13 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
     }
   }, [isTeamAdmin, assignedTeamId, isAssignedTeamInMatch, selectedTeamId]);
 
+  const [formatType, setFormatType] = useState<'7v7' | '8v8'>(match.matchFormat || '7v7');
+  const targetSlots = formatType === '7v7' ? 7 : 8;
+  const activeFormationsMap = formatType === '7v7' ? FORMATIONS_7V7 : FORMATIONS_8V8;
+
   const [startingIds, setStartingIds] = useState<string[]>([]);
   const [subIds, setSubIds] = useState<string[]>([]);
-  const [selectedFormation, setSelectedFormation] = useState<string>('3-3-1');
+  const [selectedFormation, setSelectedFormation] = useState<string>(formatType === '7v7' ? '3-2-1' : '3-3-1');
   const [pitchZoom, setPitchZoom] = useState<boolean>(false);
   const [highlightedPlayerId, setHighlightedPlayerId] = useState<string | null>(null);
 
@@ -283,28 +380,28 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
       const updatePayload: Partial<Match> = {};
 
       const currentHomeStart = match.homeStartingPlayerIds;
-      if (!currentHomeStart || currentHomeStart.length < 8) {
+      if (!currentHomeStart || currentHomeStart.length < targetSlots) {
         const sortedHome = [...(homeTeam?.roster || [])].sort(
           (a, b) => (b.overallRating || 80) - (a.overallRating || 80)
         );
-        const autoHomeStarting = sortedHome.slice(0, 8).map((p) => p.id);
-        const autoHomeSubs = sortedHome.slice(8).map((p) => p.id);
+        const autoHomeStarting = sortedHome.slice(0, targetSlots).map((p) => p.id);
+        const autoHomeSubs = sortedHome.slice(targetSlots).map((p) => p.id);
         updatePayload.homeStartingPlayerIds = autoHomeStarting;
         updatePayload.homeSubstitutePlayerIds = autoHomeSubs;
-        if (!match.homeFormation) updatePayload.homeFormation = '3-3-1';
+        if (!match.homeFormation) updatePayload.homeFormation = formatType === '7v7' ? '3-2-1' : '3-3-1';
         updated = true;
       }
 
       const currentAwayStart = match.awayStartingPlayerIds;
-      if (!currentAwayStart || currentAwayStart.length < 8) {
+      if (!currentAwayStart || currentAwayStart.length < targetSlots) {
         const sortedAway = [...(awayTeam?.roster || [])].sort(
           (a, b) => (b.overallRating || 80) - (a.overallRating || 80)
         );
-        const autoAwayStarting = sortedAway.slice(0, 8).map((p) => p.id);
-        const autoAwaySubs = sortedAway.slice(8).map((p) => p.id);
+        const autoAwayStarting = sortedAway.slice(0, targetSlots).map((p) => p.id);
+        const autoAwaySubs = sortedAway.slice(targetSlots).map((p) => p.id);
         updatePayload.awayStartingPlayerIds = autoAwayStarting;
         updatePayload.awaySubstitutePlayerIds = autoAwaySubs;
-        if (!match.awayFormation) updatePayload.awayFormation = '3-3-1';
+        if (!match.awayFormation) updatePayload.awayFormation = formatType === '7v7' ? '3-2-1' : '3-3-1';
         updated = true;
       }
 
@@ -313,7 +410,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
         setWasAutoLockedBy8HourRule(true);
       }
     }
-  }, [is8HourReviewDeadlinePassed, match.id, homeTeam, awayTeam, match.homeStartingPlayerIds, match.awayStartingPlayerIds, match.homeFormation, match.awayFormation, onUpdateFullMatch]);
+  }, [is8HourReviewDeadlinePassed, match.id, homeTeam, awayTeam, match.homeStartingPlayerIds, match.awayStartingPlayerIds, match.homeFormation, match.awayFormation, targetSlots, formatType, onUpdateFullMatch]);
 
   // Sync state whenever match or selectedTeamId changes
   useEffect(() => {
@@ -323,10 +420,13 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
     const savedSubs = isHome ? match.homeSubstitutePlayerIds : match.awaySubstitutePlayerIds;
     const savedFormation = isHome ? match.homeFormation : match.awayFormation;
 
-    if (savedFormation && FORMATIONS_8V8[savedFormation]) {
+    const activeMap = formatType === '7v7' ? FORMATIONS_7V7 : FORMATIONS_8V8;
+    const defaultForm = formatType === '7v7' ? '3-2-1' : '3-3-1';
+
+    if (savedFormation && activeMap[savedFormation]) {
       setSelectedFormation(savedFormation);
     } else {
-      setSelectedFormation('3-3-1');
+      setSelectedFormation(defaultForm);
     }
 
     if (savedStarting && savedStarting.length > 0) {
@@ -335,7 +435,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
       const sorted = [...(activeTeam?.roster || [])].sort(
         (a, b) => (b.overallRating || 80) - (a.overallRating || 80)
       );
-      setStartingIds(sorted.slice(0, 8).map((p) => p.id));
+      setStartingIds(sorted.slice(0, targetSlots).map((p) => p.id));
     }
 
     if (savedSubs && savedSubs.length > 0) {
@@ -344,10 +444,10 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
       const sorted = [...(activeTeam?.roster || [])].sort(
         (a, b) => (b.overallRating || 80) - (a.overallRating || 80)
       );
-      const defaultStart = sorted.slice(0, 8).map((p) => p.id);
+      const defaultStart = sorted.slice(0, targetSlots).map((p) => p.id);
       setSubIds(sorted.filter((p) => !defaultStart.includes(p.id)).map((p) => p.id));
     }
-  }, [match, selectedTeamId, activeTeam, isHome]);
+  }, [match, selectedTeamId, activeTeam, isHome, formatType, targetSlots]);
 
   const formatCountdownStr = (ms: number) => {
     if (ms <= 0) return '00h 00m 00s';
@@ -359,22 +459,25 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
   };
 
   // Persist starting lineup, bench, and formation to parent state & Firestore
-  const handlePersist = (newStarting: string[], newSubs: string[], formationChoice?: string) => {
+  const handlePersist = (newStarting: string[], newSubs: string[], formationChoice?: string, newFormat?: '7v7' | '8v8') => {
     if (isScreenLocked) return;
     if (!onUpdateFullMatch) return;
 
     const currentFormation = formationChoice || selectedFormation;
+    const fmt = newFormat || formatType;
 
     const updatePayload = isHome
       ? {
         homeStartingPlayerIds: newStarting,
         homeSubstitutePlayerIds: newSubs,
         homeFormation: currentFormation,
+        matchFormat: fmt,
       }
       : {
         awayStartingPlayerIds: newStarting,
         awaySubstitutePlayerIds: newSubs,
         awayFormation: currentFormation,
+        matchFormat: fmt,
       };
 
     onUpdateFullMatch(match.id, updatePayload);
@@ -386,8 +489,8 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
 
   const handleSubmitOfficialLineup = () => {
     if (!onUpdateFullMatch || isScreenLocked) return;
-    if (startingIds.length < 8) {
-      alert(`Starting 8 Required: You currently have ${startingIds.length}/8 players selected. Please select 8 starting players before submitting.`);
+    if (startingIds.length < targetSlots) {
+      alert(`Starting Lineup Required: You currently have ${startingIds.length}/${targetSlots} players selected. Please select ${targetSlots} starting players before submitting.`);
       return;
     }
 
@@ -396,18 +499,40 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           homeStartingPlayerIds: startingIds,
           homeSubstitutePlayerIds: subIds,
           homeFormation: selectedFormation,
+          matchFormat: formatType,
           homeLineupSubmitted: true,
         }
       : {
           awayStartingPlayerIds: startingIds,
           awaySubstitutePlayerIds: subIds,
           awayFormation: selectedFormation,
+          matchFormat: formatType,
           awayLineupSubmitted: true,
         };
 
     onUpdateFullMatch(match.id, updatePayload);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
+  };
+
+  const handleToggleMatchFormat = (newFmt: '7v7' | '8v8') => {
+    if (isScreenLocked) return;
+    setFormatType(newFmt);
+    const newTarget = newFmt === '7v7' ? 7 : 8;
+    const defaultForm = newFmt === '7v7' ? '3-2-1' : '3-3-1';
+    setSelectedFormation(defaultForm);
+    setCustomPositions({});
+
+    if (activeTeam) {
+      const sorted = [...(activeTeam?.roster || [])].sort(
+        (a, b) => (b.overallRating || 80) - (a.overallRating || 80)
+      );
+      const newStarting = sorted.slice(0, newTarget).map((p) => p.id);
+      const newSubs = sorted.slice(newTarget).map((p) => p.id);
+      setStartingIds(newStarting);
+      setSubIds(newSubs);
+      handlePersist(newStarting, newSubs, defaultForm, newFmt);
+    }
   };
 
   const handleFormationSelect = (formationId: string) => {
@@ -420,8 +545,8 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
   const handleSetStarting = (playerId: string) => {
     if (isScreenLocked) return;
     if (startingIds.includes(playerId)) return;
-    if (startingIds.length >= 8) {
-      alert('8v8 Format restricts Starting 8 to exactly 8 players. Move a starting player to bench first.');
+    if (startingIds.length >= targetSlots) {
+      alert(`${formatType} Format restricts Starting lineup to exactly ${targetSlots} players. Move a starting player to bench first.`);
       return;
     }
     const newStarting = [...startingIds, playerId];
@@ -450,21 +575,21 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
     handlePersist(newStarting, newSubs);
   };
 
-  const handleAutoPickTop8 = () => {
+  const handleAutoPickTop = () => {
     if (isScreenLocked) return;
     if (!activeTeam) return;
     const sortedRoster = [...(activeTeam?.roster || [])].sort(
       (a, b) => (b.overallRating || 80) - (a.overallRating || 80)
     );
-    const newStarting = sortedRoster.slice(0, 8).map((p) => p.id);
-    const newSubs = sortedRoster.slice(8).map((p) => p.id);
+    const newStarting = sortedRoster.slice(0, targetSlots).map((p) => p.id);
+    const newSubs = sortedRoster.slice(targetSlots).map((p) => p.id);
     setStartingIds(newStarting);
     setSubIds(newSubs);
     handlePersist(newStarting, newSubs);
   };
 
   // Active tactical formation info
-  const activeFormationPreset = FORMATIONS_8V8[selectedFormation] || FORMATIONS_8V8['3-3-1'];
+  const activeFormationPreset = activeFormationsMap[selectedFormation] || activeFormationsMap[formatType === '7v7' ? '3-2-1' : '3-3-1'];
 
   // Map starting 8 player objects
   const startingPlayersList: Player[] = startingIds
@@ -507,22 +632,50 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
             <h4 className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
               <span>Official Match Lineup & Squad Selection</span>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono border border-emerald-500/30 font-bold">
-                8v8 Tactical Mode
+                {formatType} Tactical Mode (Starting {targetSlots})
               </span>
             </h4>
             <p className="text-[11px] text-[#B7CEEC]/80 font-medium">
-              Pick formation, Starting 8, and Substitutes for {activeTeam?.name}. Formation & tactics sync live with Match Center.
+              Pick formation, Starting {targetSlots}, and Substitutes for {activeTeam?.name}. Formation & tactics sync live with Match Center.
             </p>
           </div>
         </div>
 
-        {/* Saved Success Notification Pill */}
-        {savedSuccess && (
-          <span className="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-xs font-bold animate-pulse flex items-center gap-1.5 shadow-lg">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            Lineup Submitted & Synced!
-          </span>
-        )}
+        {/* Format Selector Toggle (7v7 vs 8v8) */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-[#040810] p-1 rounded-xl border border-[#4C787E]/40 shadow-inner">
+            <button
+              type="button"
+              onClick={() => handleToggleMatchFormat('7v7')}
+              className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                formatType === '7v7'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              ⚡ 7v7 Format
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleMatchFormat('8v8')}
+              className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                formatType === '8v8'
+                  ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-slate-950 shadow-[0_0_12px_rgba(45,212,191,0.4)]'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              ⚡ 8v8 Format
+            </button>
+          </div>
+
+          {/* Saved Success Notification Pill */}
+          {savedSuccess && (
+            <span className="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-xs font-bold animate-pulse flex items-center gap-1.5 shadow-lg">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              Lineup Synced!
+            </span>
+          )}
+        </div>
       </div>
 
       {/* 8-HOUR PRE-GAME LINEUP AUTO-REVIEW & SCREEN LOCK STATUS BANNER */}
@@ -547,14 +700,14 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
                 </span>
                 {wasAutoLockedBy8HourRule && (
                   <span className="px-2 py-0.5 rounded-full bg-rose-500/30 text-rose-300 text-[9px] font-black uppercase tracking-wider border border-rose-500/40">
-                    Auto-Selected Top 8
+                    Auto-Selected Top {targetSlots}
                   </span>
                 )}
               </div>
               <p className="text-[11px] text-[#B7CEEC]/90 font-medium leading-relaxed">
                 {isScreenLocked
-                  ? 'As required by 8-hour pre-game rules, squad selection and formation are locked. Unchosen lineups were automatically set to top 8 OVR players.'
-                  : `Squad selection & formation must be submitted 8 hours before fixture kickoff (${match.startTime}). When countdown finishes, top 8 OVR players will be auto-picked and squad selection locked.`}
+                  ? `As required by 8-hour pre-game rules, squad selection and formation are locked. Unchosen lineups were automatically set to top ${targetSlots} OVR players.`
+                  : `Squad selection & formation must be submitted 8 hours before fixture kickoff (${match.startTime}). When countdown finishes, top ${targetSlots} OVR players will be auto-picked and squad selection locked.`}
               </p>
             </div>
           </div>
@@ -637,7 +790,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
         {/* Auto Pick Action */}
         <button
           type="button"
-          onClick={handleAutoPickTop8}
+          onClick={handleAutoPickTop}
           disabled={isScreenLocked}
           className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm ${isScreenLocked
               ? 'bg-slate-800 text-gray-500 border-slate-700 cursor-not-allowed opacity-50'
@@ -645,7 +798,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
             }`}
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>Auto-Pick Top 8 OVR</span>
+          <span>Auto-Pick Top {targetSlots} OVR</span>
         </button>
       </div>
 
@@ -655,7 +808,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-4 h-4 text-teal-400" />
             <h5 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
-              <span>Select Manager Tactical Formation</span>
+              <span>Select Manager Tactical Formation ({formatType})</span>
               <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase border ${activeFormationPreset.badgeBg} ${activeFormationPreset.badgeText}`}>
                 {activeFormationPreset.badge}
               </span>
@@ -671,8 +824,8 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
         </div>
 
         {/* Formation Buttons Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-          {Object.values(FORMATIONS_8V8).map((preset) => {
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+          {Object.values(activeFormationsMap).map((preset) => {
             const isSelected = selectedFormation === preset.id;
             return (
               <button

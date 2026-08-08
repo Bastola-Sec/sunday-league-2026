@@ -179,8 +179,9 @@ export const INITIAL_MATCHES: Match[] = [
     matchType: 'Regular',
     status: 'scheduled',
     halfDurationMinutes: 20,
-    homeFormation: '3-2-2',
-    awayFormation: '3-3-1'
+    matchFormat: '7v7',
+    homeFormation: '3-2-1',
+    awayFormation: '3-2-1'
   },
   {
     id: 'FIX-002',
@@ -205,8 +206,9 @@ export const INITIAL_MATCHES: Match[] = [
     weekNumber: 1,
     matchType: 'Regular',
     status: 'scheduled',
-    homeFormation: '3-2-2',
-    awayFormation: '2-3-2'
+    matchFormat: '7v7',
+    homeFormation: '3-2-1',
+    awayFormation: '2-3-1'
   },
   {
     id: 'FIX-003',
