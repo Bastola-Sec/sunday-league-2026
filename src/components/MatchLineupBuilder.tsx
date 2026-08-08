@@ -249,7 +249,11 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
   const homeTeam = teams.find((t) => t.id === match.homeTeamId);
   const awayTeam = teams.find((t) => t.id === match.awayTeamId);
 
-  const isCommish = currentAdmin?.role === 'league_commish';
+  const isCommish = Boolean(
+    currentAdmin?.role === 'league_commish' ||
+    currentAdmin?.teamId === 'all' ||
+    currentAdmin?.teamId === 'league_commish'
+  );
   const isTeamAdmin = Boolean(currentAdmin && !isCommish && currentAdmin.teamId && currentAdmin.teamId !== 'all');
   const assignedTeamId = currentAdmin?.teamId;
   const isAssignedTeamInMatch = assignedTeamId
@@ -721,25 +725,36 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
             )}
 
             {isScreenLocked ? (
-              isCommish && (
+              isCommish ? (
                 <button
                   type="button"
                   onClick={() => setIsForceUnlocked(true)}
-                  className="px-3.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/40 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-amber-500 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-[0_0_20px_rgba(244,63,94,0.4)] border border-rose-300 animate-pulse"
                 >
-                  <Unlock className="w-3.5 h-3.5 text-rose-300" />
-                  <span>Commissioner Override Unlock</span>
+                  <Unlock className="w-4 h-4 text-white" />
+                  <span>COMMISSIONER OVERRIDE: FORCE UNLOCK & EDIT LINEUP</span>
                 </button>
+              ) : (
+                <span className="px-3.5 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 text-xs font-bold border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
+                  <Lock className="w-3.5 h-3.5 text-rose-400" />
+                  Lineup Locked • Contact League Commissioner for Emergency Changes
+                </span>
               )
             ) : isForceUnlocked ? (
-              <button
-                type="button"
-                onClick={() => setIsForceUnlocked(false)}
-                className="px-3.5 py-1.5 rounded-xl bg-teal-500/20 hover:bg-teal-500/30 text-teal-200 border border-teal-500/40 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
-              >
-                <Lock className="w-3.5 h-3.5 text-teal-300" />
-                <span>Re-Lock Selection</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
+                  Commissioner Emergency Override Active
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsForceUnlocked(false)}
+                  className="px-3.5 py-1.5 rounded-xl bg-teal-500/20 hover:bg-teal-500/30 text-teal-200 border border-teal-500/40 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+                >
+                  <Lock className="w-3.5 h-3.5 text-teal-300" />
+                  <span>Re-Lock Selection</span>
+                </button>
+              </div>
             ) : null}
           </div>
         </div>
