@@ -478,7 +478,9 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
     return `${hrs.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`;
   };
 
-  // Persist starting lineup, bench, and formation to parent state & Firestore
+  const [hasUnsubmittedEdits, setHasUnsubmittedEdits] = useState<boolean>(false);
+
+  // Persist starting lineup, bench, and formation silently to parent state & Firestore
   const handlePersist = (
     newStarting: string[],
     newSubs: string[],
@@ -510,8 +512,11 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
       };
 
     onUpdateFullMatch(match.id, updatePayload);
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2000);
+
+    // If lineup was already submitted, flag that there are new edits needing resubmission
+    if (isLineupSubmitted) {
+      setHasUnsubmittedEdits(true);
+    }
   };
 
   const isLineupSubmitted = isHome ? Boolean(match.homeLineupSubmitted) : Boolean(match.awayLineupSubmitted);
@@ -546,10 +551,11 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
     setTimeout(() => {
       onUpdateFullMatch(match.id, updatePayload);
       setIsSubmitting(false);
+      setHasUnsubmittedEdits(false);
       setSavedSuccess(true);
       const now = new Date();
       setJustSubmittedTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      setTimeout(() => setSavedSuccess(false), 5000);
+      setTimeout(() => setSavedSuccess(false), 4000);
     }, 400);
   };
 
@@ -1106,7 +1112,11 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           <div className="flex items-center gap-2 text-xs">
             <ShieldCheck className="w-4.5 h-4.5 text-emerald-400 shrink-0" />
             <span className="text-gray-300 font-bold">
-              {isLineupSubmitted ? 'Lineup currently submitted. Tap to resubmit updates.' : 'Ready to confirm lineup for match kickoff.'}
+              {isLineupSubmitted && hasUnsubmittedEdits
+                ? 'Lineup modified! Tap Resubmit to update Match Center.'
+                : isLineupSubmitted
+                ? 'Lineup currently submitted and synced with Match Center.'
+                : 'Ready to confirm official lineup for match kickoff.'}
             </span>
             {justSubmittedTime && !savedSuccess && (
               <span className="text-[10px] text-emerald-400 font-bold font-mono ml-2">
@@ -1118,14 +1128,16 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           <button
             type="button"
             onClick={handleSubmitOfficialLineup}
-            disabled={isSubmitting}
+            disabled={isSubmitting || (isLineupSubmitted && !hasUnsubmittedEdits && !savedSuccess)}
             className={`w-full sm:w-auto px-6 py-3 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-2xl cursor-pointer border min-h-[48px] ${
               isSubmitting
                 ? 'bg-amber-500/30 text-amber-200 border-amber-400/50 cursor-wait'
                 : savedSuccess
                 ? 'bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 text-slate-950 border-emerald-200 font-extrabold shadow-[0_0_30px_rgba(16,185,129,0.8)] scale-105 animate-bounce'
+                : isLineupSubmitted && hasUnsubmittedEdits
+                ? 'bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-400 hover:brightness-110 text-slate-950 font-extrabold border-teal-200 shadow-[0_0_20px_rgba(45,212,191,0.5)] animate-pulse'
                 : isLineupSubmitted
-                ? 'bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 hover:brightness-110 text-white border-emerald-300/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40 opacity-90 cursor-default'
                 : 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 hover:brightness-110 text-slate-950 border-amber-200 font-extrabold animate-pulse'
             }`}
           >
@@ -1137,12 +1149,17 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
             ) : savedSuccess ? (
               <>
                 <CheckCircle2 className="w-4.5 h-4.5 text-slate-950" />
-                <span>✅ LINEUP RESUBMITTED & SYNCED!</span>
+                <span>✅ LINEUP {isLineupSubmitted ? 'RESUBMITTED' : 'SUBMITTED'} & SYNCED!</span>
+              </>
+            ) : isLineupSubmitted && hasUnsubmittedEdits ? (
+              <>
+                <RefreshCw className="w-4 h-4 text-slate-950 animate-spin" />
+                <span>🔄 RESUBMIT UPDATED LINEUP</span>
               </>
             ) : isLineupSubmitted ? (
               <>
-                <RefreshCw className="w-4 h-4 text-white" />
-                <span>🔄 RESUBMIT & UPDATE LINEUP</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>✓ LINEUP SUBMITTED & SYNCED</span>
               </>
             ) : (
               <>
