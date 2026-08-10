@@ -1620,11 +1620,150 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
                             {/* MATCH CONTENT CONDITIONAL: FULL TIME vs UPCOMING/LIVE */}
                             {editingMatch.isFinished || editingMatch.status === 'ended' ? (
-                              <CompletedMatchAnalytics
-                                match={editingMatch}
-                                homeTeam={teams.find((t) => t.id === editingMatch.homeTeamId)}
-                                awayTeam={teams.find((t) => t.id === editingMatch.awayTeamId)}
-                              />
+                              <div className="space-y-6">
+                                <CompletedMatchAnalytics
+                                  match={editingMatch}
+                                  homeTeam={teams.find((t) => t.id === editingMatch.homeTeamId)}
+                                  awayTeam={teams.find((t) => t.id === editingMatch.awayTeamId)}
+                                />
+
+                                {/* EXCLUSIVE COMMISSIONER PAST MATCH EVENT & SCORE CORRECTION PORTAL */}
+                                {isCommish && (
+                                  <div className="p-5 rounded-3xl bg-gradient-to-br from-[#0c1827] via-[#091320] to-[#050b14] border-2 border-amber-400/50 space-y-4 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-amber-400/30 pb-3 gap-2">
+                                      <div>
+                                        <div className="flex items-center gap-2 text-amber-300 font-extrabold text-sm uppercase tracking-wider">
+                                          <ShieldCheck className="w-5 h-5 text-amber-400 animate-pulse" />
+                                          <span>🛡️ COMMISSIONER EXCLUSIVE: PAST MATCH STAT CORRECTION</span>
+                                        </div>
+                                        <p className="text-[11px] text-[#B7CEEC]/80 mt-0.5">
+                                          Fix wrongly recorded goals, scorers, assists, cards, or scores. Standings & player leaderboards auto-recalculate!
+                                        </p>
+                                      </div>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenEditEventModal(null)}
+                                        className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:brightness-110 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-lg shrink-0"
+                                      >
+                                        <Plus className="w-4 h-4 text-slate-950" />
+                                        <span>Add / Correct Past Event</span>
+                                      </button>
+                                    </div>
+
+                                    {/* Direct Score Override Row */}
+                                    <div className="p-3.5 rounded-2xl bg-[#060e18] border border-[#4C787E]/30 space-y-2">
+                                      <span className="text-xs font-black uppercase text-amber-300 block">
+                                        Override Official Match Final Score
+                                      </span>
+                                      <div className="grid grid-cols-2 gap-3 text-xs">
+                                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#0c1b2b] border border-[#4C787E]/40">
+                                          <span className="text-gray-300 font-extrabold truncate">
+                                            {teams.find((t) => t.id === editingMatch.homeTeamId)?.name} Score:
+                                          </span>
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            max="99"
+                                            value={homeScoreInput}
+                                            onChange={(e) => setHomeScoreInput(Number(e.target.value))}
+                                            className="w-16 p-1.5 rounded-lg bg-[#040810] border border-amber-400/50 text-amber-300 font-black text-center text-sm"
+                                          />
+                                        </div>
+
+                                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#0c1b2b] border border-[#4C787E]/40">
+                                          <span className="text-gray-300 font-extrabold truncate">
+                                            {teams.find((t) => t.id === editingMatch.awayTeamId)?.name} Score:
+                                          </span>
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            max="99"
+                                            value={awayScoreInput}
+                                            onChange={(e) => setAwayScoreInput(Number(e.target.value))}
+                                            className="w-16 p-1.5 rounded-lg bg-[#040810] border border-amber-400/50 text-amber-300 font-black text-center text-sm"
+                                          />
+                                        </div>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (onUpdateFullMatch) {
+                                            onUpdateFullMatch(editingMatch.id, {
+                                              homeScore: homeScoreInput,
+                                              awayScore: awayScoreInput,
+                                            });
+                                            alert('Score updated & league standings recalculated!');
+                                          }
+                                        }}
+                                        className="w-full py-2 rounded-xl bg-[#173048] hover:bg-[#204060] text-teal-300 border border-teal-500/40 text-xs font-bold transition-all cursor-pointer mt-1"
+                                      >
+                                        Save Scoreline Override to Standings
+                                      </button>
+                                    </div>
+
+                                    {/* Past Recorded Events Log */}
+                                    <div className="space-y-2">
+                                      <span className="text-xs font-black uppercase text-gray-300 block">
+                                        Recorded Past Events Timeline ({editingMatch.events?.length || 0})
+                                      </span>
+                                      <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                        {(!editingMatch.events || editingMatch.events.length === 0) ? (
+                                          <p className="text-center text-xs text-gray-500 py-3">
+                                            No events recorded yet for this completed match. Use the button above to add events!
+                                          </p>
+                                        ) : (
+                                          editingMatch.events.map((evt, idx) => {
+                                            const eventTeam = teams.find((t) => t.id === evt.teamId);
+                                            return (
+                                              <div
+                                                key={`past-admin-evt-${evt.id}-${idx}`}
+                                                className="p-3 rounded-xl bg-[#060e18] border border-[#4C787E]/30 flex items-center justify-between text-xs transition-all hover:border-[#B7CEEC]/40"
+                                              >
+                                                <div className="flex items-center gap-3">
+                                                  <span className="px-2 py-1 rounded-lg bg-[#122436] font-black text-[#B7CEEC] text-[11px] border border-[#4C787E]/40">
+                                                    {evt.minute}'
+                                                  </span>
+                                                  <div>
+                                                    <div className="flex items-center gap-2">
+                                                      {evt.teamId && <TeamLogo teamId={evt.teamId} size={16} />}
+                                                      <span className="font-bold text-white">{evt.description}</span>
+                                                    </div>
+                                                    {evt.timestamp && (
+                                                      <span className="text-[10px] text-gray-500">
+                                                        Logged at {evt.timestamp} • Period: {evt.period || 'fulltime'}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleOpenEditEventModal(evt)}
+                                                    title="Edit past event details"
+                                                    className="p-1.5 rounded-lg bg-teal-500/20 hover:bg-teal-500/40 text-teal-300 transition-colors cursor-pointer"
+                                                  >
+                                                    <Edit2 className="w-3.5 h-3.5" />
+                                                  </button>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteEvent(evt.id)}
+                                                    title="Delete incorrect entry"
+                                                    className="p-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 transition-colors cursor-pointer"
+                                                  >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            );
+                                          })
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             ) : (
                               <>
                                 {/* PLAYING 8 REGISTRATION (OFFICIAL MATCH LINEUP & SQUAD SELECTION - HIDDEN IN LIVE 5-MIN PRE-KICKOFF MODE) */}

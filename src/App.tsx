@@ -297,19 +297,24 @@ export default function App() {
     updatedTeams.forEach((t) => saveTeamToFirestore(t.id, t));
   };
 
-  // Update full match properties (status, kickoff time, added time, minute, etc.)
+  // Update full match properties & automatically recalculate league standings + player telemetry stats
   const handleUpdateFullMatch = (matchId: string, updatedFields: Partial<Match>) => {
-    setMatches((prev) =>
-      prev.map((m) => {
-        if (m.id === matchId) {
-          const newMatch = { ...m, ...updatedFields };
-          return newMatch;
-        }
-        return m;
-      })
-    );
+    let nextMatches: Match[] = [];
 
-    // Save to Firestore
+    setMatches((prev) => {
+      nextMatches = prev.map((m) => (m.id === matchId ? { ...m, ...updatedFields } : m));
+
+      // Recalculate standings and player stats across all matches
+      const { updatedTeams, updatedMatches } = computeStandingsAndFinalsMatch(teams, nextMatches);
+      
+      // Sync recalculated teams state and Firestore
+      setTeams(updatedTeams);
+      updatedTeams.forEach((t) => saveTeamToFirestore(t.id, t));
+
+      return updatedMatches;
+    });
+
+    // Save updated match fields to Firestore
     saveMatchToFirestore(matchId, updatedFields);
 
     // Also update current open match modal if active
