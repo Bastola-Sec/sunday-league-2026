@@ -10,13 +10,13 @@ interface State1HeroProps {
 
 export const State1Hero: React.FC<State1HeroProps> = ({ onNext, onJumpToState }) => {
   return (
-    <div className="min-h-screen flex flex-col justify-between items-center px-4 sm:px-8 md:px-12 py-6 relative z-10 select-none max-w-7xl mx-auto">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 sm:px-8 md:px-12 py-4 sm:py-6 relative z-10 select-none max-w-7xl mx-auto">
       {/* Top Header Navigation Bar */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full flex items-center justify-between pt-2 pb-4 border-b border-[#B7CEEC]/15 pr-14"
+        className="w-full flex items-center justify-between pt-1 pb-3 border-b border-[#B7CEEC]/15 pr-14"
       >
         {/* Brand Logo */}
         <div className="flex items-center gap-2.5">
@@ -32,7 +32,7 @@ export const State1Hero: React.FC<State1HeroProps> = ({ onNext, onJumpToState })
       </motion.div>
 
       {/* Hero Main Body Content */}
-      <div className="w-full my-auto flex flex-col items-start text-left space-y-5 pt-6 pb-4">
+      <div className="w-full my-1 flex flex-col items-start text-left space-y-4 pt-2 pb-2">
         {/* Season & Matchday Badge */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}

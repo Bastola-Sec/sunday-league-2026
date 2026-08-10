@@ -125,12 +125,12 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
   const isDelayed = isTimeUp && (!nextMatch || (!nextMatch.isLive && nextMatch.status !== '1st_half' && nextMatch.status !== '2nd_half'));
 
   return (
-    <div className="min-h-screen flex flex-col justify-between items-center px-4 sm:px-6 py-10 relative z-10 select-none">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 sm:px-6 py-6 sm:py-8 relative z-10 select-none">
       {/* Top Header Tag */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        className="mt-4 flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#4C787E]/50 bg-[#05080c]/85 backdrop-blur-xl text-xs font-bold text-[#B7CEEC] shadow-xl"
+        className="mt-1 flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#4C787E]/50 bg-[#05080c]/85 backdrop-blur-xl text-xs font-bold text-[#B7CEEC] shadow-xl"
       >
         <span className="live-dot-container">
           <span className="live-dot-ping" />
@@ -140,7 +140,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
       </motion.div>
 
       {/* Main Action Content Container */}
-      <div className="w-full max-w-lg my-auto space-y-6">
+      <div className="w-full max-w-lg my-1 space-y-5">
         {/* LIVE MATCH CARD OR NEXT MATCH COUNTDOWN CARD */}
         {liveMatches.length > 0 ? (
           <div>

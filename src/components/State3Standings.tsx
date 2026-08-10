@@ -52,12 +52,12 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
     .slice(0, 10);
 
   return (
-    <div className="min-h-screen flex flex-col justify-between items-center px-4 sm:px-6 py-10 relative z-10 select-none">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 sm:px-6 py-6 sm:py-8 relative z-10 select-none">
       {/* Top Title Tag */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        className="mt-4 flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#B7CEEC]/40 bg-[#05080c]/85 backdrop-blur-xl text-xs font-bold text-[#B7CEEC] shadow-xl"
+        className="mt-1 flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#B7CEEC]/40 bg-[#05080c]/85 backdrop-blur-xl text-xs font-bold text-[#B7CEEC] shadow-xl"
       >
         <Trophy className="w-4 h-4 text-[#B7CEEC]" />
         <span className="f1-header text-[11px] tracking-[0.2em]">OFFICIAL LEAGUE & TELEMETRY LEADERBOARDS</span>
@@ -68,7 +68,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="w-full max-w-lg p-4 sm:p-6 rounded-3xl border border-[#B7CEEC]/30 bg-[#05080c]/90 backdrop-blur-2xl text-white shadow-2xl my-auto space-y-4"
+        className="w-full max-w-lg p-4 sm:p-6 rounded-3xl border border-[#B7CEEC]/30 bg-[#05080c]/90 backdrop-blur-2xl text-white shadow-2xl my-1 space-y-4"
       >
         {/* Module Header */}
         <div className="flex items-center justify-between pb-3 border-b border-[#B7CEEC]/20">

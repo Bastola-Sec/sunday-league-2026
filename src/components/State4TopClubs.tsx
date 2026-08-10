@@ -77,19 +77,19 @@ export const State4TopClubs: React.FC<State4TopClubsProps> = ({
   ];
 
   return (
-    <div className="min-h-screen flex flex-col justify-between items-center px-3 sm:px-6 py-8 relative z-10 select-none overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-3 sm:px-6 py-6 relative z-10 select-none overflow-hidden">
       {/* Top Section Tag */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        className="mt-2 flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#B7CEEC]/40 bg-[#05080c]/85 backdrop-blur-xl text-xs font-bold text-[#B7CEEC] shadow-xl"
+        className="mt-1 flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#B7CEEC]/40 bg-[#05080c]/85 backdrop-blur-xl text-xs font-bold text-[#B7CEEC] shadow-xl"
       >
         <Shield className="w-4 h-4 text-[#4C787E]" />
         <span className="f1-header text-[11px] tracking-[0.2em]">PARTICIPATING CLUBS ({sortedTeams.length})</span>
       </motion.div>
 
       {/* 3D WINNERS PODIUM STAGE */}
-      <div className="w-full max-w-lg my-auto flex flex-col items-center">
+      <div className="w-full max-w-lg my-1 flex flex-col items-center">
         <div className="text-center mb-3">
           <h2 className="text-2xl sm:text-3xl font-black text-white f1-header tracking-[0.15em] uppercase flex items-center justify-center gap-2 drop-shadow-lg">
             <Trophy className="w-6 h-6 text-[#B7CEEC] animate-pulse" />

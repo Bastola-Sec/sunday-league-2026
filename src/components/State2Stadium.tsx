@@ -12,12 +12,12 @@ interface State2StadiumProps {
 
 export const State2Stadium: React.FC<State2StadiumProps> = ({ onNext, isSoundEnabled, onToggleSound }) => {
   return (
-    <div className="min-h-screen flex flex-col justify-between items-center px-6 py-12 relative z-10 select-none">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 sm:px-6 py-6 sm:py-8 relative z-10 select-none">
       {/* Top Banner Tag */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        className="mt-4 flex items-center gap-2.5 px-4 py-2 rounded-full border border-[#4C787E]/50 bg-[#05080c]/85 backdrop-blur-xl text-xs font-bold text-[#B7CEEC] shadow-xl"
+        className="mt-1 flex items-center gap-2.5 px-4 py-2 rounded-full border border-[#4C787E]/50 bg-[#05080c]/85 backdrop-blur-xl text-xs font-bold text-[#B7CEEC] shadow-xl"
       >
         <Compass className="w-4 h-4 text-[#4C787E] animate-spin" style={{ animationDuration: '10s' }} />
         <span className="f1-header text-[11px] tracking-[0.2em]">OFFICIAL MATCH VENUE</span>
@@ -28,7 +28,7 @@ export const State2Stadium: React.FC<State2StadiumProps> = ({ onNext, isSoundEna
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8 }}
-        className="w-full max-w-sm p-6 rounded-3xl border border-[#B7CEEC]/30 bg-[#05080c]/90 backdrop-blur-2xl text-white shadow-2xl my-auto text-center relative overflow-hidden space-y-4"
+        className="w-full max-w-sm p-5 sm:p-6 rounded-3xl border border-[#B7CEEC]/30 bg-[#05080c]/90 backdrop-blur-2xl text-white shadow-2xl my-1 text-center relative overflow-hidden space-y-4"
       >
         {/* Ambient Glow Corner */}
         <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-[#4C787E]/25 blur-3xl pointer-events-none" />
