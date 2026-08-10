@@ -63,7 +63,7 @@ export const AutoEventWizardModal: React.FC<AutoEventWizardModalProps> = ({
   const [customNote, setCustomNote] = useState<string>('');
   const [showSuccessToast, setShowSuccessToast] = useState<boolean>(false);
 
-  // Sync state when modal opens or initial values change
+  // Sync state ONLY when modal opens
   useEffect(() => {
     if (isOpen) {
       setEventType(initialEventType);
@@ -77,7 +77,7 @@ export const AutoEventWizardModal: React.FC<AutoEventWizardModalProps> = ({
       setCustomNote('');
       setShowSuccessToast(false);
     }
-  }, [isOpen, initialEventType, homeTeam?.id, currentMatchMinute]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

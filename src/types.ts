@@ -81,6 +81,7 @@ export interface Team {
 export interface MatchEvent {
   id: string;
   minute: number;
+  second?: number;
   type: 'goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner' | 'kickoff' | 'halftime' | 'fulltime' | 'added_time';
   teamId: string;
   player: string;
@@ -99,6 +100,7 @@ export interface Match {
   homeScore: number;
   awayScore: number;
   minute: number;
+  matchSeconds?: number;
   isLive: boolean;
   isFinished: boolean;
   startTime: string;

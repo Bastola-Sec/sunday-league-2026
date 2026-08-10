@@ -6,6 +6,8 @@ import { TeamLogo } from './TeamLogos';
 import { WeatherWidget } from './WeatherWidget';
 import { TiltCard } from './TiltCard';
 
+import { formatClockTime } from '../utils/formatClock';
+
 interface State5LiveActionProps {
   matches: Match[];
   teams: Team[];
@@ -154,7 +156,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                       <WeatherWidget compact />
                       <span className="px-2.5 py-0.5 rounded-md bg-[#4C787E]/20 text-[#B7CEEC] font-extrabold border border-[#4C787E]/40 flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#4C787E] animate-ping" />
-                        ⏱ {match.minute}'
+                        ⏱ {formatClockTime(match.minute, match.matchSeconds)}
                       </span>
                     </div>
                   </div>
@@ -186,7 +188,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                         {match.status === '1st_half' || match.status === '2nd_half' || match.isLive ? (
                           <span className="text-emerald-400 flex items-center gap-1.5 bg-emerald-500/10 px-3 py-0.5 rounded-full border border-emerald-500/40 shadow-[0_0_10px_rgba(52,211,153,0.2)]">
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                            ⏱ {match.minute}'
+                            ⏱ {formatClockTime(match.minute, match.matchSeconds)}
                           </span>
                         ) : match.status === 'halftime' ? (
                           <span className="text-amber-300 bg-amber-500/10 px-3 py-0.5 rounded-full border border-amber-500/30">

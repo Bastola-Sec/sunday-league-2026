@@ -54,6 +54,7 @@ import { CompletedMatchAnalytics } from './CompletedMatchAnalytics';
 import { auth } from '../lib/firebase';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { resetFirestoreToDefaults } from '../lib/firestoreService';
+import { formatClockTime } from '../utils/formatClock';
 
 interface AdminPortalModalProps {
   isOpen: boolean;
@@ -612,18 +613,23 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     signOut(auth).catch(() => { });
   };
 
-  // Live Timer Interval Ticker
+  // Live Timer Interval Ticker (Ticks MM:SS in real-time seconds)
   useEffect(() => {
     let interval: any;
     if (isLiveClockRunning && editingMatchId) {
       interval = setInterval(() => {
-        setMatchMinute((prev) => prev + 1);
         if (onUpdateFullMatch) {
           const currentMatch = matches.find((m) => m.id === editingMatchId);
-          const nextMinute = ((currentMatch?.minute) || 0) + 1;
-          onUpdateFullMatch(editingMatchId, { minute: nextMinute });
+          const currentSec = currentMatch?.matchSeconds ?? ((currentMatch?.minute || 0) * 60);
+          const nextSec = currentSec + 1;
+          const nextMin = Math.floor(nextSec / 60);
+          onUpdateFullMatch(editingMatchId, {
+            matchSeconds: nextSec,
+            minute: nextMin,
+          });
+          setMatchMinute(nextMin);
         }
-      }, 5000); // 5 sec per game minute for smooth live updates
+      }, 1000); // 1 real second tick for authentic MM:SS live match clock!
     }
     return () => clearInterval(interval);
   }, [isLiveClockRunning, editingMatchId, matches, onUpdateFullMatch]);
@@ -1736,8 +1742,8 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                           <Zap className="w-4 h-4 text-emerald-400 animate-pulse" />
                                           RECORD LIVE EVENT
                                         </span>
-                                        <span className="text-[10px] text-emerald-400 font-bold">
-                                          Current Minute: {matchMinute}'
+                                        <span className="text-[10px] text-emerald-400 font-extrabold font-mono bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/30">
+                                          Current Match Time: ⏱ {formatClockTime(matchMinute, editingMatch?.matchSeconds)}
                                         </span>
                                       </div>
 
