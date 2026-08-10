@@ -2146,7 +2146,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                           { type: 'red_card', label: '🟥 Red Card', color: 'bg-rose-500/20 border-rose-400 text-rose-300' },
                                           { type: 'sub', label: '🔄 Substitution', color: 'bg-sky-500/20 border-sky-400 text-sky-300' },
                                           { type: 'shot_on_target', label: '🎯 Shot on Target', color: 'bg-purple-500/20 border-purple-400 text-purple-300' },
-                                          { type: 'foul', label: '🛑 Foul / Free Kick', color: 'bg-orange-500/20 border-orange-400 text-orange-300' },
+                                          { type: 'foul', label: '⚠️ Foul / Free Kick', color: 'bg-orange-500/20 border-orange-400 text-orange-300' },
                                           { type: 'corner', label: '🚩 Corner Kick', color: 'bg-indigo-500/20 border-indigo-400 text-indigo-300' },
                                         ].map((item) => (
                                           <button

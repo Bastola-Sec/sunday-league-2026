@@ -124,7 +124,7 @@ export const AutoEventWizardModal: React.FC<AutoEventWizardModalProps> = ({
         return `🎯 SHOT ON TARGET by ${pName} (${teamShort}) saved by keeper!`;
 
       case 'foul':
-        return `🛑 FOUL committed by ${pName} (${teamShort}).`;
+        return `⚠️ FOUL committed by ${pName} (${teamShort}).`;
 
       case 'corner':
         return `🚩 CORNER KICK awarded to ${teamName}.`;
@@ -330,7 +330,7 @@ export const AutoEventWizardModal: React.FC<AutoEventWizardModalProps> = ({
                         : 'bg-[#101e2e] text-gray-300 border-[#4C787E]/30 hover:bg-[#182b3d]'
                     }`}
                   >
-                    <span className="text-sm">🛑</span>
+                    <span className="text-sm">⚠️</span>
                     <span>Foul / Free Kick</span>
                   </button>
 

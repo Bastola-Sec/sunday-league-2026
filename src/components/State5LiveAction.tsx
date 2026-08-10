@@ -35,9 +35,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
     return a.id.localeCompare(b.id);
   });
 
-  const actualLiveMatches = sortedMatches.filter((m) => m.isLive);
+  const actualLiveMatches = sortedMatches.filter(
+    (m) => m.isLive || m.status === '1st_half' || m.status === 'halftime' || m.status === '2nd_half'
+  );
   const liveMatches = simulatedNoLive ? [] : actualLiveMatches;
-  const upcomingMatches = sortedMatches.filter((m) => !m.isLive && !m.isFinished && m.status !== 'ended');
+  const upcomingMatches = sortedMatches.filter((m) => !m.isLive && !m.isFinished && m.status !== 'ended' && m.status !== '1st_half' && m.status !== 'halftime' && m.status !== '2nd_half');
   const finishedMatches = sortedMatches.filter((m) => m.isFinished || m.status === 'ended');
   const nextMatch = upcomingMatches[0] || sortedMatches[0];
 
@@ -277,8 +279,14 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                         {/* Halftime indicator if halftime/2nd half */}
                         {(match.status === 'halftime' || match.status === '2nd_half' || match.status === 'ended') && (
                           <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#080d14] border border-[#4C787E]/30 text-xs font-mono font-bold">
-                            <span className="text-gray-400">HT</span>
-                            <span className="text-amber-300">0 - 0</span>
+                            <span className="text-gray-400">HT Score</span>
+                            <span className="text-amber-300">
+                              {(() => {
+                                const htHome = (match.events || []).filter(e => e.type === 'goal' && e.teamId === match.homeTeamId && (e.period === '1st_half' || e.minute <= (match.halfDurationMinutes || 20))).length;
+                                const htAway = (match.events || []).filter(e => e.type === 'goal' && e.teamId === match.awayTeamId && (e.period === '1st_half' || e.minute <= (match.halfDurationMinutes || 20))).length;
+                                return `${htHome} - ${htAway}`;
+                              })()}
+                            </span>
                           </div>
                         )}
 
@@ -312,7 +320,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                             evt.type === 'red_card' ? '🟥' :
                             evt.type === 'sub' ? '🔄' :
                             evt.type === 'shot_on_target' ? '🎯' :
-                            evt.type === 'foul' ? '🛑' :
+                            evt.type === 'foul' ? '⚠️' :
                             evt.type === 'corner' ? '🚩' : '⚡';
 
                           // Determine clean display title (Player name or event category)
@@ -323,7 +331,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                             else if (evt.type === 'red_card') displayTitle = '🟥 Red Card';
                             else if (evt.type === 'sub') displayTitle = '🔄 Substitution';
                             else if (evt.type === 'shot_on_target') displayTitle = '🎯 Shot on Target';
-                            else if (evt.type === 'foul') displayTitle = '🛑 Foul';
+                            else if (evt.type === 'foul') displayTitle = '⚠️ Foul';
                             else if (evt.type === 'corner') displayTitle = '🚩 Corner Kick';
                             else displayTitle = 'Match Event';
                           }
