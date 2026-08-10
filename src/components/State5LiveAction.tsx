@@ -258,11 +258,49 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
                         {match.events.map((evt, eIdx) => {
                           const isHomeEvent = evt.teamId === match.homeTeamId;
+
+                          // Handle administrative whistle events (Kickoff & Halftime)
+                          if (evt.type === 'kickoff' || evt.type === 'halftime') {
+                            const whistleLabel =
+                              evt.type === 'kickoff'
+                                ? evt.minute > 20
+                                  ? '▶️ 2ND HALF KICKOFF'
+                                  : '🚀 1ST HALF KICKOFF'
+                                : '⏸️ HALFTIME WHISTLE';
+
+                            return (
+                              <div
+                                key={`timeline-whistle-${evt.id}-${eIdx}`}
+                                className="flex items-center justify-center gap-2 py-1 px-3 my-1 rounded-lg bg-[#08121e] border border-[#4C787E]/30 text-[10px] font-mono font-bold text-[#B7CEEC]"
+                              >
+                                <span>{whistleLabel}</span>
+                                <span className="text-gray-400">({evt.minute}')</span>
+                              </div>
+                            );
+                          }
+
+                          // Determine event icon
                           const icon =
                             evt.type === 'goal' ? '⚽' :
                             evt.type === 'yellow_card' ? '🟨' :
                             evt.type === 'red_card' ? '🟥' :
-                            evt.type === 'sub' ? '🔄' : '⚡';
+                            evt.type === 'sub' ? '🔄' :
+                            evt.type === 'shot_on_target' ? '🎯' :
+                            evt.type === 'foul' ? '🛑' :
+                            evt.type === 'corner' ? '🚩' : '⚡';
+
+                          // Determine clean display title (Player name or event category)
+                          let displayTitle = evt.player;
+                          if (!displayTitle || displayTitle === 'Match Official') {
+                            if (evt.type === 'goal') displayTitle = '⚽ GOAL!';
+                            else if (evt.type === 'yellow_card') displayTitle = '🟨 Yellow Card';
+                            else if (evt.type === 'red_card') displayTitle = '🟥 Red Card';
+                            else if (evt.type === 'sub') displayTitle = '🔄 Substitution';
+                            else if (evt.type === 'shot_on_target') displayTitle = '🎯 Shot on Target';
+                            else if (evt.type === 'foul') displayTitle = '🛑 Foul';
+                            else if (evt.type === 'corner') displayTitle = '🚩 Corner Kick';
+                            else displayTitle = 'Match Event';
+                          }
 
                           return (
                             <div
@@ -278,11 +316,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                               <div className="flex-1 flex items-center justify-between px-2">
                                 {isHomeEvent ? (
                                   <div className="flex items-center gap-1.5 text-left">
-                                    <span className="font-bold text-white text-xs">{evt.player}</span>
                                     <span className="text-sm">{icon}</span>
+                                    <span className="font-bold text-white text-xs">{displayTitle}</span>
                                     {evt.type === 'goal' && (
                                       <span className="font-mono font-black text-emerald-400 text-xs ml-1">
-                                        {evt.description.match(/(\d+-\d+)/)?.[1] || ''}
+                                        GOAL!
                                       </span>
                                     )}
                                   </div>
@@ -294,11 +332,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                                   <div className="flex items-center gap-1.5 text-right ml-auto">
                                     {evt.type === 'goal' && (
                                       <span className="font-mono font-black text-emerald-400 text-xs mr-1">
-                                        {evt.description.match(/(\d+-\d+)/)?.[1] || ''}
+                                        GOAL!
                                       </span>
                                     )}
+                                    <span className="font-bold text-white text-xs">{displayTitle}</span>
                                     <span className="text-sm">{icon}</span>
-                                    <span className="font-bold text-white text-xs">{evt.player}</span>
                                   </div>
                                 ) : (
                                   <div className="w-full" />
