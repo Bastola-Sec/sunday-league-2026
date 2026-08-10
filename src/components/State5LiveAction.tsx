@@ -654,35 +654,80 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                       </div>
                     </div>
 
-                    {/* Timeline Summary Table (FlashScore Style) */}
-                    {match.events && match.events.length > 0 && (
-                      <div className="pt-2 border-t border-white/5 space-y-1">
-                        {match.events.slice(-3).map((evt, eIdx) => {
-                          const isHomeEvent = evt.teamId === match.homeTeamId;
-                          const icon =
-                            evt.type === 'goal' ? '⚽' :
-                            evt.type === 'yellow_card' ? '🟨' :
-                            evt.type === 'red_card' ? '🟥' : '⚡';
+                    {/* Timeline Summary Table (FlashScore Style - Gameplay Events Only) */}
+                    {(() => {
+                      const gameplayEvents = (match.events || []).filter(
+                        (e) => e.type !== 'kickoff' && e.type !== 'halftime'
+                      );
 
-                          return (
-                            <div
-                              key={`ft-evt-${evt.id}-${eIdx}`}
-                              className="flex items-center justify-between text-[11px] px-2 py-1 rounded bg-[#080d14]/80 text-gray-300 font-mono"
-                            >
-                              <span className="text-gray-400 font-bold">{evt.minute}'</span>
-                              <div className="flex-1 flex items-center justify-between px-2">
+                      if (gameplayEvents.length === 0) {
+                        return (
+                          <div className="pt-2 border-t border-white/5 text-center text-[10px] text-gray-500 italic">
+                            No goals or cards recorded in match events timeline
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="pt-2 border-t border-white/5 space-y-1">
+                          {gameplayEvents.map((evt, eIdx) => {
+                            const isHomeEvent = evt.teamId === match.homeTeamId;
+                            const icon =
+                              evt.type === 'goal' ? '⚽' :
+                              evt.type === 'yellow_card' ? '🟨' :
+                              evt.type === 'red_card' ? '🟥' :
+                              evt.type === 'sub' ? '🔄' :
+                              evt.type === 'shot_on_target' ? '🎯' : '⚡';
+
+                            let displayLabel = evt.player;
+                            if (!displayLabel || displayLabel === 'Match Official') {
+                              if (evt.type === 'goal') displayLabel = 'GOAL!';
+                              else if (evt.type === 'yellow_card') displayLabel = 'Yellow Card';
+                              else if (evt.type === 'red_card') displayLabel = 'Red Card';
+                              else if (evt.type === 'sub') displayLabel = 'Substitution';
+                              else displayLabel = 'Match Event';
+                            }
+
+                            return (
+                              <div
+                                key={`ft-evt-${evt.id}-${eIdx}`}
+                                className="flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg bg-[#080d14]/80 text-gray-300 font-mono border border-white/5"
+                              >
                                 {isHomeEvent ? (
-                                  <span className="font-medium text-white">{evt.player} {icon}</span>
-                                ) : <div />}
+                                  <div className="flex items-center gap-1.5 text-left flex-1">
+                                    <span className="font-bold text-gray-400 text-[10px]">{evt.minute}'</span>
+                                    <span className="text-sm">{icon}</span>
+                                    <span className="font-bold text-white text-xs">{displayLabel}</span>
+                                    {evt.type === 'goal' && (
+                                      <span className="font-mono font-black text-emerald-400 text-xs ml-1">
+                                        GOAL!
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="flex-1" />
+                                )}
+
                                 {!isHomeEvent ? (
-                                  <span className="font-medium text-white">{icon} {evt.player}</span>
-                                ) : <div />}
+                                  <div className="flex items-center gap-1.5 text-right flex-1 justify-end">
+                                    {evt.type === 'goal' && (
+                                      <span className="font-mono font-black text-emerald-400 text-xs mr-1">
+                                        GOAL!
+                                      </span>
+                                    )}
+                                    <span className="font-bold text-white text-xs">{displayLabel}</span>
+                                    <span className="text-sm">{icon}</span>
+                                    <span className="font-bold text-gray-400 text-[10px]">{evt.minute}'</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex-1" />
+                                )}
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </TiltCard>
                 );
               })}
