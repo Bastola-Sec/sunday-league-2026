@@ -95,6 +95,8 @@ export async function initializeFirestoreData(): Promise<void> {
       }
     } else {
       // Seed any missing official match fixtures (e.g. FIX-001..FIX-007) without wiping user edits
+      const existingMatchIds = new Set(matchesSnap.docs.map((d) => d.id));
+
       // Delete any leftover test match fixture (FIX-TEST-99)
       if (existingMatchIds.has('FIX-TEST-99')) {
         await deleteDoc(doc(db, MATCHES_COL, 'FIX-TEST-99'));
