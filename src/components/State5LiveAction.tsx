@@ -683,7 +683,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                     {/* Timeline Summary Table (FlashScore Style - Gameplay Events Only) */}
                     {(() => {
                       const gameplayEvents = (match.events || []).filter(
-                        (e) => e.type !== 'kickoff' && e.type !== 'halftime'
+                        (e) => e.type !== 'kickoff' && e.type !== 'halftime' && e.player !== 'Match Official'
                       );
 
                       if (gameplayEvents.length === 0) {
@@ -698,20 +698,23 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                         <div className="pt-2 border-t border-white/5 space-y-1">
                           {gameplayEvents.map((evt, eIdx) => {
                             const isHomeEvent = evt.teamId === match.homeTeamId;
+                            const isTeamNameLabel = evt.player === home?.name || evt.player === away?.name;
                             const icon =
                               evt.type === 'goal' ? '⚽' :
                               evt.type === 'yellow_card' ? '🟨' :
                               evt.type === 'red_card' ? '🟥' :
                               evt.type === 'sub' ? '🔄' :
+                              evt.type === 'corner' ? '⛳' :
                               evt.type === 'shot_on_target' ? '🎯' : '⚡';
 
                             let displayLabel = evt.player;
-                            if (!displayLabel || displayLabel === 'Match Official') {
+                            if (!displayLabel || displayLabel === 'Match Official' || isTeamNameLabel) {
                               if (evt.type === 'goal') displayLabel = 'GOAL!';
                               else if (evt.type === 'yellow_card') displayLabel = 'Yellow Card';
                               else if (evt.type === 'red_card') displayLabel = 'Red Card';
                               else if (evt.type === 'sub') displayLabel = 'Substitution';
-                              else displayLabel = 'Match Event';
+                              else if (evt.type === 'corner') displayLabel = 'Corner Kick';
+                              else displayLabel = isTeamNameLabel ? `${evt.type.toUpperCase()}` : 'Match Event';
                             }
 
                             return (
@@ -724,7 +727,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                                     <span className="font-bold text-gray-400 text-[10px]">{evt.minute}'</span>
                                     <span className="text-sm">{icon}</span>
                                     <span className="font-bold text-white text-xs">{displayLabel}</span>
-                                    {evt.type === 'goal' && (
+                                    {evt.type === 'goal' && displayLabel !== 'GOAL!' && (
                                       <span className="font-mono font-black text-emerald-400 text-xs ml-1">
                                         GOAL!
                                       </span>
@@ -736,7 +739,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
                                 {!isHomeEvent ? (
                                   <div className="flex items-center gap-1.5 text-right flex-1 justify-end">
-                                    {evt.type === 'goal' && (
+                                    {evt.type === 'goal' && displayLabel !== 'GOAL!' && (
                                       <span className="font-mono font-black text-emerald-400 text-xs mr-1">
                                         GOAL!
                                       </span>
