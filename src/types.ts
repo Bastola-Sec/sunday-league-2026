@@ -5,6 +5,7 @@ export interface Player {
   position: 'GK' | 'DEF' | 'MID' | 'FWD';
   goals: number;
   assists: number;
+  motmAwards?: number;
   yellowCards: number;
   redCards: number;
   isCaptain?: boolean;
@@ -134,6 +135,8 @@ export interface Match {
   seasonNumber?: number;
   homeLineupSubmitted?: boolean;
   awayLineupSubmitted?: boolean;
+  motmPlayerName?: string;
+  motmPlayerId?: string;
 }
 
 export interface PushNotification {

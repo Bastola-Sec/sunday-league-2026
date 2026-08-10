@@ -435,29 +435,37 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             {!showTacticalFlip ? (
               <div className="p-4 rounded-[1.75rem] bg-[#7d9cb8]/40 backdrop-blur-xl border border-white/60 shadow-lg text-[#152a38] space-y-4">
                 {/* Stats Summary Grid */}
-                <div className="grid grid-cols-3 text-center py-2 bg-[#ffffff]/20 rounded-2xl border border-white/30 backdrop-blur-md">
+                <div className="grid grid-cols-4 text-center py-2 bg-[#ffffff]/20 rounded-2xl border border-white/30 backdrop-blur-md">
                   <div>
-                    <span className="block text-xs font-bold text-[#304859] mb-0.5">Goals</span>
-                    <span className="text-3xl font-black text-white drop-shadow-md">
+                    <span className="block text-[11px] font-bold text-[#304859] mb-0.5">Goals</span>
+                    <span className="text-xl sm:text-2xl font-black text-white drop-shadow-md">
                       {currentPlayer.goals}
                     </span>
-                    <span className="block text-[9px] font-bold text-[#304859]/80 font-mono">Career: {currentPlayer.careerGoals ?? currentPlayer.goals}</span>
+                    <span className="block text-[8px] font-bold text-[#304859]/80 font-mono">Total</span>
                   </div>
 
-                  <div className="border-x border-[#1a3244]/20 px-2">
-                    <span className="block text-xs font-bold text-[#304859] mb-0.5">Assists</span>
-                    <span className="text-3xl font-black text-white drop-shadow-md">
+                  <div className="border-x border-[#1a3244]/20 px-1">
+                    <span className="block text-[11px] font-bold text-[#304859] mb-0.5">Assists</span>
+                    <span className="text-xl sm:text-2xl font-black text-white drop-shadow-md">
                       {currentPlayer.assists}
                     </span>
-                    <span className="block text-[9px] font-bold text-[#304859]/80 font-mono">Career: {currentPlayer.careerAssists ?? currentPlayer.assists}</span>
+                    <span className="block text-[8px] font-bold text-[#304859]/80 font-mono">Total</span>
+                  </div>
+
+                  <div className="border-r border-[#1a3244]/20 px-1">
+                    <span className="block text-[11px] font-bold text-[#304859] mb-0.5">MOTM</span>
+                    <span className="text-xl sm:text-2xl font-black text-amber-300 drop-shadow-md flex items-center justify-center gap-0.5">
+                      ⭐ {currentPlayer.motmAwards || 0}
+                    </span>
+                    <span className="block text-[8px] font-bold text-[#304859]/80 font-mono">Awards</span>
                   </div>
 
                   <div>
-                    <span className="block text-xs font-bold text-[#304859] mb-0.5">Matches</span>
-                    <span className="text-3xl font-black text-white drop-shadow-md">
+                    <span className="block text-[11px] font-bold text-[#304859] mb-0.5">Matches</span>
+                    <span className="text-xl sm:text-2xl font-black text-white drop-shadow-md">
                       {currentPlayer.matchesPlayed ?? 0}
                     </span>
-                    <span className="block text-[9px] font-bold text-[#304859]/80 font-mono">Career: {currentPlayer.careerMatches ?? (currentPlayer.matchesPlayed ?? 0)}</span>
+                    <span className="block text-[8px] font-bold text-[#304859]/80 font-mono">Played</span>
                   </div>
                 </div>
 

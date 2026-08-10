@@ -281,6 +281,11 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   const [inlineCustomNote, setInlineCustomNote] = useState<string>('');
   const [inlineSuccessToast, setInlineSuccessToast] = useState<string | null>(null);
 
+  // Player of the Match (MOTM) Selection Modal State
+  const [showMotmModal, setShowMotmModal] = useState<boolean>(false);
+  const [selectedMotmPlayerId, setSelectedMotmPlayerId] = useState<string>('');
+  const [selectedMotmPlayerName, setSelectedMotmPlayerName] = useState<string>('');
+
   // Sync inlineTeamId when editingMatch changes
   useEffect(() => {
     if (editingMatch) {
@@ -289,8 +294,21 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       setInlineAssistPlayerName('');
       setInlineSubOutPlayerName('');
       setInlineCustomNote('');
+      setSelectedMotmPlayerId(editingMatch.motmPlayerId || '');
+      setSelectedMotmPlayerName(editingMatch.motmPlayerName || '');
     }
-  }, [editingMatch?.id]);
+  }, [editingMatch?.id, editingMatch?.motmPlayerName]);
+
+  const handleConfirmMotmAward = () => {
+    if (!editingMatch || !onUpdateFullMatch || !selectedMotmPlayerName) return;
+
+    onUpdateFullMatch(editingMatch.id, {
+      motmPlayerId: selectedMotmPlayerId || undefined,
+      motmPlayerName: selectedMotmPlayerName,
+    });
+
+    setShowMotmModal(false);
+  };
 
   const handleConfirmInlineEvent = () => {
     if (!editingMatch) return;
@@ -1028,6 +1046,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     });
 
     setIsLiveClockRunning(false);
+    setShowMotmModal(true);
     onSendPushNotification(
       '🏁 FULL TIME FINAL RESULT',
       `Final Score: ${teams.find((t) => t.id === editingMatch.homeTeamId)?.name} ${homeScoreInput} - ${awayScoreInput} ${teams.find((t) => t.id === editingMatch.awayTeamId)?.name}`,
@@ -2026,6 +2045,31 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                         </button>
                                       </div>
 
+                                      {/* PLAYER OF THE MATCH AWARD BANNER / BUTTON */}
+                                      {(editingMatch.status === 'ended' || editingMatch.isFinished) && (
+                                        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 border-2 border-amber-400/60 shadow-xl flex items-center justify-between gap-3 mt-3">
+                                          <div className="flex items-center gap-2.5">
+                                            <Star className="w-5 h-5 text-amber-400 fill-amber-400 animate-spin" />
+                                            <div>
+                                              <span className="text-xs font-black uppercase text-amber-300 block">
+                                                ⭐ Player of the Match (MOTM)
+                                              </span>
+                                              <span className="text-[11px] text-gray-300 font-extrabold">
+                                                {editingMatch.motmPlayerName ? `Awarded to: ${editingMatch.motmPlayerName}` : 'Not awarded yet. Tap button to select MOTM!'}
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          <button
+                                            type="button"
+                                            onClick={() => setShowMotmModal(true)}
+                                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-black text-xs uppercase tracking-wider hover:brightness-110 shadow-lg cursor-pointer transition-all shrink-0 min-h-[44px]"
+                                          >
+                                            {editingMatch.motmPlayerName ? 'Change MOTM' : '⭐ Select MOTM'}
+                                          </button>
+                                        </div>
+                                      )}
+
                                       {/* USER STORY 5: TRACK ADDED TIME & SUNDAY LEAGUE FORMAT CONFIG */}
                                       <div className="pt-2 border-t border-[#4C787E]/30 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                         <div className="p-3 rounded-xl bg-[#09131e] border border-[#4C787E]/30 space-y-2">
@@ -2838,6 +2882,143 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
         playerToEdit={playerToEdit}
         teamName={activeSelectedTeam?.name}
       />
+
+      {/* PLAYER OF THE MATCH (MOTM) SELECTION MODAL POPUP */}
+      {editingMatch && showMotmModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="relative w-full max-w-lg p-5 sm:p-6 rounded-3xl bg-[#091522] border-2 border-amber-400/80 shadow-[0_0_50px_rgba(245,158,11,0.4)] text-white space-y-4 max-h-[90vh] overflow-y-auto"
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-amber-400/30 pb-3">
+              <div className="flex items-center gap-2">
+                <Star className="w-6 h-6 text-amber-400 fill-amber-400 animate-pulse" />
+                <div>
+                  <h3 className="text-lg font-black uppercase text-amber-300 tracking-wider">
+                    ⭐ Select Player of the Match
+                  </h3>
+                  <p className="text-xs text-gray-300 font-medium">
+                    Full Time Ended: {teams.find(t => t.id === editingMatch.homeTeamId)?.name} vs {teams.find(t => t.id === editingMatch.awayTeamId)?.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMotmModal(false)}
+                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-amber-200/90 font-bold bg-amber-500/10 p-3 rounded-xl border border-amber-400/30">
+              Choose 1 standout performer from either squad to award the official Sunday League ⭐ Player of the Match award. This will immediately update the Standings MOTM Leaderboard & Player Profile Telemetry!
+            </p>
+
+            {/* Team Filter Tabs / Grid */}
+            <div className="space-y-4">
+              {/* Home Team Squad */}
+              <div>
+                <h4 className="text-xs font-black uppercase text-[#B7CEEC] flex items-center gap-2 mb-2">
+                  <TeamLogo teamId={editingMatch.homeTeamId} size={18} />
+                  <span>{teams.find(t => t.id === editingMatch.homeTeamId)?.name} Roster</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {(teams.find(t => t.id === editingMatch.homeTeamId)?.roster || []).map((p) => {
+                    const isSelected = selectedMotmPlayerId === p.id || selectedMotmPlayerName === p.name;
+                    return (
+                      <button
+                        key={`motm-h-${p.id}`}
+                        type="button"
+                        onClick={() => {
+                          setSelectedMotmPlayerId(p.id);
+                          setSelectedMotmPlayerName(p.name);
+                        }}
+                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between min-h-[44px] ${
+                          isSelected
+                            ? 'bg-amber-400 text-slate-950 border-amber-200 font-black shadow-lg ring-2 ring-amber-300 scale-[1.02]'
+                            : 'bg-[#060e18] border-[#4C787E]/40 text-white hover:border-amber-400/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold opacity-80">#{p.number}</span>
+                          <span className="text-xs font-extrabold">{p.name}</span>
+                        </div>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${isSelected ? 'bg-slate-950 text-amber-300' : 'bg-white/10 text-gray-300'}`}>
+                          {p.position}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Away Team Squad */}
+              <div>
+                <h4 className="text-xs font-black uppercase text-[#B7CEEC] flex items-center gap-2 mb-2">
+                  <TeamLogo teamId={editingMatch.awayTeamId} size={18} />
+                  <span>{teams.find(t => t.id === editingMatch.awayTeamId)?.name} Roster</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {(teams.find(t => t.id === editingMatch.awayTeamId)?.roster || []).map((p) => {
+                    const isSelected = selectedMotmPlayerId === p.id || selectedMotmPlayerName === p.name;
+                    return (
+                      <button
+                        key={`motm-a-${p.id}`}
+                        type="button"
+                        onClick={() => {
+                          setSelectedMotmPlayerId(p.id);
+                          setSelectedMotmPlayerName(p.name);
+                        }}
+                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between min-h-[44px] ${
+                          isSelected
+                            ? 'bg-amber-400 text-slate-950 border-amber-200 font-black shadow-lg ring-2 ring-amber-300 scale-[1.02]'
+                            : 'bg-[#060e18] border-[#4C787E]/40 text-white hover:border-amber-400/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold opacity-80">#{p.number}</span>
+                          <span className="text-xs font-extrabold">{p.name}</span>
+                        </div>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${isSelected ? 'bg-slate-950 text-amber-300' : 'bg-white/10 text-gray-300'}`}>
+                          {p.position}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Confirm Button */}
+            <div className="pt-3 border-t border-white/10 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowMotmModal(false)}
+                className="w-1/3 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-gray-300 font-bold text-xs uppercase cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!selectedMotmPlayerName}
+                onClick={handleConfirmMotmAward}
+                className={`w-2/3 py-3 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl cursor-pointer transition-all min-h-[48px] ${
+                  selectedMotmPlayerName
+                    ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 hover:brightness-110 shadow-amber-500/30'
+                    : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                <Star className="w-4 h-4 fill-slate-950" />
+                <span>🏆 CONFIRM & AWARD MOTM</span>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </AnimatePresence>
   );
 };

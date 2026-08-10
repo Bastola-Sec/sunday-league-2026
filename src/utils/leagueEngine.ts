@@ -59,6 +59,7 @@ export function computeStandingsAndFinalsMatch(
       let telemetryAssists = 0;
       let telemetryYellows = 0;
       let telemetryReds = 0;
+      let telemetryMotm = 0;
       let playerGamesCount = 0;
 
       matchesList.forEach((m) => {
@@ -72,6 +73,15 @@ export function computeStandingsAndFinalsMatch(
           
           if (!lineup || lineup.length === 0 || lineup.includes(player.id) || (subs && subs.includes(player.id))) {
             playerGamesCount += 1;
+          }
+        }
+
+        // Count MOTM Awards
+        if (m.isFinished || m.status === 'ended') {
+          if (m.motmPlayerId && m.motmPlayerId === player.id) {
+            telemetryMotm += 1;
+          } else if (m.motmPlayerName && m.motmPlayerName.toLowerCase().trim() === player.name.toLowerCase().trim()) {
+            telemetryMotm += 1;
           }
         }
 
@@ -114,6 +124,7 @@ export function computeStandingsAndFinalsMatch(
         assists: telemetryAssists,
         yellowCards: telemetryYellows,
         redCards: telemetryReds,
+        motmAwards: telemetryMotm,
         matchesPlayed: playerGamesCount,
       };
     });

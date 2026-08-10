@@ -33,18 +33,21 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
     }))
   );
 
-  // Leaderboard 1: Top Goalscorers (Golden Boot)
+  // Leaderboard 1: Top Goalscorers (Golden Boot) - > 0 goals only
   const topScorers = [...allPlayers]
+    .filter((p) => (p.goals || 0) > 0)
     .sort((a, b) => (b.goals || 0) - (a.goals || 0))
     .slice(0, 10);
 
-  // Leaderboard 2: Top Assist Providers (Playmakers)
+  // Leaderboard 2: Top Assist Providers (Playmakers) - > 0 assists only
   const topAssists = [...allPlayers]
+    .filter((p) => (p.assists || 0) > 0)
     .sort((a, b) => (b.assists || 0) - (a.assists || 0))
     .slice(0, 10);
 
-  // Leaderboard 3: Most Player of the Match Awards (MOTM)
+  // Leaderboard 3: Most Player of the Match Awards (MOTM) - > 0 MOTMs only
   const topMotm = [...allPlayers]
+    .filter((p) => (p.motmAwards || 0) > 0)
     .sort((a, b) => (b.motmAwards || 0) - (a.motmAwards || 0))
     .slice(0, 10);
 
@@ -217,46 +220,53 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
               <span>Total Goals</span>
             </div>
 
-            <div className="divide-y divide-white/10">
-              {topScorers.map((player, index) => {
-                const rank = index + 1;
-                return (
-                  <motion.div
-                    key={`scorer-${player.id}-${index}`}
-                    whileHover={{ backgroundColor: 'rgba(16, 185, 129, 0.15)' }}
-                    onClick={() => onSelectPlayer && onSelectPlayer(player, player.team)}
-                    className="flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all hover:border-emerald-500/40"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 text-center font-black text-xs sm:text-sm">
-                        {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
-                      </span>
+            {topScorers.length === 0 ? (
+              <div className="py-8 text-center text-xs text-gray-400 space-y-1">
+                <p className="font-bold text-emerald-300">No Goals Scored Yet</p>
+                <p className="text-[10px] text-gray-500">Only players with &gt; 0 goals appear on the Golden Boot leaderboard.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-white/10">
+                {topScorers.map((player, index) => {
+                  const rank = index + 1;
+                  return (
+                    <motion.div
+                      key={`scorer-${player.id}-${index}`}
+                      whileHover={{ backgroundColor: 'rgba(16, 185, 129, 0.15)' }}
+                      onClick={() => onSelectPlayer && onSelectPlayer(player, player.team)}
+                      className="flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all hover:border-emerald-500/40"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 text-center font-black text-xs sm:text-sm">
+                          {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                        </span>
 
-                      <TeamLogo teamId={player.team.id} size={26} />
+                        <TeamLogo teamId={player.team.id} size={26} />
 
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-white font-extrabold text-xs sm:text-sm">
-                            #{player.number} {player.name}
-                          </span>
-                          <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold uppercase">
-                            {player.position}
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-white font-extrabold text-xs sm:text-sm">
+                              #{player.number} {player.name}
+                            </span>
+                            <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold uppercase">
+                              {player.position}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-gray-400 font-mono">
+                            {player.team.name}
                           </span>
                         </div>
-                        <span className="text-[10px] text-gray-400 font-mono">
-                          {player.team.name}
-                        </span>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-1 px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-black font-mono text-sm shadow-md">
-                      <span>⚽</span>
-                      <span>{player.goals || 0}</span>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                      <div className="flex items-center gap-1 px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-black font-mono text-sm shadow-md">
+                        <span>⚽</span>
+                        <span>{player.goals || 0}</span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -268,46 +278,53 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
               <span>Total Assists</span>
             </div>
 
-            <div className="divide-y divide-white/10">
-              {topAssists.map((player, index) => {
-                const rank = index + 1;
-                return (
-                  <motion.div
-                    key={`assist-${player.id}-${index}`}
-                    whileHover={{ backgroundColor: 'rgba(6, 182, 212, 0.15)' }}
-                    onClick={() => onSelectPlayer && onSelectPlayer(player, player.team)}
-                    className="flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all hover:border-cyan-500/40"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 text-center font-black text-xs sm:text-sm">
-                        {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
-                      </span>
+            {topAssists.length === 0 ? (
+              <div className="py-8 text-center text-xs text-gray-400 space-y-1">
+                <p className="font-bold text-cyan-300">No Assists Recorded Yet</p>
+                <p className="text-[10px] text-gray-500">Only players with &gt; 0 assists appear on the Playmakers leaderboard.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-white/10">
+                {topAssists.map((player, index) => {
+                  const rank = index + 1;
+                  return (
+                    <motion.div
+                      key={`assist-${player.id}-${index}`}
+                      whileHover={{ backgroundColor: 'rgba(6, 182, 212, 0.15)' }}
+                      onClick={() => onSelectPlayer && onSelectPlayer(player, player.team)}
+                      className="flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all hover:border-cyan-500/40"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 text-center font-black text-xs sm:text-sm">
+                          {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                        </span>
 
-                      <TeamLogo teamId={player.team.id} size={26} />
+                        <TeamLogo teamId={player.team.id} size={26} />
 
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-white font-extrabold text-xs sm:text-sm">
-                            #{player.number} {player.name}
-                          </span>
-                          <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[9px] font-bold uppercase">
-                            {player.position}
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-white font-extrabold text-xs sm:text-sm">
+                              #{player.number} {player.name}
+                            </span>
+                            <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[9px] font-bold uppercase">
+                              {player.position}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-gray-400 font-mono">
+                            {player.team.name}
                           </span>
                         </div>
-                        <span className="text-[10px] text-gray-400 font-mono">
-                          {player.team.name}
-                        </span>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-1 px-3 py-1 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-black font-mono text-sm shadow-md">
-                      <span>🅰️</span>
-                      <span>{player.assists || 0}</span>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                      <div className="flex items-center gap-1 px-3 py-1 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-black font-mono text-sm shadow-md">
+                        <span>🅰️</span>
+                        <span>{player.assists || 0}</span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -319,46 +336,53 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
               <span>MOTM Awards</span>
             </div>
 
-            <div className="divide-y divide-white/10">
-              {topMotm.map((player, index) => {
-                const rank = index + 1;
-                return (
-                  <motion.div
-                    key={`motm-${player.id}-${index}`}
-                    whileHover={{ backgroundColor: 'rgba(245, 158, 11, 0.15)' }}
-                    onClick={() => onSelectPlayer && onSelectPlayer(player, player.team)}
-                    className="flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all hover:border-amber-500/40"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 text-center font-black text-xs sm:text-sm">
-                        {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
-                      </span>
+            {topMotm.length === 0 ? (
+              <div className="py-8 text-center text-xs text-gray-400 space-y-1">
+                <p className="font-bold text-amber-300">No MOTM Awards Awarded Yet</p>
+                <p className="text-[10px] text-gray-500">Select Player of the Match at Full Time to populate this leaderboard!</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-white/10">
+                {topMotm.map((player, index) => {
+                  const rank = index + 1;
+                  return (
+                    <motion.div
+                      key={`motm-${player.id}-${index}`}
+                      whileHover={{ backgroundColor: 'rgba(245, 158, 11, 0.15)' }}
+                      onClick={() => onSelectPlayer && onSelectPlayer(player, player.team)}
+                      className="flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all hover:border-amber-500/40"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 text-center font-black text-xs sm:text-sm">
+                          {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                        </span>
 
-                      <TeamLogo teamId={player.team.id} size={26} />
+                        <TeamLogo teamId={player.team.id} size={26} />
 
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-white font-extrabold text-xs sm:text-sm">
-                            #{player.number} {player.name}
-                          </span>
-                          <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-bold uppercase">
-                            {player.position}
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-white font-extrabold text-xs sm:text-sm">
+                              #{player.number} {player.name}
+                            </span>
+                            <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-bold uppercase">
+                              {player.position}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-gray-400 font-mono">
+                            {player.team.name}
                           </span>
                         </div>
-                        <span className="text-[10px] text-gray-400 font-mono">
-                          {player.team.name}
-                        </span>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-1 px-3 py-1 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-black font-mono text-sm shadow-md">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span>{player.motmAwards || 0}</span>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                      <div className="flex items-center gap-1 px-3 py-1 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-black font-mono text-sm shadow-md">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        <span>{player.motmAwards || 0}</span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
