@@ -1007,7 +1007,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
 
           <div
             ref={pitchRef}
-            className="w-[320px] h-[370px] relative rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] border-2 border-emerald-300/40 transition-transform duration-300"
+            className="w-full max-w-[320px] h-[360px] sm:h-[380px] relative rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] border-2 border-emerald-300/40 transition-transform duration-300 mx-auto"
             style={{
               transform: pitchZoom ? 'scale(1.05)' : 'scale(1.0)',
               background:

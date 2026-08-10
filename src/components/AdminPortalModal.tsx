@@ -2148,7 +2148,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                                 setInlineAssistPlayerName('');
                                                 setInlineSubOutPlayerName('');
                                               }}
-                                              className="w-full p-2.5 rounded-xl bg-[#060e18] border border-[#4C787E]/50 text-white font-extrabold focus:outline-none focus:border-[#B7CEEC]"
+                                              className="w-full p-3 rounded-xl bg-[#060e18] border border-[#4C787E]/50 text-white font-extrabold text-xs sm:text-sm focus:outline-none focus:border-[#B7CEEC] min-h-[44px]"
                                             >
                                               <option value={editingMatch.homeTeamId}>
                                                 ⚽ {teams.find((t) => t.id === editingMatch.homeTeamId)?.name} (Home Team)
@@ -2168,7 +2168,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                               <select
                                                 value={inlinePlayerName}
                                                 onChange={(e) => setInlinePlayerName(e.target.value)}
-                                                className="w-full p-2.5 rounded-xl bg-[#060e18] border border-[#4C787E]/50 text-white font-bold focus:outline-none focus:border-[#B7CEEC]"
+                                                className="w-full p-3 rounded-xl bg-[#060e18] border border-[#4C787E]/50 text-white font-bold text-xs sm:text-sm focus:outline-none focus:border-[#B7CEEC] min-h-[44px]"
                                               >
                                                 <option value="">-- Choose Roster Player --</option>
                                                 {(
@@ -2191,7 +2191,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                               <select
                                                 value={inlineAssistPlayerName}
                                                 onChange={(e) => setInlineAssistPlayerName(e.target.value)}
-                                                className="w-full p-2.5 rounded-xl bg-[#060e18] border border-[#4C787E]/50 text-white font-bold focus:outline-none"
+                                                className="w-full p-3 rounded-xl bg-[#060e18] border border-[#4C787E]/50 text-white font-bold text-xs sm:text-sm focus:outline-none min-h-[44px]"
                                               >
                                                 <option value="">None / Solo Goal</option>
                                                 {(
@@ -2213,7 +2213,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                               <select
                                                 value={inlineSubOutPlayerName}
                                                 onChange={(e) => setInlineSubOutPlayerName(e.target.value)}
-                                                className="w-full p-2.5 rounded-xl bg-[#060e18] border border-[#4C787E]/50 text-white font-bold focus:outline-none"
+                                                className="w-full p-3 rounded-xl bg-[#060e18] border border-[#4C787E]/50 text-white font-bold text-xs sm:text-sm focus:outline-none min-h-[44px]"
                                               >
                                                 <option value="">-- Choose Player Out --</option>
                                                 {(
@@ -2232,7 +2232,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                         <button
                                           type="button"
                                           onClick={handleConfirmInlineEvent}
-                                          className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400 hover:brightness-110 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-xl transition-all mt-2"
+                                          className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400 hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-xl transition-all mt-2 min-h-[48px]"
                                         >
                                           <Zap className="w-4 h-4 text-slate-950" />
                                           <span>
