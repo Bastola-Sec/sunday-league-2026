@@ -946,37 +946,28 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
         </div>
       </div>
 
-      {/* 3D / TACTICAL PITCH BOARD PREVIEW (DISPLAYING STARTING 8 ON THE PITCH) */}
-      <div className="relative w-full h-[420px] rounded-[2.2rem] bg-gradient-to-b from-[#0b1c28] to-[#07131d] border border-[#4C787E]/40 overflow-hidden shadow-2xl flex flex-col justify-between p-4">
-        {/* Top Control Bar Over Field */}
-        <div className="relative z-20 flex items-center justify-between gap-2 pointer-events-auto">
-          {/* Active Formation Pill */}
-          <div className="px-3.5 py-2 rounded-2xl bg-[#13283b]/90 border border-white/15 backdrop-blur-md shadow-lg flex items-center gap-2">
+      {/* 3D / TACTICAL PITCH BOARD PREVIEW (DISPLAYING STARTING PLAYERS ON CLEAN PITCH) */}
+      <div className="relative w-full rounded-[2.2rem] bg-gradient-to-b from-[#0b1c28] to-[#07131d] border border-[#4C787E]/40 overflow-hidden shadow-2xl p-4 space-y-3">
+        {/* Top Control Bar Over Field (Zoom & Reset Only) */}
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
             <TeamLogo teamId={activeTeam?.id || ''} size={20} />
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="block text-[10px] text-teal-300 font-bold uppercase tracking-wider leading-none">
-                  Tactical Pitch ({selectedFormation})
-                </span>
-                {hasCustomPositions && (
-                  <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[9px] font-black uppercase flex items-center gap-1">
-                    <Sparkles className="w-2.5 h-2.5 text-amber-300 animate-spin" /> Custom Formation
-                  </span>
-                )}
-              </div>
-              <span className="text-xs font-black text-white tracking-wider uppercase">
-                {activeTeam?.name} • {startingIds.length}/{targetSlots} Starting Players
+            <span className="text-xs font-black text-white uppercase tracking-wider">
+              {activeTeam?.name} Pitch Layout ({selectedFormation})
+            </span>
+            {hasCustomPositions && (
+              <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[9px] font-black uppercase flex items-center gap-1">
+                <Sparkles className="w-2.5 h-2.5 text-amber-300 animate-spin" /> Custom
               </span>
-            </div>
+            )}
           </div>
 
-          {/* View Toggles, Zoom & Reset Custom */}
           <div className="flex items-center gap-1.5">
             {hasCustomPositions && (
               <button
                 type="button"
                 onClick={() => setCustomPositions({})}
-                className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 backdrop-blur-md text-xs font-bold flex items-center gap-1 transition-all shadow-md cursor-pointer"
+                className="px-2.5 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 backdrop-blur-md text-[11px] font-bold flex items-center gap-1 transition-all shadow-md cursor-pointer"
                 title="Reset to standard preset formation"
               >
                 <RotateCcw className="w-3 h-3 text-amber-300" />
@@ -987,7 +978,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
             <button
               type="button"
               onClick={() => setPitchZoom((prev) => !prev)}
-              className="p-2 rounded-xl bg-[#13283b]/90 hover:bg-[#1d3a54] border border-white/15 text-white backdrop-blur-md transition-all shadow-md cursor-pointer"
+              className="p-1.5 rounded-xl bg-[#13283b]/90 hover:bg-[#1d3a54] border border-white/15 text-white backdrop-blur-md transition-all shadow-md cursor-pointer"
               title="Zoom In/Out Pitch"
             >
               <Maximize2 className="w-4 h-4 text-teal-300" />
@@ -995,19 +986,11 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           </div>
         </div>
 
-        {/* Pitch Surface Container */}
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-          {/* Drag Helper Banner */}
-          {!isScreenLocked && (
-            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1 rounded-full bg-[#050c14]/85 border border-teal-400/40 text-teal-200 text-[10px] font-extrabold backdrop-blur-md flex items-center gap-1.5 shadow-lg pointer-events-none animate-pulse">
-              <Move className="w-3 h-3 text-teal-300" />
-              <span>Drag any player node on pitch to customize formation</span>
-            </div>
-          )}
-
+        {/* Pitch Surface Container (Clean & Unobstructed) */}
+        <div className="flex items-center justify-center py-2">
           <div
             ref={pitchRef}
-            className="w-full max-w-[320px] h-[360px] sm:h-[380px] relative rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] border-2 border-emerald-300/40 transition-transform duration-300 mx-auto"
+            className="w-full max-w-[320px] h-[360px] sm:h-[380px] relative rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] border-2 border-emerald-300/40 transition-transform duration-300 mx-auto overflow-hidden"
             style={{
               transform: pitchZoom ? 'scale(1.05)' : 'scale(1.0)',
               background:
@@ -1115,64 +1098,61 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
             })}
           </div>
         </div>
+      </div>
 
-        {/* Bottom Bar Info Overlay */}
-        <div className="relative z-20 flex items-center justify-between mt-auto">
-          <div className="px-3 py-1.5 rounded-xl bg-[#13283b]/85 border border-white/10 text-[10px] text-gray-300 backdrop-blur-md flex items-center gap-1.5">
-            <span>Positioning: </span>
-            <strong className="text-white font-extrabold">{activeFormationPreset.name}</strong>
-            {hasCustomPositions && (
-              <span className="text-amber-300 font-bold ml-1"> (Customized)</span>
+      {/* SUBMIT MATCH LINEUP ACTION BAR (BELOW THE PITCH) */}
+      {!isScreenLocked && (
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-[#091522] border border-[#4C787E]/40 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xl">
+          <div className="flex items-center gap-2 text-xs">
+            <ShieldCheck className="w-4.5 h-4.5 text-emerald-400 shrink-0" />
+            <span className="text-gray-300 font-bold">
+              {isLineupSubmitted ? 'Lineup currently submitted. Tap to resubmit updates.' : 'Ready to confirm lineup for match kickoff.'}
+            </span>
+            {justSubmittedTime && !savedSuccess && (
+              <span className="text-[10px] text-emerald-400 font-bold font-mono ml-2">
+                ✓ Last synced at {justSubmittedTime}
+              </span>
             )}
           </div>
 
-            {!isScreenLocked && (
-              <div className="flex items-center gap-2">
-                {justSubmittedTime && !savedSuccess && (
-                  <span className="text-[10px] text-emerald-400 font-bold hidden sm:inline-block">
-                    ✓ Last synced at {justSubmittedTime}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={handleSubmitOfficialLineup}
-                  disabled={isSubmitting}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-2xl cursor-pointer border ${
-                    isSubmitting
-                      ? 'bg-amber-500/30 text-amber-200 border-amber-400/50 cursor-wait'
-                      : savedSuccess
-                      ? 'bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 text-slate-950 border-emerald-200 font-extrabold shadow-[0_0_30px_rgba(16,185,129,0.8)] scale-105 animate-bounce'
-                      : isLineupSubmitted
-                      ? 'bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 hover:brightness-110 text-white border-emerald-300/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-                      : 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 hover:brightness-110 text-slate-950 border-amber-200 font-extrabold animate-pulse'
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Sparkles className="w-4 h-4 text-amber-300 animate-spin" />
-                      <span>SYNCING TO MATCH CENTER...</span>
-                    </>
-                  ) : savedSuccess ? (
-                    <>
-                      <CheckCircle2 className="w-4.5 h-4.5 text-slate-950" />
-                      <span>✅ LINEUP RESUBMITTED & SYNCED!</span>
-                    </>
-                  ) : isLineupSubmitted ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 text-white" />
-                      <span>🔄 RESUBMIT & UPDATE LINEUP</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 text-slate-950" />
-                      <span>🚀 SUBMIT MATCH LINEUP</span>
-                    </>
-                  )}
-                </button>
-              </div>
+          <button
+            type="button"
+            onClick={handleSubmitOfficialLineup}
+            disabled={isSubmitting}
+            className={`w-full sm:w-auto px-6 py-3 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-2xl cursor-pointer border min-h-[48px] ${
+              isSubmitting
+                ? 'bg-amber-500/30 text-amber-200 border-amber-400/50 cursor-wait'
+                : savedSuccess
+                ? 'bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 text-slate-950 border-emerald-200 font-extrabold shadow-[0_0_30px_rgba(16,185,129,0.8)] scale-105 animate-bounce'
+                : isLineupSubmitted
+                ? 'bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 hover:brightness-110 text-white border-emerald-300/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                : 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 hover:brightness-110 text-slate-950 border-amber-200 font-extrabold animate-pulse'
+            }`}
+          >
+            {isSubmitting ? (
+              <>
+                <Sparkles className="w-4 h-4 text-amber-300 animate-spin" />
+                <span>SYNCING TO MATCH CENTER...</span>
+              </>
+            ) : savedSuccess ? (
+              <>
+                <CheckCircle2 className="w-4.5 h-4.5 text-slate-950" />
+                <span>✅ LINEUP RESUBMITTED & SYNCED!</span>
+              </>
+            ) : isLineupSubmitted ? (
+              <>
+                <RefreshCw className="w-4 h-4 text-white" />
+                <span>🔄 RESUBMIT & UPDATE LINEUP</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-slate-950" />
+                <span>🚀 SUBMIT MATCH LINEUP</span>
+              </>
             )}
+          </button>
         </div>
-      </div>
+      )}
 
       {/* Starting Squad & Bench Counter Summary */}
       <div className="grid grid-cols-2 gap-3">
