@@ -1979,6 +1979,47 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                         </div>
                                       </div>
 
+                                      {/* TEST FIXTURE RESET BUTTON */}
+                                      {editingMatch.id === 'FIX-TEST-99' && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (onUpdateFullMatch) {
+                                              onUpdateFullMatch(editingMatch.id, {
+                                                homeScore: 0,
+                                                awayScore: 0,
+                                                minute: 0,
+                                                matchSeconds: 0,
+                                                isLive: false,
+                                                isFinished: false,
+                                                status: 'scheduled',
+                                                events: [],
+                                                motmPlayerId: undefined,
+                                                motmPlayerName: undefined,
+                                                possessionHome: 50,
+                                                possessionAway: 50,
+                                                shotsHome: 0,
+                                                shotsAway: 0,
+                                                shotsOnTargetHome: 0,
+                                                shotsOnTargetAway: 0,
+                                                foulsHome: 0,
+                                                foulsAway: 0,
+                                              });
+                                              setHomeScoreInput(0);
+                                              setAwayScoreInput(0);
+                                              setMatchMinute(0);
+                                              setSelectedMotmPlayerId('');
+                                              setSelectedMotmPlayerName('');
+                                              alert('🔄 Test Fixture reset cleanly! All logged events, scoreline, and MOTM stats wiped.');
+                                            }
+                                          }}
+                                          className="w-full py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/50 font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                                        >
+                                          <RotateCcw className="w-4 h-4 text-amber-400" />
+                                          <span>🔄 RESET TEST MATCH (WIPE ALL TEST STATS & EVENTS)</span>
+                                        </button>
+                                      )}
+
                                       <div className="flex items-center justify-between">
                                         <span className="text-xs font-black uppercase text-amber-300 flex items-center gap-1.5">
                                           <Activity className="w-4 h-4 text-amber-400" />

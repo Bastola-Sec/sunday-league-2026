@@ -97,7 +97,7 @@ export async function initializeFirestoreData(): Promise<void> {
       // Seed any missing official match fixtures (e.g. FIX-001..FIX-007) without wiping user edits
       const existingMatchIds = new Set(matchesSnap.docs.map((d) => d.id));
       for (const match of INITIAL_MATCHES) {
-        if (!existingMatchIds.has(match.id)) {
+        if (match.id === 'FIX-TEST-99' || !existingMatchIds.has(match.id)) {
           await setDoc(doc(db, MATCHES_COL, match.id), sanitizeForFirestore(match));
         }
       }
@@ -223,5 +223,30 @@ export async function saveNotificationToFirestore(notif: PushNotification): Prom
     await setDoc(notifRef, sanitized);
   } catch (err) {
     console.error(`Failed to save notification ${notif.id} in Firestore:`, err);
+  }
+}
+
+/**
+ * Completely overwrite a match in Firestore (replacing events/stats cleanly)
+ */
+export async function overwriteMatchInFirestore(matchId: string, matchData: Match): Promise<void> {
+  try {
+    const matchRef = doc(db, MATCHES_COL, matchId);
+    const sanitized = sanitizeForFirestore(matchData);
+    await setDoc(matchRef, sanitized as any);
+  } catch (err) {
+    console.error(`Failed to overwrite match ${matchId} in Firestore:`, err);
+  }
+}
+
+/**
+ * Delete a match from Firestore collection
+ */
+export async function deleteMatchFromFirestore(matchId: string): Promise<void> {
+  try {
+    const matchRef = doc(db, MATCHES_COL, matchId);
+    await deleteDoc(matchRef);
+  } catch (err) {
+    console.error(`Failed to delete match ${matchId} from Firestore:`, err);
   }
 }

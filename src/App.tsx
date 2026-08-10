@@ -9,6 +9,7 @@ import {
   saveTeamToFirestore,
   saveTeamRosterToFirestore,
   saveMatchToFirestore,
+  overwriteMatchInFirestore,
   saveNotificationToFirestore,
 } from './lib/firestoreService';
 import { ThreeSoccerCanvas } from './components/ThreeSoccerCanvas';
@@ -315,7 +316,12 @@ export default function App() {
     });
 
     // Save updated match fields to Firestore
-    saveMatchToFirestore(matchId, updatedFields);
+    const targetMatch = nextMatches.find((m) => m.id === matchId);
+    if (targetMatch) {
+      overwriteMatchInFirestore(matchId, targetMatch);
+    } else {
+      saveMatchToFirestore(matchId, updatedFields);
+    }
 
     // Also update current open match modal if active
     if (selectedMatchForModal && selectedMatchForModal.id === matchId) {
