@@ -680,23 +680,23 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                       </div>
                     </div>
 
-                    {/* Timeline Summary Table (FlashScore Style - Gameplay Events Only) */}
+                    {/* Timeline Summary Table (FlashScore Style - Key Match Events Only) */}
                     {(() => {
-                      const gameplayEvents = (match.events || []).filter(
-                        (e) => e.type !== 'kickoff' && e.type !== 'halftime' && e.player !== 'Match Official'
+                      const keyMatchEvents = (match.events || []).filter(
+                        (e) => e.type === 'goal' || e.type === 'yellow_card' || e.type === 'red_card' || e.type === 'sub'
                       );
 
-                      if (gameplayEvents.length === 0) {
+                      if (keyMatchEvents.length === 0) {
                         return (
                           <div className="pt-2 border-t border-white/5 text-center text-[10px] text-gray-500 italic">
-                            No goals or cards recorded in match events timeline
+                            No goals, cards, or substitutions recorded in match timeline
                           </div>
                         );
                       }
 
                       return (
                         <div className="pt-2 border-t border-white/5 space-y-1">
-                          {gameplayEvents.map((evt, eIdx) => {
+                          {keyMatchEvents.map((evt, eIdx) => {
                             const isHomeEvent = evt.teamId === match.homeTeamId;
                             const isTeamNameLabel = evt.player === home?.name || evt.player === away?.name;
                             const icon =
