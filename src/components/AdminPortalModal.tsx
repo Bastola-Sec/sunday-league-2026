@@ -272,7 +272,143 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   const [isAutoWizardOpen, setIsAutoWizardOpen] = useState<boolean>(false);
   const [wizardEventType, setWizardEventType] = useState<'goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner'>('goal');
 
-  // Manual Event Editor Modal State
+  // Inline Quick Event Logger state (NO modal popups)
+  const [inlineEventType, setInlineEventType] = useState<'goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner'>('goal');
+  const [inlineTeamId, setInlineTeamId] = useState<string>('');
+  const [inlinePlayerName, setInlinePlayerName] = useState<string>('');
+  const [inlineAssistPlayerName, setInlineAssistPlayerName] = useState<string>('');
+  const [inlineSubOutPlayerName, setInlineSubOutPlayerName] = useState<string>('');
+  const [inlineCustomNote, setInlineCustomNote] = useState<string>('');
+  const [inlineSuccessToast, setInlineSuccessToast] = useState<string | null>(null);
+
+  // Sync inlineTeamId when editingMatch changes
+  useEffect(() => {
+    if (editingMatch) {
+      setInlineTeamId(editingMatch.homeTeamId);
+      setInlinePlayerName('');
+      setInlineAssistPlayerName('');
+      setInlineSubOutPlayerName('');
+      setInlineCustomNote('');
+    }
+  }, [editingMatch?.id]);
+
+  const handleConfirmInlineEvent = () => {
+    if (!editingMatch) return;
+
+    const selectedTeamObj = teams.find((t) => t.id === inlineTeamId) || teams[0];
+    const isHomeTeam = inlineTeamId === editingMatch.homeTeamId;
+
+    if (!inlinePlayerName && inlineEventType !== 'corner') {
+      alert('Please select a player from the team roster dropdown!');
+      return;
+    }
+
+    if (inlineEventType === 'sub' && !inlineSubOutPlayerName) {
+      alert('Please select the player subbed out!');
+      return;
+    }
+
+    setSyncStatus('syncing');
+
+    let updatedHomeScore = homeScoreInput;
+    let updatedAwayScore = awayScoreInput;
+
+    let desc = '';
+    switch (inlineEventType) {
+      case 'goal':
+        if (isHomeTeam) updatedHomeScore += 1;
+        else updatedAwayScore += 1;
+        desc = `⚽ GOAL! ${inlinePlayerName || 'Striker'} scores for ${selectedTeamObj.name}!${
+          inlineAssistPlayerName ? ` (Assist: ${inlineAssistPlayerName})` : ''
+        }`;
+        break;
+      case 'yellow_card':
+        desc = `🟨 YELLOW CARD issued to ${inlinePlayerName} (${selectedTeamObj.shortName}).`;
+        break;
+      case 'red_card':
+        desc = `🟥 RED CARD! ${inlinePlayerName} (${selectedTeamObj.shortName}) sent off by match official!`;
+        break;
+      case 'sub':
+        desc = `🔄 SUBSTITUTION (${selectedTeamObj.shortName}): ${inlinePlayerName} comes ON for ${inlineSubOutPlayerName}.`;
+        break;
+      case 'shot_on_target':
+        desc = `🎯 SHOT ON TARGET by ${inlinePlayerName} (${selectedTeamObj.shortName}) saved by keeper!`;
+        break;
+      case 'foul':
+        desc = `🛑 FOUL committed by ${inlinePlayerName} (${selectedTeamObj.shortName}).`;
+        break;
+      case 'corner':
+        desc = `🚩 CORNER KICK awarded to ${selectedTeamObj.name}.`;
+        break;
+    }
+
+    if (inlineCustomNote.trim()) {
+      desc += ` - ${inlineCustomNote.trim()}`;
+    }
+
+    const currentPeriodStr =
+      editingMatch.status === '1st_half'
+        ? '1st_half'
+        : editingMatch.status === '2nd_half'
+        ? '2nd_half'
+        : editingMatch.status === 'halftime'
+        ? 'halftime'
+        : 'fulltime';
+
+    const newEvt: MatchEvent = {
+      id: `evt-${Date.now()}`,
+      minute: matchMinute,
+      second: editingMatch.matchSeconds || matchMinute * 60,
+      type: inlineEventType,
+      teamId: inlineTeamId || editingMatch.homeTeamId,
+      player: inlinePlayerName || selectedTeamObj.name || 'Player',
+      description: desc,
+      period: currentPeriodStr,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      assistPlayer: inlineAssistPlayerName || undefined,
+      subOutPlayer: inlineSubOutPlayerName || undefined,
+    };
+
+    setHomeScoreInput(updatedHomeScore);
+    setAwayScoreInput(updatedAwayScore);
+
+    onUpdateMatchScore(editingMatch.id, updatedHomeScore, updatedAwayScore, newEvt);
+
+    if (onUpdateFullMatch) {
+      if (inlineEventType === 'shot_on_target') {
+        if (isHomeTeam) {
+          onUpdateFullMatch(editingMatch.id, { shotsOnTargetHome: (editingMatch.shotsOnTargetHome || 0) + 1 });
+        } else {
+          onUpdateFullMatch(editingMatch.id, { shotsOnTargetAway: (editingMatch.shotsOnTargetAway || 0) + 1 });
+        }
+      } else if (inlineEventType === 'foul') {
+        if (isHomeTeam) {
+          onUpdateFullMatch(editingMatch.id, { foulsHome: (editingMatch.foulsHome || 0) + 1 });
+        } else {
+          onUpdateFullMatch(editingMatch.id, { foulsAway: (editingMatch.foulsAway || 0) + 1 });
+        }
+      }
+    }
+
+    // Reset inline player selections
+    setInlinePlayerName('');
+    setInlineAssistPlayerName('');
+    setInlineSubOutPlayerName('');
+    setInlineCustomNote('');
+
+    const timeFormatted = formatClockTime(matchMinute, editingMatch?.matchSeconds);
+    setInlineSuccessToast(`✅ Logged ${inlineEventType.toUpperCase()} for ${selectedTeamObj.shortName} at ${timeFormatted}!`);
+    setTimeout(() => {
+      setInlineSuccessToast(null);
+    }, 4000);
+
+    setTimeout(() => {
+      setSyncStatus('synced');
+      setLastSyncTime(new Date().toLocaleTimeString());
+    }, 500);
+  };
+
+  // Manual Event Editor Modal State (For Past Match Corrections)
   const [isEditEventModalOpen, setIsEditEventModalOpen] = useState<boolean>(false);
   const [eventToEdit, setEventToEdit] = useState<MatchEvent | null>(null);
 
@@ -739,6 +875,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     const kickoffEvent: MatchEvent = {
       id: `evt-kickoff-${Date.now()}`,
       minute: 1,
+      second: 0,
       type: 'kickoff',
       teamId: editingMatch.homeTeamId,
       player: 'Match Official',
@@ -754,6 +891,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       isLive: true,
       isFinished: false,
       minute: 1,
+      matchSeconds: 0,
       kickoffTime: new Date().toISOString(),
       currentPeriod: '1st_half',
       events: updatedEvents,
@@ -777,9 +915,12 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     if (!editingMatch || !onUpdateFullMatch) return;
     setSyncStatus('syncing');
 
+    const htSeconds = (halfDuration || 20) * 60;
+
     const halftimeEvent: MatchEvent = {
       id: `evt-ht-${Date.now()}`,
       minute: halfDuration,
+      second: htSeconds,
       type: 'halftime',
       teamId: editingMatch.homeTeamId,
       player: 'Match Official',
@@ -795,6 +936,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       isLive: false,
       isFinished: false,
       minute: halfDuration,
+      matchSeconds: htSeconds,
       currentPeriod: 'halftime',
       events: updatedEvents,
     });
@@ -816,11 +958,13 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     if (!editingMatch || !onUpdateFullMatch) return;
     setSyncStatus('syncing');
 
-    const start2ndHalfMinute = halfDuration + 1;
+    const start2ndHalfMinute = (halfDuration || 20);
+    const start2ndHalfSeconds = (halfDuration || 20) * 60; // Start 2nd half clock from 20:00 (MM:SS)
 
     const kickoff2ndEvent: MatchEvent = {
       id: `evt-2ndhalf-${Date.now()}`,
-      minute: start2ndHalfMinute,
+      minute: start2ndHalfMinute + 1,
+      second: start2ndHalfSeconds,
       type: 'kickoff',
       teamId: editingMatch.awayTeamId,
       player: 'Match Official',
@@ -835,12 +979,13 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       status: '2nd_half',
       isLive: true,
       isFinished: false,
-      minute: start2ndHalfMinute,
+      minute: start2ndHalfMinute + 1,
+      matchSeconds: start2ndHalfSeconds,
       currentPeriod: '2nd_half',
       events: updatedEvents,
     });
 
-    setMatchMinute(start2ndHalfMinute);
+    setMatchMinute(start2ndHalfMinute + 1);
     setIsLiveClockRunning(true);
     onSendPushNotification(
       '▶️ SECOND HALF KICKOFF',
@@ -1780,7 +1925,41 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                 {isLiveRecordingUnlocked ? (
                                   <div className="space-y-4">
                                     {/* USER STORY 3, 5, 6, 9: MATCH PROGRESSION & KICKOFF STATE MACHINE CONTROLS */}
-                                    <div className="p-4 rounded-2xl bg-[#0d1a28] border border-[#4C787E]/40 space-y-3">
+                                    <div className="p-4 rounded-2xl bg-[#0d1a28] border border-[#4C787E]/40 space-y-4">
+                                      {/* PROMINENT BIG DIGITAL LIVE MATCH CLOCK DISPLAY */}
+                                      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#030914] via-[#091829] to-[#030914] border-2 border-emerald-400/60 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-3.5 h-3.5 rounded-full bg-emerald-400 animate-ping shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
+                                          <div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 block font-mono">
+                                              STATUS: {editingMatch.status === '1st_half'
+                                                ? '🔴 1ST HALF LIVE'
+                                                : editingMatch.status === 'halftime'
+                                                ? '⏸️ HALFTIME PAUSE'
+                                                : editingMatch.status === '2nd_half'
+                                                ? '🔴 2ND HALF LIVE'
+                                                : editingMatch.status === 'ended'
+                                                ? '🏁 FULL TIME ENDED'
+                                                : '⚪ UPCOMING / READY'}
+                                            </span>
+                                            <h3 className="font-black text-sm sm:text-base text-white tracking-wider uppercase">
+                                              {teams.find((t) => t.id === editingMatch.homeTeamId)?.name} vs{' '}
+                                              {teams.find((t) => t.id === editingMatch.awayTeamId)?.name}
+                                            </h3>
+                                          </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 bg-[#02050a] px-6 py-2.5 rounded-2xl border-2 border-emerald-400/80 shadow-[0_0_25px_rgba(16,185,129,0.4)]">
+                                          <Clock className="w-7 h-7 text-emerald-400 animate-pulse" />
+                                          <div className="flex flex-col items-center">
+                                            <span className="text-[9px] font-black uppercase tracking-widest text-[#B7CEEC]">CURRENT MATCH TIME</span>
+                                            <span className="text-3xl sm:text-4xl font-black font-mono tracking-widest text-emerald-300 drop-shadow-[0_0_15px_rgba(52,211,153,0.7)]">
+                                              {formatClockTime(matchMinute, editingMatch?.matchSeconds)}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+
                                       <div className="flex items-center justify-between">
                                         <span className="text-xs font-black uppercase text-amber-300 flex items-center gap-1.5">
                                           <Activity className="w-4 h-4 text-amber-400" />
@@ -1903,90 +2082,163 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                       </div>
                                     </div>
 
-                                    {/* USER STORY 4: RECORD LIVE MATCH EVENTS MANUALLY OR VIA AUTO WIZARD */}
+                                    {/* USER STORY 4: INLINE RECORD LIVE MATCH EVENTS WITH TEAM & ROSTER DROPDOWNS */}
                                     <div className="p-4 rounded-2xl bg-[#0d1a28] border border-[#4C787E]/40 space-y-4">
                                       <div className="flex items-center justify-between border-b border-[#4C787E]/30 pb-2">
                                         <span className="text-xs font-black uppercase text-white flex items-center gap-1.5">
                                           <Zap className="w-4 h-4 text-emerald-400 animate-pulse" />
-                                          RECORD LIVE EVENT
+                                          RECORD LIVE EVENT (INLINE CONSOLE)
                                         </span>
                                         <span className="text-[10px] text-emerald-400 font-extrabold font-mono bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/30">
-                                          Current Match Time: ⏱ {formatClockTime(matchMinute, editingMatch?.matchSeconds)}
+                                          Timer: ⏱ {formatClockTime(matchMinute, editingMatch?.matchSeconds)}
                                         </span>
                                       </div>
 
-                                      {/* PROMINENT AUTO POPUP WIZARD LAUNCH BUTTON */}
-
-
                                       {/* Event Type Category Selector */}
                                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold">
-                                        <button
-                                          type="button"
-                                          onClick={() => openWizardWithCategory('goal')}
-                                          className="py-2.5 px-3 rounded-xl border bg-[#122336] hover:bg-emerald-500/20 text-emerald-300 border-[#4C787E]/40 font-black flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-md"
-                                        >
-                                          ⚽ Goal
-                                        </button>
+                                        {[
+                                          { type: 'goal', label: '⚽ Goal', color: 'bg-emerald-500/20 border-emerald-400 text-emerald-300' },
+                                          { type: 'yellow_card', label: '🟨 Yellow Card', color: 'bg-yellow-500/20 border-yellow-400 text-yellow-300' },
+                                          { type: 'red_card', label: '🟥 Red Card', color: 'bg-rose-500/20 border-rose-400 text-rose-300' },
+                                          { type: 'sub', label: '🔄 Substitution', color: 'bg-sky-500/20 border-sky-400 text-sky-300' },
+                                          { type: 'shot_on_target', label: '🎯 Shot on Target', color: 'bg-purple-500/20 border-purple-400 text-purple-300' },
+                                          { type: 'foul', label: '🛑 Foul / Free Kick', color: 'bg-orange-500/20 border-orange-400 text-orange-300' },
+                                          { type: 'corner', label: '🚩 Corner Kick', color: 'bg-indigo-500/20 border-indigo-400 text-indigo-300' },
+                                        ].map((item) => (
+                                          <button
+                                            key={`inline-btn-${item.type}`}
+                                            type="button"
+                                            onClick={() => {
+                                              setInlineEventType(item.type as any);
+                                              setInlinePlayerName('');
+                                              setInlineAssistPlayerName('');
+                                              setInlineSubOutPlayerName('');
+                                            }}
+                                            className={`py-2.5 px-3 rounded-xl border font-black flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-md ${
+                                              inlineEventType === item.type
+                                                ? `${item.color} ring-2 ring-emerald-400 scale-[1.03]`
+                                                : 'bg-[#122336] border-[#4C787E]/40 text-gray-300 hover:text-white'
+                                            }`}
+                                          >
+                                            {item.label}
+                                          </button>
+                                        ))}
+                                      </div>
 
-                                        <button
-                                          type="button"
-                                          onClick={() => openWizardWithCategory('yellow_card')}
-                                          className="py-2.5 px-3 rounded-xl border bg-[#122336] hover:bg-yellow-500/20 text-yellow-300 border-[#4C787E]/40 font-black flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-md"
-                                        >
-                                          🟨 Yellow Card
-                                        </button>
+                                      {/* INLINE QUICK RECORDING DROPDOWNS FORM */}
+                                      <div className="p-3.5 rounded-2xl bg-[#091522] border border-[#4C787E]/40 space-y-3">
+                                        {inlineSuccessToast && (
+                                          <div className="p-2.5 rounded-xl bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-xs font-bold font-mono animate-bounce flex items-center gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                            <span>{inlineSuccessToast}</span>
+                                          </div>
+                                        )}
 
-                                        <button
-                                          type="button"
-                                          onClick={() => openWizardWithCategory('red_card')}
-                                          className="py-2.5 px-3 rounded-xl border bg-[#122336] hover:bg-rose-500/20 text-rose-300 border-[#4C787E]/40 font-black flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-md"
-                                        >
-                                          🟥 Red Card
-                                        </button>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                          {/* 1. SELECT TEAM DROPDOWN */}
+                                          <div>
+                                            <label className="text-[11px] font-black uppercase text-[#B7CEEC] block mb-1">
+                                              1. Select Team
+                                            </label>
+                                            <select
+                                              value={inlineTeamId || editingMatch.homeTeamId}
+                                              onChange={(e) => {
+                                                setInlineTeamId(e.target.value);
+                                                setInlinePlayerName('');
+                                                setInlineAssistPlayerName('');
+                                                setInlineSubOutPlayerName('');
+                                              }}
+                                              className="w-full p-2.5 rounded-xl bg-[#060e18] border border-[#4C787E]/50 text-white font-extrabold focus:outline-none focus:border-[#B7CEEC]"
+                                            >
+                                              <option value={editingMatch.homeTeamId}>
+                                                ⚽ {teams.find((t) => t.id === editingMatch.homeTeamId)?.name} (Home Team)
+                                              </option>
+                                              <option value={editingMatch.awayTeamId}>
+                                                ⚽ {teams.find((t) => t.id === editingMatch.awayTeamId)?.name} (Away Team)
+                                              </option>
+                                            </select>
+                                          </div>
 
-                                        <button
-                                          type="button"
-                                          onClick={() => openWizardWithCategory('sub')}
-                                          className="py-2.5 px-3 rounded-xl border bg-[#122336] hover:bg-sky-500/20 text-sky-300 border-[#4C787E]/40 font-black flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-md"
-                                        >
-                                          🔄 Substitution
-                                        </button>
+                                          {/* 2. SELECT PLAYER FROM SELECTED TEAM'S ROSTER DROPDOWN */}
+                                          {inlineEventType !== 'corner' && (
+                                            <div>
+                                              <label className="text-[11px] font-black uppercase text-[#B7CEEC] block mb-1">
+                                                2. Select Player ({teams.find((t) => t.id === (inlineTeamId || editingMatch.homeTeamId))?.shortName} Roster)
+                                              </label>
+                                              <select
+                                                value={inlinePlayerName}
+                                                onChange={(e) => setInlinePlayerName(e.target.value)}
+                                                className="w-full p-2.5 rounded-xl bg-[#060e18] border border-[#4C787E]/50 text-white font-bold focus:outline-none focus:border-[#B7CEEC]"
+                                              >
+                                                <option value="">-- Choose Roster Player --</option>
+                                                {(
+                                                  teams.find((t) => t.id === (inlineTeamId || editingMatch.homeTeamId))?.roster || []
+                                                ).map((p, idx) => (
+                                                  <option key={`inline-p-${p.id}-${idx}`} value={p.name}>
+                                                    #{p.number} {p.name} ({p.position})
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            </div>
+                                          )}
 
-                                        <button
-                                          type="button"
-                                          onClick={() => openWizardWithCategory('shot_on_target')}
-                                          className="py-2.5 px-3 rounded-xl border bg-[#122336] hover:bg-purple-500/20 text-purple-300 border-[#4C787E]/40 font-black flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-md"
-                                        >
-                                          🎯 Shot on Target
-                                        </button>
+                                          {/* 3. ASSIST / SUB OUT DROPDOWNS */}
+                                          {inlineEventType === 'goal' && (
+                                            <div>
+                                              <label className="text-[11px] font-black uppercase text-[#B7CEEC] block mb-1">
+                                                3. Assist Provider (Optional)
+                                              </label>
+                                              <select
+                                                value={inlineAssistPlayerName}
+                                                onChange={(e) => setInlineAssistPlayerName(e.target.value)}
+                                                className="w-full p-2.5 rounded-xl bg-[#060e18] border border-[#4C787E]/50 text-white font-bold focus:outline-none"
+                                              >
+                                                <option value="">None / Solo Goal</option>
+                                                {(
+                                                  teams.find((t) => t.id === (inlineTeamId || editingMatch.homeTeamId))?.roster || []
+                                                ).map((p, idx) => (
+                                                  <option key={`inline-ast-${p.id}-${idx}`} value={p.name}>
+                                                    #{p.number} {p.name}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            </div>
+                                          )}
 
-                                        <button
-                                          type="button"
-                                          onClick={() => openWizardWithCategory('foul')}
-                                          className="py-2.5 px-3 rounded-xl border bg-[#122336] hover:bg-orange-500/20 text-orange-300 border-[#4C787E]/40 font-black flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-md"
-                                        >
-                                          🛑 Foul / Free Kick
-                                        </button>
-
-                                        <button
-                                          type="button"
-                                          onClick={() => openWizardWithCategory('corner')}
-                                          className="py-2.5 px-3 rounded-xl border bg-[#122336] hover:bg-indigo-500/20 text-indigo-300 border-[#4C787E]/40 font-black flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-md"
-                                        >
-                                          🚩 Corner Kick
-                                        </button>
-
-                                        <div className="flex items-center gap-1 text-[11px]">
-                                          <span className="text-gray-400">Min:</span>
-                                          <input
-                                            type="number"
-                                            min="1"
-                                            max="120"
-                                            value={matchMinute}
-                                            onChange={(e) => setMatchMinute(Number(e.target.value))}
-                                            className="w-full p-2 rounded-xl bg-[#122336] border border-[#4C787E]/40 text-white text-center font-bold"
-                                          />
+                                          {inlineEventType === 'sub' && (
+                                            <div>
+                                              <label className="text-[11px] font-black uppercase text-[#B7CEEC] block mb-1">
+                                                3. Player Subbed Out (OFF)
+                                              </label>
+                                              <select
+                                                value={inlineSubOutPlayerName}
+                                                onChange={(e) => setInlineSubOutPlayerName(e.target.value)}
+                                                className="w-full p-2.5 rounded-xl bg-[#060e18] border border-[#4C787E]/50 text-white font-bold focus:outline-none"
+                                              >
+                                                <option value="">-- Choose Player Out --</option>
+                                                {(
+                                                  teams.find((t) => t.id === (inlineTeamId || editingMatch.homeTeamId))?.roster || []
+                                                ).map((p, idx) => (
+                                                  <option key={`inline-out-${p.id}-${idx}`} value={p.name}>
+                                                    #{p.number} {p.name}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            </div>
+                                          )}
                                         </div>
+
+                                        {/* SUBMIT BUTTON WITH LIVE TIMER STAMP */}
+                                        <button
+                                          type="button"
+                                          onClick={handleConfirmInlineEvent}
+                                          className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400 hover:brightness-110 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-xl transition-all mt-2"
+                                        >
+                                          <Zap className="w-4 h-4 text-slate-950" />
+                                          <span>
+                                            🚀 CONFIRM & LOG {inlineEventType.toUpperCase()} (⏱️ {formatClockTime(matchMinute, editingMatch?.matchSeconds)})
+                                          </span>
+                                        </button>
                                       </div>
                                     </div>
 
