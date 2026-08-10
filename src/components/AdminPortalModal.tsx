@@ -49,6 +49,7 @@ import { TeamLogo } from './TeamLogos';
 import { Player3DAvatar } from './Player3DAvatar';
 import { PlayerFormModal } from './PlayerFormModal';
 import { AutoEventWizardModal } from './AutoEventWizardModal';
+import { EditMatchEventModal } from './EditMatchEventModal';
 import { MatchLineupBuilder } from './MatchLineupBuilder';
 import { CompletedMatchAnalytics } from './CompletedMatchAnalytics';
 import { auth } from '../lib/firebase';
@@ -270,6 +271,34 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   // Auto Event Wizard Popup State
   const [isAutoWizardOpen, setIsAutoWizardOpen] = useState<boolean>(false);
   const [wizardEventType, setWizardEventType] = useState<'goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner'>('goal');
+
+  // Manual Event Editor Modal State
+  const [isEditEventModalOpen, setIsEditEventModalOpen] = useState<boolean>(false);
+  const [eventToEdit, setEventToEdit] = useState<MatchEvent | null>(null);
+
+  const handleOpenEditEventModal = (evt: MatchEvent | null) => {
+    setEventToEdit(evt);
+    setIsEditEventModalOpen(true);
+  };
+
+  const handleSaveEditedEvents = (updatedEvents: MatchEvent[], newHomeScore: number, newAwayScore: number) => {
+    if (!editingMatch || !onUpdateFullMatch) return;
+    setSyncStatus('syncing');
+
+    setHomeScoreInput(newHomeScore);
+    setAwayScoreInput(newAwayScore);
+
+    onUpdateFullMatch(editingMatch.id, {
+      events: updatedEvents,
+      homeScore: newHomeScore,
+      awayScore: newAwayScore,
+    });
+
+    setTimeout(() => {
+      setSyncStatus('synced');
+      setLastSyncTime(new Date().toLocaleTimeString());
+    }, 500);
+  };
 
   const openWizardWithCategory = (cat: 'goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner') => {
     setWizardEventType(cat);
@@ -1822,64 +1851,82 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                       </div>
                                     </div>
 
-                                    {/* USER STORY 8: REVIEW RECORDED LIVE DATA & TIMELINE AUDIT */}
-                                    <div className="p-4 rounded-2xl bg-[#0d1a28] border border-[#4C787E]/40 space-y-3">
-                                      <div className="flex items-center justify-between border-b border-[#4C787E]/30 pb-2">
-                                        <span className="text-xs font-black uppercase text-amber-300 flex items-center gap-1.5">
-                                          <Clock className="w-4 h-4" />
-                                          Recorded Match Events Log ({editingMatch.events?.length || 0} Recorded)
-                                        </span>
-                                        <span className="text-[10px] text-gray-400">
-                                          Click Trash icon to correct / delete wrong entries
-                                        </span>
-                                      </div>
+                                      {/* USER STORY 8: REVIEW RECORDED LIVE DATA & TIMELINE AUDIT & MANUAL EVENT CORRECTION */}
+                                      <div className="p-4 rounded-2xl bg-[#0d1a28] border border-[#4C787E]/40 space-y-3">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-[#4C787E]/30 pb-2 gap-2">
+                                          <span className="text-xs font-black uppercase text-amber-300 flex items-center gap-1.5">
+                                            <Clock className="w-4 h-4" />
+                                            Recorded Match Events Log ({editingMatch.events?.length || 0} Recorded)
+                                          </span>
+                                          <div className="flex items-center gap-2">
+                                            <button
+                                              type="button"
+                                              onClick={() => handleOpenEditEventModal(null)}
+                                              className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/40 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                                            >
+                                              <Plus className="w-3.5 h-3.5 text-amber-400" />
+                                              <span>Add / Correct Past Event</span>
+                                            </button>
+                                          </div>
+                                        </div>
 
-                                      <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                                        {(!editingMatch.events || editingMatch.events.length === 0) ? (
-                                          <p className="text-center text-xs text-gray-500 py-4">
-                                            No events recorded yet for this fixture. Use the controls above to log events!
-                                          </p>
-                                        ) : (
-                                          editingMatch.events.map((evt, idx) => {
-                                            const eventTeam = teams.find((t) => t.id === evt.teamId);
-                                            return (
-                                              <div
-                                                key={`admin-evt-${evt.id}-${idx}`}
-                                                className="p-3 rounded-xl bg-[#08131f] border border-[#4C787E]/30 flex items-center justify-between text-xs transition-all hover:border-[#B7CEEC]/40"
-                                              >
-                                                <div className="flex items-center gap-3">
-                                                  <span className="px-2 py-1 rounded-lg bg-[#142638] font-black text-[#B7CEEC] text-[11px] border border-[#4C787E]/40">
-                                                    {evt.minute}'
-                                                  </span>
+                                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                          {(!editingMatch.events || editingMatch.events.length === 0) ? (
+                                            <p className="text-center text-xs text-gray-500 py-4">
+                                              No events recorded yet for this fixture. Use the controls above to log events!
+                                            </p>
+                                          ) : (
+                                            editingMatch.events.map((evt, idx) => {
+                                              const eventTeam = teams.find((t) => t.id === evt.teamId);
+                                              return (
+                                                <div
+                                                  key={`admin-evt-${evt.id}-${idx}`}
+                                                  className="p-3 rounded-xl bg-[#08131f] border border-[#4C787E]/30 flex items-center justify-between text-xs transition-all hover:border-[#B7CEEC]/40"
+                                                >
+                                                  <div className="flex items-center gap-3">
+                                                    <span className="px-2 py-1 rounded-lg bg-[#142638] font-black text-[#B7CEEC] text-[11px] border border-[#4C787E]/40">
+                                                      {evt.minute}'
+                                                    </span>
 
-                                                  <div>
-                                                    <div className="flex items-center gap-2">
-                                                      {evt.teamId && <TeamLogo teamId={evt.teamId} size={16} />}
-                                                      <span className="font-bold text-white">{evt.description}</span>
+                                                    <div>
+                                                      <div className="flex items-center gap-2">
+                                                        {evt.teamId && <TeamLogo teamId={evt.teamId} size={16} />}
+                                                        <span className="font-bold text-white">{evt.description}</span>
+                                                      </div>
+                                                      {evt.timestamp && (
+                                                        <span className="text-[10px] text-gray-500">
+                                                          Logged at {evt.timestamp} • Period: {evt.period || 'live'}
+                                                        </span>
+                                                      )}
                                                     </div>
-                                                    {evt.timestamp && (
-                                                      <span className="text-[10px] text-gray-500">
-                                                        Logged at {evt.timestamp} • Period: {evt.period || 'live'}
-                                                      </span>
-                                                    )}
+                                                  </div>
+
+                                                  <div className="flex items-center gap-1.5 shrink-0">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleOpenEditEventModal(evt)}
+                                                      title="Edit event details or scorer"
+                                                      className="p-1.5 rounded-lg bg-teal-500/20 hover:bg-teal-500/40 text-teal-300 transition-colors cursor-pointer"
+                                                    >
+                                                      <Edit2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleDeleteEvent(evt.id)}
+                                                      title="Delete incorrect entry"
+                                                      className="p-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 transition-colors cursor-pointer"
+                                                    >
+                                                      <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
                                                   </div>
                                                 </div>
-
-                                                <button
-                                                  onClick={() => handleDeleteEvent(evt.id)}
-                                                  title="Delete incorrect entry"
-                                                  className="p-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 transition-colors cursor-pointer"
-                                                >
-                                                  <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                              </div>
-                                            );
-                                          })
-                                        )}
+                                              );
+                                            })
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                ) : (
+                                  ) : (
                                   <div className="p-6 rounded-2xl bg-[#060b14]/90 border border-[#B7CEEC]/30 text-center space-y-4 shadow-[0_0_25px_rgba(76,120,126,0.15)] backdrop-blur-xl">
                                     <div className="w-14 h-14 rounded-2xl bg-[#4C787E]/15 border border-[#B7CEEC]/30 text-teal-300 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(76,120,126,0.3)]">
                                       <Clock className="w-7 h-7 text-teal-300 animate-pulse" />
@@ -2363,6 +2410,18 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
           initialEventType={wizardEventType}
           currentMatchMinute={matchMinute}
           onConfirmEvent={handleConfirmWizardEvent}
+        />
+      )}
+
+      {/* DEDICATED EVENT EDITOR / MANUAL EVENT CORRECTION MODAL */}
+      {editingMatch && (
+        <EditMatchEventModal
+          isOpen={isEditEventModalOpen}
+          onClose={() => setIsEditEventModalOpen(false)}
+          match={editingMatch}
+          teams={teams}
+          eventToEdit={eventToEdit}
+          onSaveEvent={handleSaveEditedEvents}
         />
       )}
 
