@@ -43,34 +43,31 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
   const getTeam = (id: string) => teams.find((t) => t.id === id);
 
-  const [timeLeft, setTimeLeft] = useState({ days: 2, hours: 14, minutes: 35, seconds: 48 });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: 59, seconds: 59 };
-        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        if (prev.days > 0) return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        return prev;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   // Helper to extract exact scheduled Kickoff Date
   const getKickoffDate = (m?: Match): Date | null => {
     if (!m) return null;
+
+    // 1. Check if m.kickoffTime (ISO timestamp) exists
     if (m.kickoffTime) {
       const d = new Date(m.kickoffTime);
       if (!isNaN(d.getTime())) return d;
     }
+
     if (!m.startTime) return null;
+
+    // 2. Try direct Date parsing
     const directDate = new Date(m.startTime);
     if (!isNaN(directDate.getTime())) return directDate;
 
+    // 3. Parse formatted date string e.g. "Sun, Aug 16 • 8:30 AM" or "Aug 16 8:30 AM"
+    const monthMatch = m.startTime.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})/i);
     const timeMatch = m.startTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-    if (timeMatch) {
+
+    if (monthMatch && timeMatch) {
+      const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      const monthIndex = monthNames.indexOf(monthMatch[1].toLowerCase());
+      const day = parseInt(monthMatch[2], 10);
+
       let hours = parseInt(timeMatch[1], 10);
       const minutes = parseInt(timeMatch[2], 10);
       const ampm = timeMatch[3]?.toUpperCase();
@@ -78,20 +75,49 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
       if (ampm === 'AM' && hours === 12) hours = 0;
 
       const targetDate = new Date();
-      const monthMatch = m.startTime.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})/i);
-      if (monthMatch) {
-        const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-        const monthIndex = monthNames.indexOf(monthMatch[1].toLowerCase());
-        const day = parseInt(monthMatch[2], 10);
-        if (monthIndex !== -1) {
-          targetDate.setMonth(monthIndex, day);
-        }
+      if (monthIndex !== -1) {
+        targetDate.setMonth(monthIndex, day);
       }
       targetDate.setHours(hours, minutes, 0, 0);
+
+      // If targetDate is in the past by > 30 days, assume next year
+      if (targetDate.getTime() < Date.now() - 30 * 24 * 3600 * 1000) {
+        targetDate.setFullYear(targetDate.getFullYear() + 1);
+      }
+
       return targetDate;
     }
+
     return null;
   };
+
+  // Dynamically calculate remaining time to nextMatch scheduled kickoff
+  const calculateTimeLeft = () => {
+    if (!nextMatch) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    const targetDate = getKickoffDate(nextMatch);
+    if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+    const diffMs = targetDate.getTime() - Date.now();
+    if (diffMs <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+    const totalSeconds = Math.floor(diffMs / 1000);
+    const days = Math.floor(totalSeconds / (3600 * 24));
+    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return { days, hours, minutes, seconds };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  useEffect(() => {
+    setTimeLeft(calculateTimeLeft());
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [nextMatch?.id, nextMatch?.startTime, nextMatch?.kickoffTime]);
 
   const nextKickoffDate = nextMatch ? getKickoffDate(nextMatch) : null;
   const isPastKickoffTime = nextKickoffDate ? Date.now() > nextKickoffDate.getTime() : false;
