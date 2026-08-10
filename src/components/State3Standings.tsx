@@ -162,10 +162,12 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                 return (
                   <motion.div
                     key={`standing-row-${team.id}-${index}`}
-                    whileHover={{ backgroundColor: 'rgba(76, 120, 126, 0.2)' }}
+                    whileHover={{ backgroundColor: rank <= 2 ? 'rgba(52, 211, 153, 0.2)' : 'rgba(76, 120, 126, 0.2)' }}
                     onClick={() => onSelectTeam(team)}
-                    className={`grid grid-cols-12 items-center px-2 py-3.5 rounded-xl cursor-pointer transition-all ${
-                      rank === 1 ? 'bg-[#4C787E]/15 border-l-4 border-[#4C787E]' : ''
+                    className={`grid grid-cols-12 items-center px-2 py-3 rounded-xl cursor-pointer transition-all ${
+                      rank <= 2
+                        ? 'bg-emerald-500/10 border-l-4 border-emerald-400 shadow-[inset_0_0_15px_rgba(16,185,129,0.12)]'
+                        : ''
                     }`}
                   >
                     {/* Rank */}
@@ -386,12 +388,17 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
           </div>
         )}
 
-        <div className="mt-4 pt-3 border-t border-[#B7CEEC]/20 flex items-center justify-between text-[11px] text-[#B7CEEC]/70">
+        <div className="mt-4 pt-3 border-t border-[#B7CEEC]/20 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-[#B7CEEC]/70 gap-2">
           <span className="flex items-center gap-1">
             <Info className="w-3.5 h-3.5 text-[#4C787E]" />
             {activeTab === 'standings' ? 'Tap team to inspect roster' : 'Tap player to inspect telemetry'}
           </span>
-          <span className="text-[#4C787E] font-extrabold f1-sub-header text-[10px]">1st Place = Championship Trophy</span>
+          <div className="flex items-center gap-1.5 bg-[#080d14] px-2.5 py-1 rounded-lg border border-emerald-500/30">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            <span className="text-emerald-300 font-extrabold f1-sub-header text-[10px] uppercase tracking-wide">
+              Top 2 Qualify for League Cup Finals
+            </span>
+          </div>
         </div>
       </motion.div>
 
