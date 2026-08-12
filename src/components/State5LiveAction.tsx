@@ -27,24 +27,6 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 }) => {
   const [simulatedNoLive, setSimulatedNoLive] = useState(false);
 
-  // Sort matches chronologically (Week 1 -> Week 2 -> Week 3 -> Week 4)
-  const sortedMatches = [...matches].sort((a, b) => {
-    const wA = a.weekNumber || 99;
-    const wB = b.weekNumber || 99;
-    if (wA !== wB) return wA - wB;
-    return a.id.localeCompare(b.id);
-  });
-
-  const actualLiveMatches = sortedMatches.filter(
-    (m) => m.isLive || m.status === '1st_half' || m.status === 'halftime' || m.status === '2nd_half'
-  );
-  const liveMatches = simulatedNoLive ? [] : actualLiveMatches;
-  const upcomingMatches = sortedMatches.filter((m) => !m.isLive && !m.isFinished && m.status !== 'ended' && m.status !== '1st_half' && m.status !== 'halftime' && m.status !== '2nd_half');
-  const finishedMatches = sortedMatches.filter((m) => m.isFinished || m.status === 'ended');
-  const nextMatch = upcomingMatches[0] || sortedMatches[0];
-
-  const getTeam = (id: string) => teams.find((t) => t.id === id);
-
   // Helper to extract exact scheduled Kickoff Date
   const getKickoffDate = (m?: Match): Date | null => {
     if (!m) return null;
@@ -92,6 +74,31 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
     return null;
   };
+
+  // Sort matches chronologically strictly by Kickoff Date & Time, then Week Number
+  const sortedMatches = [...matches].sort((a, b) => {
+    const dateA = getKickoffDate(a);
+    const dateB = getKickoffDate(b);
+    if (dateA && dateB) {
+      const diff = dateA.getTime() - dateB.getTime();
+      if (diff !== 0) return diff;
+    }
+
+    const wA = a.weekNumber || 99;
+    const wB = b.weekNumber || 99;
+    if (wA !== wB) return wA - wB;
+    return a.id.localeCompare(b.id);
+  });
+
+  const actualLiveMatches = sortedMatches.filter(
+    (m) => m.isLive || m.status === '1st_half' || m.status === 'halftime' || m.status === '2nd_half'
+  );
+  const liveMatches = simulatedNoLive ? [] : actualLiveMatches;
+  const upcomingMatches = sortedMatches.filter((m) => !m.isLive && !m.isFinished && m.status !== 'ended' && m.status !== '1st_half' && m.status !== 'halftime' && m.status !== '2nd_half');
+  const finishedMatches = sortedMatches.filter((m) => m.isFinished || m.status === 'ended');
+  const nextMatch = upcomingMatches[0] || sortedMatches[0];
+
+  const getTeam = (id: string) => teams.find((t) => t.id === id);
 
   // Dynamically calculate remaining time to nextMatch scheduled kickoff
   const calculateTimeLeft = () => {

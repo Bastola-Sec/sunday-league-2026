@@ -286,6 +286,115 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   const [selectedMotmPlayerId, setSelectedMotmPlayerId] = useState<string>('');
   const [selectedMotmPlayerName, setSelectedMotmPlayerName] = useState<string>('');
 
+  // Fixture Schedule Editor Modal State (League Commissioner Exclusive)
+  const [isFixtureEditModalOpen, setIsFixtureEditModalOpen] = useState<boolean>(false);
+  const [fixtureToEdit, setFixtureToEdit] = useState<Match | null>(null);
+
+  const [editFixtureHomeId, setEditFixtureHomeId] = useState<string>('');
+  const [editFixtureAwayId, setEditFixtureAwayId] = useState<string>('');
+  const [editFixtureStartTime, setEditFixtureStartTime] = useState<string>('');
+  const [editFixtureVenue, setEditFixtureVenue] = useState<string>('');
+  const [editFixtureWeekNumber, setEditFixtureWeekNumber] = useState<number>(1);
+  const [editFixtureMatchType, setEditFixtureMatchType] = useState<string>('Regular');
+  const [editFixtureMatchFormat, setEditFixtureMatchFormat] = useState<'7v7' | '8v8'>('7v7');
+  const [editFixtureHalfDuration, setEditFixtureHalfDuration] = useState<number>(20);
+  const [editFixtureStatus, setEditFixtureStatus] = useState<string>('scheduled');
+  const [editFixtureHomeScore, setEditFixtureHomeScore] = useState<number>(0);
+  const [editFixtureAwayScore, setEditFixtureAwayScore] = useState<number>(0);
+  const [editFixtureMotmPlayerName, setEditFixtureMotmPlayerName] = useState<string>('');
+
+  const handleOpenEditFixtureModal = (matchItem: Match) => {
+    setFixtureToEdit(matchItem);
+    setEditFixtureHomeId(matchItem.homeTeamId);
+    setEditFixtureAwayId(matchItem.awayTeamId);
+    setEditFixtureStartTime(matchItem.startTime || 'Sun, Aug 16 • 8:30 AM');
+    setEditFixtureVenue(matchItem.venue || 'De Anza Stadium');
+    setEditFixtureWeekNumber(matchItem.weekNumber || 1);
+    setEditFixtureMatchType(matchItem.matchType || 'Regular');
+    setEditFixtureMatchFormat(matchItem.matchFormat || '7v7');
+    setEditFixtureHalfDuration(matchItem.halfDurationMinutes || 20);
+    setEditFixtureStatus(matchItem.status || 'scheduled');
+    setEditFixtureHomeScore(matchItem.homeScore || 0);
+    setEditFixtureAwayScore(matchItem.awayScore || 0);
+    setEditFixtureMotmPlayerName(matchItem.motmPlayerName || '');
+    setIsFixtureEditModalOpen(true);
+  };
+
+  const handleOpenCreateFixtureModal = () => {
+    const newId = `FIX-00${matches.length + 1}`;
+    const defaultHome = teams[0]?.id || 'momo-strikers';
+    const defaultAway = teams[1]?.id || 'jhyap-warriors';
+    const draftMatch: Match = {
+      id: newId,
+      homeTeamId: defaultHome,
+      awayTeamId: defaultAway,
+      homeScore: 0,
+      awayScore: 0,
+      minute: 0,
+      isLive: false,
+      isFinished: false,
+      startTime: 'Sun, Aug 30 • 8:30 AM',
+      venue: 'De Anza Stadium',
+      possessionHome: 50,
+      possessionAway: 50,
+      shotsHome: 0,
+      shotsAway: 0,
+      shotsOnTargetHome: 0,
+      shotsOnTargetAway: 0,
+      foulsHome: 0,
+      foulsAway: 0,
+      events: [],
+      weekNumber: matches.length > 0 ? (matches[matches.length - 1].weekNumber || 1) : 1,
+      matchType: 'Regular',
+      status: 'scheduled',
+      matchFormat: '7v7',
+      halfDurationMinutes: 20,
+    };
+    setFixtureToEdit(draftMatch);
+    setEditFixtureHomeId(draftMatch.homeTeamId);
+    setEditFixtureAwayId(draftMatch.awayTeamId);
+    setEditFixtureStartTime(draftMatch.startTime);
+    setEditFixtureVenue(draftMatch.venue);
+    setEditFixtureWeekNumber(draftMatch.weekNumber || 1);
+    setEditFixtureMatchType(draftMatch.matchType || 'Regular');
+    setEditFixtureMatchFormat(draftMatch.matchFormat || '7v7');
+    setEditFixtureHalfDuration(draftMatch.halfDurationMinutes || 20);
+    setEditFixtureStatus('scheduled');
+    setEditFixtureHomeScore(0);
+    setEditFixtureAwayScore(0);
+    setEditFixtureMotmPlayerName('');
+    setIsFixtureEditModalOpen(true);
+  };
+
+  const handleSaveFixtureModal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fixtureToEdit || !onUpdateFullMatch) return;
+
+    const isEnded = editFixtureStatus === 'ended';
+    const isLiveMatch = editFixtureStatus === '1st_half' || editFixtureStatus === '2nd_half' || editFixtureStatus === 'halftime';
+
+    const updatedPayload: Partial<Match> = {
+      homeTeamId: editFixtureHomeId,
+      awayTeamId: editFixtureAwayId,
+      startTime: editFixtureStartTime,
+      venue: editFixtureVenue,
+      weekNumber: Number(editFixtureWeekNumber) || 1,
+      matchType: editFixtureMatchType,
+      matchFormat: editFixtureMatchFormat,
+      halfDurationMinutes: Number(editFixtureHalfDuration) || 20,
+      status: editFixtureStatus as any,
+      isFinished: isEnded,
+      isLive: isLiveMatch,
+      homeScore: Number(editFixtureHomeScore) || 0,
+      awayScore: Number(editFixtureAwayScore) || 0,
+      motmPlayerName: editFixtureMotmPlayerName.trim() || undefined,
+    };
+
+    onUpdateFullMatch(fixtureToEdit.id, updatedPayload);
+    setIsFixtureEditModalOpen(false);
+    setFixtureToEdit(null);
+  };
+
   // Sync inlineTeamId when editingMatch changes
   useEffect(() => {
     if (editingMatch) {
@@ -1251,7 +1360,53 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       ? matches.filter((m) => m.homeTeamId === currentAdmin.teamId || m.awayTeamId === currentAdmin.teamId)
       : matches;
 
+  // Helper to extract exact scheduled Kickoff Date for sorting
+  const getMatchKickoffDateForSort = (m?: Match): Date | null => {
+    if (!m) return null;
+    if (m.kickoffTime) {
+      const d = new Date(m.kickoffTime);
+      if (!isNaN(d.getTime())) return d;
+    }
+    if (!m.startTime) return null;
+    const directDate = new Date(m.startTime);
+    if (!isNaN(directDate.getTime())) return directDate;
+
+    const monthMatch = m.startTime.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})/i);
+    const timeMatch = m.startTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+
+    if (monthMatch && timeMatch) {
+      const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      const monthIndex = monthNames.indexOf(monthMatch[1].toLowerCase());
+      const day = parseInt(monthMatch[2], 10);
+
+      let hours = parseInt(timeMatch[1], 10);
+      const minutes = parseInt(timeMatch[2], 10);
+      const ampm = timeMatch[3]?.toUpperCase();
+      if (ampm === 'PM' && hours < 12) hours += 12;
+      if (ampm === 'AM' && hours === 12) hours = 0;
+
+      const targetDate = new Date();
+      if (monthIndex !== -1) {
+        targetDate.setMonth(monthIndex, day);
+      }
+      targetDate.setHours(hours, minutes, 0, 0);
+
+      if (targetDate.getTime() < Date.now() - 30 * 24 * 3600 * 1000) {
+        targetDate.setFullYear(targetDate.getFullYear() + 1);
+      }
+      return targetDate;
+    }
+    return null;
+  };
+
   const visibleMatches = [...rawVisibleMatches].sort((a, b) => {
+    const dA = getMatchKickoffDateForSort(a);
+    const dB = getMatchKickoffDateForSort(b);
+    if (dA && dB) {
+      const diff = dA.getTime() - dB.getTime();
+      if (diff !== 0) return diff;
+    }
+
     const wA = a.weekNumber || 99;
     const wB = b.weekNumber || 99;
     if (wA !== wB) return wA - wB;
@@ -1629,9 +1784,21 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                               {visibleMatches.length} Fixtures
                             </span>
                           </h4>
-                          <span className="text-[11px] text-[#B7CEEC]/70 font-medium">
-                            Click any match tile to launch live recorder console
-                          </span>
+                          <div className="flex items-center gap-2">
+                            {isCommish && (
+                              <button
+                                type="button"
+                                onClick={handleOpenCreateFixtureModal}
+                                className="px-3 py-1 rounded-xl bg-gradient-to-r from-[#4C787E] to-teal-500 hover:from-[#3a5d62] hover:to-teal-400 text-white text-xs font-black flex items-center gap-1.5 shadow-lg transition-all cursor-pointer border border-teal-300/40"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>+ Add Fixture</span>
+                              </button>
+                            )}
+                            <span className="hidden sm:inline text-[11px] text-[#B7CEEC]/70 font-medium">
+                              Click any match tile to launch live recorder console
+                            </span>
+                          </div>
                         </div>
 
                         {(() => {
@@ -1694,7 +1861,24 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                         )}
                                         {badgeText}
                                       </span>
-                                      <span className="text-[#B7CEEC] font-bold text-[10px] uppercase tracking-wider">{m.venue}</span>
+
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[#B7CEEC] font-bold text-[10px] uppercase tracking-wider">{m.venue}</span>
+                                        {isCommish && (
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleOpenEditFixtureModal(m);
+                                            }}
+                                            className="px-2.5 py-0.5 rounded-lg bg-[#4C787E]/30 hover:bg-[#4C787E]/70 text-teal-200 border border-[#4C787E]/60 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-md"
+                                            title="Edit Fixture Details & Schedule"
+                                          >
+                                            <Edit2 className="w-3 h-3 text-teal-300" />
+                                            <span>Edit</span>
+                                          </button>
+                                        )}
+                                      </div>
                                     </div>
 
                                     {/* Scoreboard Row */}
@@ -3057,6 +3241,253 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                 <span>🏆 CONFIRM & AWARD MOTM</span>
               </button>
             </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* FIXTURE SCHEDULE EDITOR MODAL (COMMISSIONER EXCLUSIVE) */}
+      {isFixtureEditModalOpen && fixtureToEdit && (
+        <div className="fixed inset-0 bg-[#020408]/92 backdrop-blur-2xl z-[70] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-[#05080c]/98 border-2 border-[#4C787E] rounded-3xl max-w-2xl w-full p-5 sm:p-7 space-y-5 shadow-[0_0_50px_rgba(76,120,126,0.35)] relative text-white max-h-[92vh] overflow-y-auto custom-scrollbar"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#B7CEEC]/20 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-[#4C787E]/20 text-teal-300 border border-[#4C787E]/40">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-wider f1-header">
+                    EDIT FIXTURE SCHEDULE & DETAILS
+                  </h3>
+                  <p className="text-xs text-[#B7CEEC]/70 font-mono">
+                    Fixture ID: <span className="text-teal-300 font-bold">{fixtureToEdit.id}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsFixtureEditModalOpen(false)}
+                className="p-2 rounded-full bg-[#03060a] hover:bg-[#09111c] text-gray-400 hover:text-white transition-all cursor-pointer border border-[#B7CEEC]/30"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handleSaveFixtureModal} className="space-y-4">
+              {/* Teams Selection */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-extrabold uppercase tracking-wider text-teal-300 mb-1.5">
+                    Home Team
+                  </label>
+                  <select
+                    value={editFixtureHomeId}
+                    onChange={(e) => setEditFixtureHomeId(e.target.value)}
+                    className="w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl px-3.5 py-2.5 text-white text-xs font-bold focus:border-[#4C787E] focus:outline-none"
+                  >
+                    {teams.map((t) => (
+                      <option key={`h-opt-${t.id}`} value={t.id}>
+                        {t.name} ({t.shortName})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-extrabold uppercase tracking-wider text-teal-300 mb-1.5">
+                    Away Team
+                  </label>
+                  <select
+                    value={editFixtureAwayId}
+                    onChange={(e) => setEditFixtureAwayId(e.target.value)}
+                    className="w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl px-3.5 py-2.5 text-white text-xs font-bold focus:border-[#4C787E] focus:outline-none"
+                  >
+                    {teams.map((t) => (
+                      <option key={`a-opt-${t.id}`} value={t.id}>
+                        {t.name} ({t.shortName})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Schedule Time & Venue */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-extrabold uppercase tracking-wider text-[#B7CEEC] mb-1.5">
+                    Schedule Kickoff Time & Date
+                  </label>
+                  <input
+                    type="text"
+                    value={editFixtureStartTime}
+                    onChange={(e) => setEditFixtureStartTime(e.target.value)}
+                    placeholder="e.g. Sun, Aug 16 • 8:30 AM"
+                    className="w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl px-3.5 py-2.5 text-white text-xs font-mono focus:border-[#4C787E] focus:outline-none"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-extrabold uppercase tracking-wider text-[#B7CEEC] mb-1.5">
+                    Stadium Venue
+                  </label>
+                  <input
+                    type="text"
+                    value={editFixtureVenue}
+                    onChange={(e) => setEditFixtureVenue(e.target.value)}
+                    placeholder="e.g. De Anza Stadium"
+                    className="w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl px-3.5 py-2.5 text-white text-xs font-semibold focus:border-[#4C787E] focus:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Match Settings (Week, Type, Format, Duration) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-300 mb-1">
+                    Week #
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={editFixtureWeekNumber}
+                    onChange={(e) => setEditFixtureWeekNumber(parseInt(e.target.value, 10) || 1)}
+                    className="w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl px-3 py-2 text-white text-xs font-mono focus:border-[#4C787E] focus:outline-none text-center"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-300 mb-1">
+                    Match Type
+                  </label>
+                  <select
+                    value={editFixtureMatchType}
+                    onChange={(e) => setEditFixtureMatchType(e.target.value)}
+                    className="w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl px-2 py-2 text-white text-xs font-semibold focus:border-[#4C787E] focus:outline-none"
+                  >
+                    <option value="Regular">Regular</option>
+                    <option value="Finals">Finals</option>
+                    <option value="Playoffs">Playoffs</option>
+                    <option value="Friendly">Friendly</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-300 mb-1">
+                    Format
+                  </label>
+                  <select
+                    value={editFixtureMatchFormat}
+                    onChange={(e) => setEditFixtureMatchFormat(e.target.value as any)}
+                    className="w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl px-2 py-2 text-white text-xs font-semibold focus:border-[#4C787E] focus:outline-none"
+                  >
+                    <option value="7v7">7v7</option>
+                    <option value="8v8">8v8</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-300 mb-1">
+                    Half (mins)
+                  </label>
+                  <input
+                    type="number"
+                    min={5}
+                    max={45}
+                    value={editFixtureHalfDuration}
+                    onChange={(e) => setEditFixtureHalfDuration(parseInt(e.target.value, 10) || 20)}
+                    className="w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl px-3 py-2 text-white text-xs font-mono focus:border-[#4C787E] focus:outline-none text-center"
+                  />
+                </div>
+              </div>
+
+              {/* Status & Scores */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-[#080d14] border border-[#B7CEEC]/20">
+                <div>
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-amber-300 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={editFixtureStatus}
+                    onChange={(e) => setEditFixtureStatus(e.target.value)}
+                    className="w-full bg-[#05080c] border border-[#B7CEEC]/30 rounded-xl px-3 py-2 text-white text-xs font-bold focus:border-[#4C787E] focus:outline-none"
+                  >
+                    <option value="scheduled">Scheduled</option>
+                    <option value="1st_half">Live 1st Half</option>
+                    <option value="halftime">Halftime</option>
+                    <option value="2nd_half">Live 2nd Half</option>
+                    <option value="ended">Full Time (Ended)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-emerald-300 mb-1">
+                    Home Score
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editFixtureHomeScore}
+                    onChange={(e) => setEditFixtureHomeScore(parseInt(e.target.value, 10) || 0)}
+                    className="w-full bg-[#05080c] border border-[#B7CEEC]/30 rounded-xl px-3 py-2 text-white text-xs font-mono font-bold focus:border-[#4C787E] focus:outline-none text-center"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-emerald-300 mb-1">
+                    Away Score
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editFixtureAwayScore}
+                    onChange={(e) => setEditFixtureAwayScore(parseInt(e.target.value, 10) || 0)}
+                    className="w-full bg-[#05080c] border border-[#B7CEEC]/30 rounded-xl px-3 py-2 text-white text-xs font-mono font-bold focus:border-[#4C787E] focus:outline-none text-center"
+                  />
+                </div>
+              </div>
+
+              {/* Player of the Match Name */}
+              <div>
+                <label className="block text-xs font-extrabold uppercase tracking-wider text-amber-400 mb-1.5 flex items-center gap-1.5">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span>Player of the Match (Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={editFixtureMotmPlayerName}
+                  onChange={(e) => setEditFixtureMotmPlayerName(e.target.value)}
+                  placeholder="e.g. Roshan Basnet"
+                  className="w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl px-3.5 py-2.5 text-white text-xs font-semibold focus:border-[#4C787E] focus:outline-none"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#B7CEEC]/20">
+                <button
+                  type="button"
+                  onClick={() => setIsFixtureEditModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-[#B7CEEC]/30 bg-[#080d14] text-gray-300 text-xs font-bold hover:bg-[#0e1622] transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#4C787E] to-teal-500 hover:from-[#3a5d62] hover:to-teal-400 text-white text-xs font-black uppercase tracking-wider shadow-lg flex items-center gap-2 transition-all cursor-pointer border border-teal-300/40"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Save Fixture Changes</span>
+                </button>
+              </div>
+            </form>
           </motion.div>
         </div>
       )}
