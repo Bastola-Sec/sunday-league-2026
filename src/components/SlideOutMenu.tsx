@@ -41,12 +41,13 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
 }) => {
   return (
     <>
-      {/* 3-Dot Floating Trigger Button (Top Right Corner) */}
+      {/* 3-Dot Floating Trigger Button (Top Right Corner - Safe Area Offset) */}
       <motion.button
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
         onClick={onToggle}
-        className="fixed top-5 right-5 z-50 flex items-center justify-center w-12 h-12 rounded-full border border-[#B7CEEC]/40 bg-[#05080c]/85 backdrop-blur-xl text-[#B7CEEC] shadow-xl shadow-[#4C787E]/20 hover:border-[#4C787E] hover:text-white transition-all cursor-pointer"
+        style={{ top: 'calc(1.25rem + env(safe-area-inset-top, 24px))' }}
+        className="fixed right-4 sm:right-6 z-50 flex items-center justify-center w-12 h-12 rounded-full border border-[#B7CEEC]/50 bg-[#05080c]/90 backdrop-blur-2xl text-[#B7CEEC] shadow-[0_0_20px_rgba(0,0,0,0.8)] hover:border-[#4C787E] hover:text-white transition-all cursor-pointer"
         aria-label="Open Navigation Menu"
       >
         {isOpen ? <X className="w-6 h-6 text-[#B7CEEC]" /> : <MoreVertical className="w-6 h-6 text-[#B7CEEC]" />}
