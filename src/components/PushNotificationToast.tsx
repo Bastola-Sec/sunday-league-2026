@@ -11,7 +11,10 @@ interface PushNotificationToastProps {
 
 export const PushNotificationToast: React.FC<PushNotificationToastProps> = ({ notifications, onDismiss }) => {
   return (
-    <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4 space-y-2 pointer-events-none">
+    <div
+      style={{ top: 'calc(0.75rem + env(safe-area-inset-top, 24px))' }}
+      className="fixed left-1/2 -translate-x-1/2 z-[90] w-full max-w-sm px-4 space-y-2 pointer-events-none"
+    >
       <AnimatePresence>
         {notifications.slice(0, 3).map((notif, idx) => (
           <motion.div

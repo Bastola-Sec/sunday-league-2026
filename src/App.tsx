@@ -104,18 +104,75 @@ export default function App() {
   const [scrollState, setScrollState] = useState<AppScrollState>(1);
   const [scrollProgress, setScrollProgress] = useState<number>(0);
 
-  // Ref for hero background video optimization
+  // Ref for hero background video optimization & mobile PWA autoplay guarantees
   const heroVideoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    if (heroVideoRef.current) {
-      if (scrollState === 1) {
-        heroVideoRef.current.play().catch(() => { });
-      } else {
-        heroVideoRef.current.pause();
+  // Helper function to safely play video on mobile browsers
+  const attemptPlayHeroVideo = () => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+
+    // Force muted & playsInline properties on the HTML DOM node for mobile Safari / PWA
+    video.muted = true;
+    video.playsInline = true;
+
+    if (scrollState === 1) {
+      const promise = video.play();
+      if (promise !== undefined) {
+        promise.catch(() => {
+          // Autoplay deferred by browser policy; event listeners will retry on load / interaction
+        });
       }
+    } else {
+      video.pause();
     }
+  };
+
+  useEffect(() => {
+    attemptPlayHeroVideo();
   }, [scrollState]);
+
+  // Comprehensive mobile autoplay & event listeners setup
+  useEffect(() => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+
+    // Set properties explicitly on the DOM element for mobile Safari / PWA webview
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+
+    attemptPlayHeroVideo();
+
+    const handleInteraction = () => {
+      attemptPlayHeroVideo();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        attemptPlayHeroVideo();
+      }
+    };
+
+    video.addEventListener('canplay', attemptPlayHeroVideo);
+    video.addEventListener('loadeddata', attemptPlayHeroVideo);
+    window.addEventListener('touchstart', handleInteraction, { passive: true, once: true });
+    window.addEventListener('pointerdown', handleInteraction, { passive: true, once: true });
+    window.addEventListener('click', handleInteraction, { passive: true, once: true });
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      video.removeEventListener('canplay', attemptPlayHeroVideo);
+      video.removeEventListener('loadeddata', attemptPlayHeroVideo);
+      window.removeEventListener('touchstart', handleInteraction);
+      window.removeEventListener('pointerdown', handleInteraction);
+      window.removeEventListener('click', handleInteraction);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // Navigation & Modals
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -404,12 +461,15 @@ export default function App() {
       >
         <video
           ref={heroVideoRef}
-          className="absolute inset-0 w-full h-full object-cover min-w-full min-h-full will-change-transform transform-gpu"
+          className="absolute inset-0 w-full h-full object-cover min-w-full min-h-full will-change-transform transform-gpu pointer-events-none"
           autoPlay
           loop
           muted
           playsInline
+          controls={false}
           preload="auto"
+          onCanPlay={attemptPlayHeroVideo}
+          onLoadedData={attemptPlayHeroVideo}
           src="https://res.cloudinary.com/s87ouqnz/video/upload/v1785915477/Change_the_player_s_jersey_to_jiveo0.mp4"
         />
         {/* Dark Contrast Overlay for hero text readability */}

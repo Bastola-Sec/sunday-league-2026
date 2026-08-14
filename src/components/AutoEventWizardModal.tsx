@@ -176,7 +176,8 @@ export const AutoEventWizardModal: React.FC<AutoEventWizardModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-xl"
+        style={{ paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 24px))' }}
+        className="fixed inset-0 z-[75] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-xl overflow-y-auto"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.88, y: 25 }}

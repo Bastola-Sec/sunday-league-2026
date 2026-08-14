@@ -178,7 +178,8 @@ export const CinematicClubModal: React.FC<CinematicClubModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-xl overflow-y-auto"
+          style={{ paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 24px))' }}
+          className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-xl overflow-y-auto"
         >
           {/* Ambient Atmosphere Spotlight */}
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[28rem] h-[28rem] bg-[#B7CEEC]/15 rounded-full blur-[140px] pointer-events-none" />

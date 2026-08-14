@@ -47,7 +47,7 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
         whileTap={{ scale: 0.92 }}
         onClick={onToggle}
         style={{ top: 'calc(1.25rem + env(safe-area-inset-top, 24px))' }}
-        className="fixed right-4 sm:right-6 z-50 flex items-center justify-center w-12 h-12 rounded-full border border-[#B7CEEC]/50 bg-[#05080c]/90 backdrop-blur-2xl text-[#B7CEEC] shadow-[0_0_20px_rgba(0,0,0,0.8)] hover:border-[#4C787E] hover:text-white transition-all cursor-pointer"
+        className="fixed right-4 sm:right-6 z-40 flex items-center justify-center w-12 h-12 rounded-full border border-[#B7CEEC]/50 bg-[#05080c]/90 backdrop-blur-2xl text-[#B7CEEC] shadow-[0_0_20px_rgba(0,0,0,0.8)] hover:border-[#4C787E] hover:text-white transition-all cursor-pointer"
         aria-label="Open Navigation Menu"
       >
         {isOpen ? <X className="w-6 h-6 text-[#B7CEEC]" /> : <MoreVertical className="w-6 h-6 text-[#B7CEEC]" />}
@@ -64,7 +64,7 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={onClose}
-              className="fixed inset-0 z-40 bg-black/80 backdrop-blur-md cursor-pointer"
+              className="fixed inset-0 z-[95] bg-black/80 backdrop-blur-md cursor-pointer"
             />
 
             {/* Custom 3D Slide-Out Menu */}
@@ -74,10 +74,11 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
               animate={{ x: 0, rotateY: 0, opacity: 1 }}
               exit={{ x: '100%', rotateY: 20, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed top-0 right-0 z-50 h-full w-80 max-w-[85vw] bg-[#05080c]/95 backdrop-blur-2xl border-l border-[#B7CEEC]/30 text-white shadow-2xl p-6 flex flex-col justify-between overflow-y-auto"
+              className="fixed top-0 right-0 z-[100] h-full w-80 max-w-[85vw] bg-[#05080c]/95 backdrop-blur-2xl border-l border-[#B7CEEC]/30 text-white shadow-2xl p-6 flex flex-col justify-between overflow-y-auto"
               style={{
                 perspective: '1000px',
                 transformStyle: 'preserve-3d',
+                paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 24px))',
               }}
             >
               <div>

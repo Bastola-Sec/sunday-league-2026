@@ -1424,7 +1424,8 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 bg-[#020408]/90 backdrop-blur-3xl"
+          style={{ paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 24px))' }}
+          className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-5 bg-[#020408]/90 backdrop-blur-3xl overflow-y-auto"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.88, y: 25 }}
@@ -1945,7 +1946,10 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
                       {/* SELECTED FIXTURE RECORDING CONSOLE POPUP MODAL */}
                       {editingMatch && (
-                        <div className="fixed inset-0 bg-[#020408]/92 backdrop-blur-2xl z-[60] flex items-center justify-center p-2 sm:p-5 overflow-y-auto animate-fade-in">
+                        <div
+                          style={{ paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 24px))' }}
+                          className="fixed inset-0 bg-[#020408]/92 backdrop-blur-2xl z-[70] flex items-center justify-center p-2 sm:p-5 overflow-y-auto animate-fade-in"
+                        >
                           <div className="bg-[#05080c]/98 border-2 border-[#4C787E] rounded-3xl max-w-5xl w-full p-4 sm:p-6 space-y-4 shadow-[0_0_50px_rgba(76,120,126,0.3)] relative text-white max-h-[94vh] flex flex-col min-h-0 overflow-y-auto custom-scrollbar backdrop-blur-2xl">
                             {/* Popup Header with Match Title & Close X Button */}
                             <div className="flex items-center justify-between border-b border-[#B7CEEC]/20 pb-4 relative">
@@ -3110,7 +3114,10 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
       {/* PLAYER OF THE MATCH (MOTM) SELECTION MODAL POPUP */}
       {editingMatch && showMotmModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl">
+        <div
+          style={{ paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 24px))' }}
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl overflow-y-auto"
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -3247,7 +3254,10 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
       {/* FIXTURE SCHEDULE EDITOR MODAL (COMMISSIONER EXCLUSIVE) */}
       {isFixtureEditModalOpen && fixtureToEdit && (
-        <div className="fixed inset-0 bg-[#020408]/92 backdrop-blur-2xl z-[70] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+        <div
+          style={{ paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 24px))' }}
+          className="fixed inset-0 bg-[#020408]/92 backdrop-blur-2xl z-[80] flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}

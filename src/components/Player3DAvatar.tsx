@@ -73,7 +73,9 @@ export const Player3DAvatar: React.FC<Player3DAvatarProps> = ({
                 loop
                 muted
                 playsInline
-                className="w-full h-full object-cover rounded-2xl"
+                controls={false}
+                onCanPlay={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
+                className="w-full h-full object-cover rounded-2xl pointer-events-none"
               />
             </div>
           ) : (
