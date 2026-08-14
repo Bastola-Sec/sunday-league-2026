@@ -107,6 +107,9 @@ export default function App() {
   // Ref for hero background video optimization & mobile PWA autoplay guarantees
   const heroVideoRef = useRef<HTMLVideoElement>(null);
 
+  // State to track if video is actively playing (prevents iOS Low Power Mode play button overlay)
+  const [isVideoPlaying, setIsVideoPlaying] = useState<boolean>(false);
+
   // Helper function to safely play video on mobile browsers
   const attemptPlayHeroVideo = () => {
     const video = heroVideoRef.current;
@@ -119,12 +122,15 @@ export default function App() {
     if (scrollState === 1) {
       const promise = video.play();
       if (promise !== undefined) {
-        promise.catch(() => {
-          // Autoplay deferred by browser policy; event listeners will retry on load / interaction
-        });
+        promise
+          .then(() => setIsVideoPlaying(true))
+          .catch(() => {
+            setIsVideoPlaying(false);
+          });
       }
     } else {
       video.pause();
+      setIsVideoPlaying(false);
     }
   };
 
@@ -459,19 +465,31 @@ export default function App() {
           scrollState === 1 ? 'opacity-100 visible z-[1]' : 'opacity-0 invisible z-[-1]'
         }`}
       >
+        {/* High-Tech Ambient Stadium Backdrop Fallback (shows when video is paused/blocked by iOS Low Power Mode) */}
+        <div className="absolute inset-0 bg-[#05080c] bg-gradient-to-b from-[#09131d] via-[#05080c] to-[#08111a]">
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[35rem] h-[35rem] bg-[#4C787E]/20 rounded-full blur-[140px] pointer-events-none" />
+          <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-[35rem] h-[35rem] bg-[#B7CEEC]/10 rounded-full blur-[140px] pointer-events-none" />
+        </div>
+
+        {/* Hero Loop Video (Only visible when actively playing, prevents iOS native play button overlay) */}
         <video
           ref={heroVideoRef}
-          className="absolute inset-0 w-full h-full object-cover min-w-full min-h-full will-change-transform transform-gpu pointer-events-none"
+          className={`absolute inset-0 w-full h-full object-cover min-w-full min-h-full will-change-transform transform-gpu pointer-events-none transition-opacity duration-700 ${
+            isVideoPlaying ? 'opacity-100' : 'opacity-0'
+          }`}
           autoPlay
           loop
           muted
           playsInline
           controls={false}
           preload="auto"
+          onPlay={() => setIsVideoPlaying(true)}
+          onPause={() => setIsVideoPlaying(false)}
           onCanPlay={attemptPlayHeroVideo}
           onLoadedData={attemptPlayHeroVideo}
           src="https://res.cloudinary.com/s87ouqnz/video/upload/v1785915477/Change_the_player_s_jersey_to_jiveo0.mp4"
         />
+
         {/* Dark Contrast Overlay for hero text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#05080c]/65 via-[#05080c]/40 to-[#05080c]/80 backdrop-blur-[0.5px]" />
       </div>
