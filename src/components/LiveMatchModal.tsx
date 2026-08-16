@@ -385,13 +385,14 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
       case '3-3-1':
       default:
         return [
-          { num: 1, top: '85%', left: '48%', role: 'CB' },
-          { num: 3, top: '70%', left: '22%', role: 'LB' },
-          { num: 2, top: '70%', left: '74%', role: 'RB' },
-          { num: 6, top: '48%', left: '36%', role: 'LCM' },
-          { num: 8, top: '48%', left: '60%', role: 'RCM' },
-          { num: 10, top: '34%', left: '48%', role: 'AM' },
-          { num: 9, top: '22%', left: '48%', role: 'ST' },
+          { num: 1, top: '86%', left: '48%', role: 'CB' },
+          { num: 3, top: '70%', left: '20%', role: 'LB' },
+          { num: 4, top: '74%', left: '48%', role: 'CB' },
+          { num: 2, top: '70%', left: '76%', role: 'RB' },
+          { num: 8, top: '48%', left: '24%', role: 'LM' },
+          { num: 6, top: '52%', left: '48%', role: 'CM' },
+          { num: 7, top: '48%', left: '72%', role: 'RM' },
+          { num: 9, top: '24%', left: '48%', role: 'ST' },
         ];
     }
   };
@@ -659,8 +660,8 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                         {(() => {
                           const customPositions = isHomeSelected ? match.homeCustomPositions : match.awayCustomPositions;
 
-                          return formationCoords.map((pos, idx) => {
-                            const playerInRoster = activeStartingList[idx];
+                          return activeStartingList.map((playerInRoster, idx) => {
+                            const pos = formationCoords[idx] || { num: idx + 1, top: '50%', left: '50%', role: 'SUB' };
                             const playerNum = playerInRoster?.number || pos.num;
                             const isHome = lineupTeamId === match.homeTeamId;
 
