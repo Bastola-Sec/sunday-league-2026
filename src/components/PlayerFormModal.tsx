@@ -88,6 +88,17 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (Firestore document limit is 1MB total for team payload)
+      // 800 KB limit for inline Base64 strings to prevent Firestore document size rejection
+      const maxSizeBytes = 800 * 1024;
+      if (file.size > maxSizeBytes) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        alert(
+          `⚠️ Video Clip Too Large (${sizeMb} MB)!\n\nFirestore has a 1MB limit per team document. Direct iPhone camera videos are usually 15MB-50MB.\n\nPlease select a short 2-3 sec compressed clip under 800 KB, or paste a direct Video Link (MP4/WebM URL) above!`
+        );
+        return;
+      }
+
       setIsVideoUploading(true);
       setUploadProgress(10);
       setUploadSuccess(false);
@@ -402,6 +413,11 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
                   />
                 </label>
               </div>
+
+              {/* Pro-Tip Helper Notice for iPhone Videos */}
+              <p className="text-[10px] text-gray-400 font-medium leading-tight">
+                💡 <strong className="text-rose-300">iPhone Video Tip:</strong> Direct iPhone video clips are usually 15MB–50MB (exceeds Firestore&apos;s 1MB limit). For fast sync, use short compressed clips under 800 KB, or paste a direct Video URL (MP4) above.
+              </p>
 
               {videoUrl && (
                 <div className="flex items-center justify-between p-2 rounded-xl bg-rose-950/40 border border-rose-500/40">
