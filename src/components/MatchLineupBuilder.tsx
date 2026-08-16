@@ -890,7 +890,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           <div className="flex items-center gap-2">
             <TeamLogo teamId={activeTeam?.id || ''} size={20} />
             <span className="text-xs font-black text-white uppercase tracking-wider">
-              {activeTeam?.name} Pitch Layout ({selectedFormation})
+              {activeTeam?.name} Pitch Layout ({targetSlots} Players)
             </span>
             {hasCustomPositions && (
               <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[9px] font-black uppercase flex items-center gap-1">

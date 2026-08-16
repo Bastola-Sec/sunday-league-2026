@@ -622,7 +622,7 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                       <TeamLogo teamId={selectedLineupTeam?.id || ''} size={18} />
                       <div>
                         <span className="block text-[10px] text-gray-300 font-medium leading-none mb-1">
-                          Tactical Lineup ({selectedFormation})
+                          Starting Squad Lineup
                         </span>
                         <span className="text-xs font-black text-white tracking-wider uppercase">
                           {selectedLineupTeam?.name} • {activeStartingList.length} Players
@@ -723,16 +723,7 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
 
 
                     {/* Bottom Overlay Controls */}
-                    <div className="relative z-20 flex items-end justify-between mt-auto">
-                      {/* Bottom Left Glass Box - Official Team Formation Display */}
-                      <div className="px-3.5 py-2 rounded-2xl bg-[#13283b]/85 border border-white/10 backdrop-blur-md shadow-xl flex flex-col">
-                        <span className="text-[9px] text-gray-300 font-bold mb-0.5 uppercase tracking-wider">
-                          Tactical Lineup
-                        </span>
-                        <span className="text-xs font-black text-amber-300 tracking-wider">
-                          {selectedFormation} Formation
-                        </span>
-                      </div>
+                    <div className="relative z-20 flex items-end justify-end mt-auto">
 
                       {/* Bottom Right Glass Action Buttons */}
                       <div className="flex items-center gap-2">
