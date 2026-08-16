@@ -533,16 +533,30 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
 
                 if (selectedLineupTeam) {
                   const teamRoster = selectedLineupTeam.roster || [];
-                  if (matchStartingIds && matchStartingIds.length > 0) {
-                    activeStartingList = matchStartingIds
-                      .map((id) => teamRoster.find((p) => p.id === id))
-                      .filter((p): p is Player => Boolean(p));
+                  const validStartingIds = (matchStartingIds || []).filter((id) => teamRoster.some((p) => p.id === id));
+                  const validSubIds = (matchSubIds || []).filter((id) => teamRoster.some((p) => p.id === id));
+
+                  if (validStartingIds.length > 0) {
+                    if (validStartingIds.length < targetSlots) {
+                      const unassigned = teamRoster.filter(
+                        (p) => !validStartingIds.includes(p.id) && !validSubIds.includes(p.id)
+                      );
+                      const filledStarting = [...validStartingIds, ...unassigned.map((p) => p.id)].slice(0, targetSlots);
+                      activeStartingList = filledStarting
+                        .map((id) => teamRoster.find((p) => p.id === id))
+                        .filter((p): p is Player => Boolean(p));
+                    } else {
+                      activeStartingList = validStartingIds
+                        .slice(0, targetSlots)
+                        .map((id) => teamRoster.find((p) => p.id === id))
+                        .filter((p): p is Player => Boolean(p));
+                    }
                   } else {
                     activeStartingList = teamRoster.slice(0, targetSlots);
                   }
 
-                  if (matchSubIds && matchSubIds.length > 0) {
-                    activeBenchList = matchSubIds
+                  if (validSubIds.length > 0) {
+                    activeBenchList = validSubIds
                       .map((id) => teamRoster.find((p) => p.id === id))
                       .filter((p): p is Player => Boolean(p));
                   } else {

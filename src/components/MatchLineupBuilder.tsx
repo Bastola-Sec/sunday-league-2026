@@ -450,8 +450,20 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
       setCustomPositions({});
     }
 
-    if (savedStarting && savedStarting.length > 0) {
-      setStartingIds(savedStarting);
+    const rosterIds = new Set((activeTeam?.roster || []).map((p) => p.id));
+    const validSavedStarting = (savedStarting || []).filter((id) => rosterIds.has(id));
+    const validSavedSubs = (savedSubs || []).filter((id) => rosterIds.has(id));
+
+    if (validSavedStarting.length > 0) {
+      if (validSavedStarting.length < targetSlots) {
+        const remainingRoster = (activeTeam?.roster || []).filter(
+          (p) => !validSavedStarting.includes(p.id) && !validSavedSubs.includes(p.id)
+        );
+        const filledStarting = [...validSavedStarting, ...remainingRoster.map((p) => p.id)].slice(0, targetSlots);
+        setStartingIds(filledStarting);
+      } else {
+        setStartingIds(validSavedStarting.slice(0, targetSlots));
+      }
     } else {
       const sorted = [...(activeTeam?.roster || [])].sort(
         (a, b) => (b.overallRating || 80) - (a.overallRating || 80)
@@ -459,8 +471,8 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
       setStartingIds(sorted.slice(0, targetSlots).map((p) => p.id));
     }
 
-    if (savedSubs && savedSubs.length > 0) {
-      setSubIds(savedSubs);
+    if (validSavedSubs.length > 0) {
+      setSubIds(validSavedSubs);
     } else {
       const sorted = [...(activeTeam?.roster || [])].sort(
         (a, b) => (b.overallRating || 80) - (a.overallRating || 80)
