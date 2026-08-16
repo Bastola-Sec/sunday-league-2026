@@ -1,4 +1,5 @@
 import React from 'react';
+import { SecurePlayerVideo } from '../utils/videoSecurity';
 
 export interface Player3DAvatarProps {
   player: {
@@ -18,25 +19,32 @@ export interface Player3DAvatarProps {
 
 export const getTeamDefaultAvatar = (teamId: string = ''): string => {
   const norm = (teamId || '').toLowerCase();
-  if (norm.includes('momo')) return '/avatars/momo-strikers.jpg';
-  if (norm.includes('jhyap')) return '/avatars/jhyap-warriors.jpg';
-  return '/avatars/no-stamina.jpg';
+  if (norm.includes('momo')) {
+    return 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?auto=format&fit=crop&w=400&q=80';
+  } else if (norm.includes('jhyap')) {
+    return 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=400&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=400&q=80';
 };
 
 export const Player3DAvatar: React.FC<Player3DAvatarProps> = ({
   player,
-  teamId = '',
-  size = 'hero',
+  teamId,
+  size = 'md',
   className = '',
 }) => {
-  const safePlayer = player || { id: 'p0', name: 'Player', number: 10, position: 'MID' };
+  const safePlayer = {
+    name: player?.name || 'Player',
+    number: player?.number || 10,
+    isCaptain: Boolean(player?.isCaptain),
+    position: player?.position || 'MID',
+    imageUrl: player?.imageUrl,
+    videoUrl: player?.videoUrl,
+    overallRating: player?.overallRating || 80,
+  };
 
-  // Use uploaded photo or video if provided, otherwise fall back to team default avatar
-  const activePhoto =
-    safePlayer.imageUrl && safePlayer.imageUrl.trim() !== ''
-      ? safePlayer.imageUrl
-      : getTeamDefaultAvatar(teamId);
-
+  const defaultAvatar = getTeamDefaultAvatar(teamId);
+  const activePhoto = safePlayer.imageUrl && safePlayer.imageUrl.trim() !== '' ? safePlayer.imageUrl : defaultAvatar;
   const hasVideo = Boolean(safePlayer.videoUrl && safePlayer.videoUrl.trim() !== '');
 
   let badgeGradient = 'from-rose-600 via-red-600 to-rose-950';
@@ -65,18 +73,9 @@ export const Player3DAvatar: React.FC<Player3DAvatarProps> = ({
           <div className="absolute inset-0 bg-gradient-to-t from-[#040810] via-transparent to-[#040810]/60" />
 
           {/* Player Media (Direct Video Reel or Photo Avatar) */}
-          {hasVideo ? (
+          {hasVideo && safePlayer.videoUrl ? (
             <div className="absolute inset-0 z-10 w-full h-full rounded-2xl overflow-hidden bg-black flex items-center justify-center">
-              <video
-                src={safePlayer.videoUrl}
-                autoPlay
-                loop
-                muted
-                playsInline
-                controls={false}
-                onCanPlay={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
-                className="w-full h-full object-cover rounded-2xl pointer-events-none"
-              />
+              <SecurePlayerVideo videoUrl={safePlayer.videoUrl} />
             </div>
           ) : (
             <img

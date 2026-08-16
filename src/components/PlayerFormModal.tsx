@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, User, Save, Upload, Star, Shield, Award, Camera, Sparkles, Video, CheckCircle2, Loader2 } from 'lucide-react';
+import { X, User, Save, Upload, Star, Shield, Award, Camera, Sparkles, Video, CheckCircle2, Loader2, Lock } from 'lucide-react';
 import { Player } from '../types';
+import { SecurePlayerVideo, parseAndSecureVideoUrl } from '../utils/videoSecurity';
 
 interface PlayerFormModalProps {
   isOpen: boolean;
@@ -125,6 +126,15 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
     if (!name.trim()) {
       alert('Please enter a player name.');
       return;
+    }
+
+    let sanitizedVideoUrl = videoUrl.trim();
+    if (sanitizedVideoUrl) {
+      const sec = parseAndSecureVideoUrl(sanitizedVideoUrl);
+      if (sec.type === 'invalid') {
+        alert('⚠️ Invalid or unsafe Video URL detected! Please enter a valid HTTPS link (YouTube, Vimeo, Streamable, Google Drive, MP4).');
+        return;
+      }
     }
 
     const updatedPlayer: Player = {
@@ -453,23 +463,37 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
                 </div>
               )}
 
-              {/* Upload Completed Success Box */}
-              {!isVideoUploading && videoUrl && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-950/60 border-2 border-emerald-500/60 shadow-lg shadow-emerald-950/40">
-                  <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-emerald-400 shrink-0 relative bg-black shadow-md">
-                    <video src={videoUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-1.5 text-emerald-400 font-black text-xs">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
-                      <span>VIDEO UPLOAD COMPLETE!</span>
+              {/* Upload Completed / Security Verified Box */}
+              {!isVideoUploading && videoUrl && (() => {
+                const sec = parseAndSecureVideoUrl(videoUrl);
+                if (sec.type === 'invalid') {
+                  return (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-950/60 border-2 border-rose-500/60 shadow-lg">
+                      <Lock className="w-5 h-5 text-rose-400 shrink-0" />
+                      <div className="flex-1 text-[11px] text-rose-300 font-bold">
+                        ⚠️ Unsafe or invalid Video URL detected! Please enter an HTTPS link (YouTube, Streamable, Vimeo, Google Drive, MP4).
+                      </div>
                     </div>
-                    <span className="text-[10px] text-emerald-200/90 font-bold block mt-0.5">
-                      Preview ready above! Click <span className="text-amber-300 font-extrabold">Save Changes</span> below to apply.
-                    </span>
+                  );
+                }
+
+                return (
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-950/60 border-2 border-emerald-500/60 shadow-lg shadow-emerald-950/40">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-emerald-400 shrink-0 relative bg-black shadow-md flex items-center justify-center">
+                      <SecurePlayerVideo videoUrl={videoUrl} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5 text-emerald-400 font-black text-xs">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                        <span>SECURE VIDEO VERIFIED ({sec.provider ? sec.provider.toUpperCase() : 'HTTPS'})</span>
+                      </div>
+                      <span className="text-[10px] text-emerald-200/90 font-bold block mt-0.5">
+                        Sanitized &amp; sandboxed embed ready! Click <span className="text-amber-300 font-extrabold">Save Changes</span> below to apply.
+                      </span>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {!isVideoUploading && !videoUrl && (
                 <p className="text-[10px] text-gray-400 font-medium">
