@@ -1,6 +1,8 @@
 import React from 'react';
 import { SecurePlayerVideo } from '../utils/videoSecurity';
-import { getPlayerAvatar } from '../utils/avatarUtils';
+import { getPlayerAvatar, getTeamDefaultAvatar } from '../utils/avatarUtils';
+
+export { getTeamDefaultAvatar };
 
 export interface Player3DAvatarProps {
   player: {
