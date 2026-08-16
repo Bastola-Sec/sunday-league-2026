@@ -868,7 +868,6 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           )}
         </div>
 
-        {/* Auto Pick Action */}
         <button
           type="button"
           onClick={handleAutoPickTop}
@@ -881,6 +880,135 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
           <span>Auto-Pick Top {targetSlots} OVR</span>
         </button>
+      </div>
+
+      {/* Starting Squad & Bench Counter Summary */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="p-3 rounded-xl bg-[#09131e] border border-emerald-500/30 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-emerald-400 uppercase block">Starting {targetSlots} Lineup</span>
+            <span className="text-lg font-black text-white">{startingIds.length} / {targetSlots} Selected</span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs border border-emerald-500/40">
+            {formatType}
+          </div>
+        </div>
+
+        <div className="p-3 rounded-xl bg-[#09131e] border border-amber-500/30 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-amber-400 uppercase block">Substitutes / Bench</span>
+            <span className="text-lg font-black text-white">{subIds.length} Players</span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xs border border-amber-500/40">
+            Sub
+          </div>
+        </div>
+      </div>
+
+      {/* Roster Selection Table / List (Full Height, No Inner Scroll) */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+            {activeTeam?.name} Squad Roster ({activeTeam?.roster?.length || 0} Players)
+          </span>
+          <span className="text-[10px] text-gray-400">
+            {isScreenLocked ? '🔒 Selection locked by 8-hour pre-game rule' : 'Click status pill to assign player'}
+          </span>
+        </div>
+
+        <div className="space-y-1.5">
+          {(activeTeam?.roster || []).map((p, idx) => {
+            const isStarting = startingIds.includes(p.id);
+            const isSub = subIds.includes(p.id);
+            const isHighlighted = highlightedPlayerId === p.id;
+
+            return (
+              <div
+                key={`builder-p-${p.id}-${idx}`}
+                onMouseEnter={() => setHighlightedPlayerId(p.id)}
+                onMouseLeave={() => setHighlightedPlayerId(null)}
+                className={`p-2.5 rounded-xl border flex items-center justify-between transition-all ${isHighlighted
+                    ? 'bg-teal-900/40 border-teal-400 text-white ring-1 ring-teal-400/40'
+                    : isStarting
+                      ? 'bg-emerald-950/30 border-emerald-500/40 text-white'
+                      : isSub
+                        ? 'bg-amber-950/30 border-amber-500/40 text-gray-200'
+                        : 'bg-[#09131e] border-[#4C787E]/20 text-gray-400'
+                  }`}
+              >
+                {/* Player Basic Info */}
+                <div className="flex items-center gap-3">
+                  <span className="w-7 h-7 rounded-lg bg-[#182d42] border border-[#4C787E]/40 text-[#B7CEEC] font-black text-xs flex items-center justify-center shrink-0">
+                    #{p.number}
+                  </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-xs text-white leading-tight">{p.name}</p>
+                      {p.isCaptain && (
+                        <span className="px-1.5 py-0.2 rounded bg-amber-400 text-slate-950 text-[9px] font-black">
+                          CAPTAIN
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                      <span className="font-mono">{p.position}</span>
+                      <span>•</span>
+                      <span>OVR {p.overallRating || 82}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status Assignment Controls */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleSetStarting(p.id)}
+                    disabled={isScreenLocked}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${isScreenLocked
+                        ? isStarting
+                          ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-500/30 cursor-not-allowed opacity-80'
+                          : 'bg-slate-900 text-gray-600 border border-slate-800 cursor-not-allowed opacity-40'
+                        : isStarting
+                          ? 'bg-emerald-500 text-slate-950 shadow ring-1 ring-emerald-300 font-black cursor-pointer'
+                          : 'bg-[#13283b] text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 cursor-pointer'
+                      }`}
+                  >
+                    {isScreenLocked ? <Lock className="w-3 h-3 text-rose-400" /> : <UserCheck className="w-3 h-3" />}
+                    <span>{isStarting ? `STARTING ${targetSlots}` : 'Set Starting'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSetSubstitute(p.id)}
+                    disabled={isScreenLocked}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${isScreenLocked
+                        ? isSub
+                          ? 'bg-amber-950/50 text-amber-400 border border-amber-500/30 cursor-not-allowed opacity-80'
+                          : 'bg-slate-900 text-gray-600 border border-slate-800 cursor-not-allowed opacity-40'
+                        : isSub
+                          ? 'bg-amber-400 text-slate-950 shadow ring-1 ring-amber-300 font-black cursor-pointer'
+                          : 'bg-[#13283b] text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 cursor-pointer'
+                      }`}
+                  >
+                    {isScreenLocked ? <Lock className="w-3 h-3 text-amber-400" /> : <Users className="w-3 h-3" />}
+                    <span>{isSub ? 'BENCH / SUB' : 'Set Sub'}</span>
+                  </button>
+
+                  {(isStarting || isSub) && !isScreenLocked && (
+                    <button
+                      type="button"
+                      onClick={() => handleUnassign(p.id)}
+                      className="px-2 py-1 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-[10px] font-bold cursor-pointer"
+                      title="Unassign Player"
+                    >
+                      Out
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* 3D / TACTICAL PITCH BOARD PREVIEW (DISPLAYING STARTING PLAYERS ON CLEAN PITCH) */}
@@ -1102,134 +1230,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
         </div>
       )}
 
-      {/* Starting Squad & Bench Counter Summary */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="p-3 rounded-xl bg-[#09131e] border border-emerald-500/30 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-emerald-400 uppercase block">Starting {targetSlots} Lineup</span>
-            <span className="text-lg font-black text-white">{startingIds.length} / {targetSlots} Selected</span>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs border border-emerald-500/40">
-            {formatType}
-          </div>
-        </div>
 
-        <div className="p-3 rounded-xl bg-[#09131e] border border-amber-500/30 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-amber-400 uppercase block">Substitutes / Bench</span>
-            <span className="text-lg font-black text-white">{subIds.length} Players</span>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xs border border-amber-500/40">
-            Sub
-          </div>
-        </div>
-      </div>
-
-      {/* Roster Selection Table / List */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">
-            {activeTeam?.name} Squad Roster ({activeTeam?.roster?.length || 0} Players)
-          </span>
-          <span className="text-[10px] text-gray-400">
-            {isScreenLocked ? '🔒 Selection locked by 8-hour pre-game rule' : 'Click status pill to assign player'}
-          </span>
-        </div>
-
-        <div className="space-y-1.5 max-h-[320px] overflow-y-auto pr-1">
-          {(activeTeam?.roster || []).map((p, idx) => {
-            const isStarting = startingIds.includes(p.id);
-            const isSub = subIds.includes(p.id);
-            const isHighlighted = highlightedPlayerId === p.id;
-
-            return (
-              <div
-                key={`builder-p-${p.id}-${idx}`}
-                onMouseEnter={() => setHighlightedPlayerId(p.id)}
-                onMouseLeave={() => setHighlightedPlayerId(null)}
-                className={`p-2.5 rounded-xl border flex items-center justify-between transition-all ${isHighlighted
-                    ? 'bg-teal-900/40 border-teal-400 text-white ring-1 ring-teal-400/40'
-                    : isStarting
-                      ? 'bg-emerald-950/30 border-emerald-500/40 text-white'
-                      : isSub
-                        ? 'bg-amber-950/30 border-amber-500/40 text-gray-200'
-                        : 'bg-[#09131e] border-[#4C787E]/20 text-gray-400'
-                  }`}
-              >
-                {/* Player Basic Info */}
-                <div className="flex items-center gap-3">
-                  <span className="w-7 h-7 rounded-lg bg-[#182d42] border border-[#4C787E]/40 text-[#B7CEEC] font-black text-xs flex items-center justify-center shrink-0">
-                    #{p.number}
-                  </span>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-xs text-white leading-tight">{p.name}</p>
-                      {p.isCaptain && (
-                        <span className="px-1.5 py-0.2 rounded bg-amber-400 text-slate-950 text-[9px] font-black">
-                          CAPTAIN
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] text-gray-400">
-                      <span className="font-mono">{p.position}</span>
-                      <span>•</span>
-                      <span>OVR {p.overallRating || 82}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Status Assignment Controls */}
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleSetStarting(p.id)}
-                    disabled={isScreenLocked}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${isScreenLocked
-                        ? isStarting
-                          ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-500/30 cursor-not-allowed opacity-80'
-                          : 'bg-slate-900 text-gray-600 border border-slate-800 cursor-not-allowed opacity-40'
-                        : isStarting
-                          ? 'bg-emerald-500 text-slate-950 shadow ring-1 ring-emerald-300 font-black cursor-pointer'
-                          : 'bg-[#13283b] text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 cursor-pointer'
-                      }`}
-                  >
-                    {isScreenLocked ? <Lock className="w-3 h-3 text-rose-400" /> : <UserCheck className="w-3 h-3" />}
-                    <span>{isStarting ? 'STARTING 8' : 'Set Starting'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSetSubstitute(p.id)}
-                    disabled={isScreenLocked}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${isScreenLocked
-                        ? isSub
-                          ? 'bg-amber-950/50 text-amber-400 border border-amber-500/30 cursor-not-allowed opacity-80'
-                          : 'bg-slate-900 text-gray-600 border border-slate-800 cursor-not-allowed opacity-40'
-                        : isSub
-                          ? 'bg-amber-400 text-slate-950 shadow ring-1 ring-amber-300 font-black cursor-pointer'
-                          : 'bg-[#13283b] text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 cursor-pointer'
-                      }`}
-                  >
-                    {isScreenLocked ? <Lock className="w-3 h-3 text-amber-400" /> : <Users className="w-3 h-3" />}
-                    <span>{isSub ? 'BENCH / SUB' : 'Set Sub'}</span>
-                  </button>
-
-                  {(isStarting || isSub) && !isScreenLocked && (
-                    <button
-                      type="button"
-                      onClick={() => handleUnassign(p.id)}
-                      className="px-2 py-1 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-[10px] font-bold cursor-pointer"
-                      title="Unassign Player"
-                    >
-                      Out
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 };
