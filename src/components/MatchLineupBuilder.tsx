@@ -1026,16 +1026,16 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
 
       {/* 3D / TACTICAL PITCH BOARD PREVIEW (DISPLAYING STARTING PLAYERS ON CLEAN PITCH) */}
       <div className="relative w-full rounded-[2.2rem] bg-gradient-to-b from-[#0b1c28] to-[#07131d] border border-[#4C787E]/40 overflow-hidden shadow-2xl p-4 space-y-3">
-        {/* Top Control Bar Over Field (Zoom & Reset Only) */}
+        {/* Top Control Bar Over Field (Small compact header) */}
         <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            <TeamLogo teamId={activeTeam?.id || ''} size={20} />
-            <span className="text-xs font-black text-white uppercase tracking-wider">
+          <div className="flex items-center gap-1.5">
+            <TeamLogo teamId={activeTeam?.id || ''} size={16} />
+            <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">
               {activeTeam?.name} Pitch Layout ({targetSlots} Players)
             </span>
             {hasCustomPositions && (
-              <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[9px] font-black uppercase flex items-center gap-1">
-                <Sparkles className="w-2.5 h-2.5 text-amber-300 animate-spin" /> Custom
+              <span className="px-1 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[8px] font-black uppercase flex items-center gap-0.5">
+                <Sparkles className="w-2 h-2 text-amber-300 animate-spin" /> Custom
               </span>
             )}
           </div>
@@ -1115,7 +1115,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
                 >
                   {/* Base Pitch Ring */}
                   <div
-                    className={`w-6 h-6 rounded-full border shadow-lg transition-all ${
+                    className={`w-8 h-8 rounded-full border shadow-lg transition-all ${
                       playerInSlot
                         ? isDraggingCurrent
                           ? 'bg-amber-400/60 border-amber-300 shadow-[0_0_25px_#f59e0b] scale-125'
@@ -1128,32 +1128,32 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
 
                   {/* Standing Jersey Overlay */}
                   <div
-                    className={`absolute -top-4.5 left-1/2 -translate-x-1/2 flex flex-col items-center transition-transform ${
+                    className={`absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center transition-transform ${
                       isDraggingCurrent ? 'scale-125' : 'group-hover:scale-125'
                     }`}
                   >
                     {playerInSlot ? (
                       <>
                         <div
-                          className={`w-7.5 h-8.5 border ${jerseyStyle.border} rounded-t-lg rounded-b-sm shadow-xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${jerseyStyle.gradient}`}
+                          className={`w-9 h-10 border ${jerseyStyle.border} rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${jerseyStyle.gradient}`}
                         >
-                          <div className={`absolute top-0 w-3 h-1 rounded-b-full ${jerseyStyle.collar}`} />
-                          <span className={`font-black text-[10px] tracking-tight drop-shadow-md mt-0.5 ${jerseyStyle.numberText}`}>
+                          <div className={`absolute top-0 w-4 h-1.5 rounded-b-full ${jerseyStyle.collar}`} />
+                          <span className={`font-black text-xs tracking-tight drop-shadow-md mt-1 ${jerseyStyle.numberText}`}>
                             {playerInSlot.number}
                           </span>
                           {playerInSlot.isCaptain && (
-                            <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-amber-400 text-slate-950 text-[7px] font-black flex items-center justify-center">
+                            <span className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full bg-amber-400 text-slate-950 text-[8px] font-black flex items-center justify-center">
                               C
                             </span>
                           )}
                           {!isScreenLocked && (
                             <div className="absolute top-0.5 right-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                              <Move className="w-2 h-2 text-white/90" />
+                              <Move className="w-2.5 h-2.5 text-white/90" />
                             </div>
                           )}
                         </div>
                         <span
-                          className={`text-[8px] font-black px-1.5 py-0.2 rounded-full mt-0.5 whitespace-nowrap shadow-md border ${
+                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md border ${
                             isDraggingCurrent || isHighlighted
                               ? 'border-amber-400 text-amber-300 bg-black/90'
                               : jerseyStyle.nameTagBorder
@@ -1163,8 +1163,8 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
                         </span>
                       </>
                     ) : (
-                      <div className="w-7 h-7 rounded-full bg-black/70 border border-dashed border-teal-400/70 text-teal-300 flex flex-col items-center justify-center shadow-md">
-                        <span className="text-[8px] font-mono font-black">#{presetPos.num || idx + 1}</span>
+                      <div className="w-8 h-8 rounded-full bg-black/70 border border-dashed border-teal-400/70 text-teal-300 flex flex-col items-center justify-center shadow-md">
+                        <span className="text-[9px] font-mono font-black">#{presetPos.num || idx + 1}</span>
                       </div>
                     )}
                   </div>

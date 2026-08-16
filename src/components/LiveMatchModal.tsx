@@ -632,17 +632,12 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
 
                       {/* VIBRANT 3D TACTICAL FOOTBALL PITCH (DISPLAYING ACTIVE TEAM'S 8 PLAYERS) */}
                   <div className="relative w-full h-[400px] rounded-[2.2rem] bg-gradient-to-b from-[#0b1c28] to-[#07131d] border border-[#4C787E]/40 overflow-hidden shadow-2xl flex flex-col justify-between p-4">
-                    {/* Top Left Glass Pill Badge */}
-                    <div className="absolute top-4 left-4 z-20 px-3.5 py-2 rounded-2xl bg-[#13283b]/80 border border-white/10 backdrop-blur-md shadow-lg pointer-events-auto flex items-center gap-2">
-                      <TeamLogo teamId={selectedLineupTeam?.id || ''} size={18} />
-                      <div>
-                        <span className="block text-[10px] text-gray-300 font-medium leading-none mb-1">
-                          Starting Squad Lineup
-                        </span>
-                        <span className="text-xs font-black text-white tracking-wider uppercase">
-                          {selectedLineupTeam?.name} • {activeStartingList.length} Players
-                        </span>
-                      </div>
+                    {/* Top Left Small Glass Pill Badge */}
+                    <div className="absolute top-3 left-3 z-20 px-2.5 py-1 rounded-xl bg-[#13283b]/80 border border-white/10 backdrop-blur-md shadow-md pointer-events-auto flex items-center gap-1.5">
+                      <TeamLogo teamId={selectedLineupTeam?.id || ''} size={14} />
+                      <span className="text-[9px] font-bold text-gray-300 uppercase tracking-wider">
+                        {selectedLineupTeam?.name} • {activeStartingList.length} Players
+                      </span>
                     </div>
 
                     {/* Pitch 3D Canvas Area */}
@@ -697,24 +692,24 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                               >
                                 {/* Glowing Ring Base on Pitch */}
                                 <div
-                                  className={`w-6 h-6 rounded-full border shadow-lg animate-pulse ${jerseyStyle.ringBg}`}
+                                  className={`w-8 h-8 rounded-full border shadow-lg animate-pulse ${jerseyStyle.ringBg}`}
                                 />
 
                                 {/* 3D Vertical Standing Jersey */}
                                 <div
-                                  className="absolute -top-4.5 left-1/2 -translate-x-1/2 flex flex-col items-center group-hover:scale-125 transition-transform"
+                                  className="absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center group-hover:scale-125 transition-transform"
                                 >
                                   <div
-                                    className={`w-7.5 h-8.5 border ${jerseyStyle.border} rounded-t-lg rounded-b-sm shadow-xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${jerseyStyle.gradient}`}
+                                    className={`w-9 h-10 border ${jerseyStyle.border} rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${jerseyStyle.gradient}`}
                                   >
                                     {/* Jersey Collar */}
-                                    <div className={`absolute top-0 w-3 h-1 rounded-b-full ${jerseyStyle.collar}`} />
-                                    <span className={`font-black text-[10px] tracking-tight drop-shadow-md mt-0.5 ${jerseyStyle.numberText}`}>
+                                    <div className={`absolute top-0 w-4 h-1.5 rounded-b-full ${jerseyStyle.collar}`} />
+                                    <span className={`font-black text-xs tracking-tight drop-shadow-md mt-1 ${jerseyStyle.numberText}`}>
                                       {playerNum}
                                     </span>
                                   </div>
                                   <span
-                                    className={`text-[8px] font-black px-1.5 py-0.2 rounded-full mt-0.5 whitespace-nowrap shadow-md opacity-90 group-hover:opacity-100 border ${jerseyStyle.nameTagBorder}`}
+                                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md opacity-90 group-hover:opacity-100 border ${jerseyStyle.nameTagBorder}`}
                                   >
                                     {playerInRoster ? playerInRoster.name.split(' ')[0] : `#${idx + 1}`}
                                   </span>
