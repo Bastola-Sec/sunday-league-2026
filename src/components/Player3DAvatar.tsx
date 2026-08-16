@@ -1,5 +1,6 @@
 import React from 'react';
 import { SecurePlayerVideo } from '../utils/videoSecurity';
+import { getPlayerAvatar } from '../utils/avatarUtils';
 
 export interface Player3DAvatarProps {
   player: {
@@ -17,16 +18,6 @@ export interface Player3DAvatarProps {
   className?: string;
 }
 
-export const getTeamDefaultAvatar = (teamId: string = ''): string => {
-  const norm = (teamId || '').toLowerCase();
-  if (norm.includes('momo')) {
-    return 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?auto=format&fit=crop&w=400&q=80';
-  } else if (norm.includes('jhyap')) {
-    return 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=400&q=80';
-  }
-  return 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=400&q=80';
-};
-
 export const Player3DAvatar: React.FC<Player3DAvatarProps> = ({
   player,
   teamId,
@@ -34,6 +25,7 @@ export const Player3DAvatar: React.FC<Player3DAvatarProps> = ({
   className = '',
 }) => {
   const safePlayer = {
+    id: player?.id,
     name: player?.name || 'Player',
     number: player?.number || 10,
     isCaptain: Boolean(player?.isCaptain),
@@ -43,8 +35,7 @@ export const Player3DAvatar: React.FC<Player3DAvatarProps> = ({
     overallRating: player?.overallRating || 80,
   };
 
-  const defaultAvatar = getTeamDefaultAvatar(teamId);
-  const activePhoto = safePlayer.imageUrl && safePlayer.imageUrl.trim() !== '' ? safePlayer.imageUrl : defaultAvatar;
+  const activePhoto = getPlayerAvatar(safePlayer, teamId);
   const hasVideo = Boolean(safePlayer.videoUrl && safePlayer.videoUrl.trim() !== '');
 
   let badgeGradient = 'from-rose-600 via-red-600 to-rose-950';
