@@ -3097,8 +3097,10 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
           setPlayerToEdit(null);
         }}
         onSave={(savedPlayer) => {
-          if (!activeSelectedTeam || !canEditActiveTeam) return;
-          const currentRoster = activeSelectedTeam.roster || [];
+          const targetTeam = teams.find((t) => t.id === selectedTeamId) || teams[0];
+          if (!targetTeam) return;
+
+          const currentRoster = targetTeam.roster || [];
           const exists = currentRoster.some((p) => p.id === savedPlayer.id);
           let updatedRoster: Player[];
           if (exists) {
@@ -3106,10 +3108,12 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
           } else {
             updatedRoster = [...currentRoster, savedPlayer];
           }
-          onUpdateRoster(activeSelectedTeam.id, updatedRoster);
+          onUpdateRoster(targetTeam.id, updatedRoster);
+          setIsPlayerFormOpen(false);
+          setPlayerToEdit(null);
         }}
         playerToEdit={playerToEdit}
-        teamName={activeSelectedTeam?.name}
+        teamName={teams.find((t) => t.id === selectedTeamId)?.name}
       />
 
       {/* PLAYER OF THE MATCH (MOTM) SELECTION MODAL POPUP */}

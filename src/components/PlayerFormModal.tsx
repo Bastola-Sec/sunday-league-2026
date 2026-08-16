@@ -354,33 +354,72 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
               <div className="flex items-center justify-between">
                 <label className="text-[11px] font-black text-rose-300 uppercase tracking-wider flex items-center gap-1.5">
                   <Video className="w-4 h-4 text-rose-400 animate-pulse" />
-                  <span>Player Intro Video Reel (Camera / Video File)</span>
+                  <span>Player Intro Video Reel</span>
                 </label>
                 <span className="text-[9px] px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">
                   DIRECT VIDEO
                 </span>
               </div>
 
-              <div className="flex items-center justify-between gap-3">
-                <label className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:brightness-110 text-white font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all">
-                  <Video className="w-4 h-4 text-white" />
-                  <span>{videoUrl ? 'Change / Record New Video' : '📹 Record Camera / Upload Video File'}</span>
-                  <input type="file" accept="video/*,video/mp4,video/quicktime,video/webm,video/mov" onChange={handleVideoUpload} className="hidden" />
+              {/* Video URL Text Input */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={videoUrl || ''}
+                  onChange={(e) => {
+                    setVideoUrl(e.target.value);
+                    if (e.target.value) setUploadSuccess(true);
+                  }}
+                  placeholder="Paste direct Video URL (.mp4, .mov) or upload below"
+                  className="flex-1 p-2 rounded-xl bg-[#0a1420] border border-rose-500/30 text-white text-xs placeholder:text-gray-500 focus:outline-none focus:border-rose-400 font-mono"
+                />
+              </div>
+
+              {/* Dual Upload Options: From Photos/Files vs Live Camera */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* 1. Photos & Files Upload Button (Does NOT open camera directly) */}
+                <label className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:brightness-110 text-white font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all">
+                  <Upload className="w-4 h-4 text-white" />
+                  <span>📂 Photos & Files</span>
+                  <input
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/mov,video/webm,video/*"
+                    onChange={handleVideoUpload}
+                    className="hidden"
+                  />
                 </label>
 
-                {videoUrl && (
+                {/* 2. Live Camera Record Button */}
+                <label className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-red-800 to-rose-900 hover:brightness-110 text-white font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all border border-rose-500/40">
+                  <Video className="w-4 h-4 text-rose-200" />
+                  <span>📹 Record Camera</span>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    capture="user"
+                    onChange={handleVideoUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {videoUrl && (
+                <div className="flex items-center justify-between p-2 rounded-xl bg-rose-950/40 border border-rose-500/40">
+                  <span className="text-[11px] text-rose-200 font-medium truncate max-w-[220px]">
+                    ✓ Video attached
+                  </span>
                   <button
                     type="button"
                     onClick={() => {
                       setVideoUrl('');
                       setUploadSuccess(false);
                     }}
-                    className="px-3 py-2.5 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-500/50 text-rose-300 text-xs font-bold transition-all cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-rose-900/80 hover:bg-rose-800 text-rose-200 text-[10px] font-bold transition-all cursor-pointer"
                   >
                     Remove Video
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Progress Loading Bar */}
               {isVideoUploading && (
