@@ -26,7 +26,7 @@ export function computeStandingsAndFinalsMatch(
     const playerGoalsCount: Record<string, number> = {};
 
     regularMatches.forEach((m) => {
-      const isFinished = m.isFinished || m.status === 'ended';
+      const isFinished = m.isFinished || m.status === 'ended' || m.homeScore > 0 || m.awayScore > 0 || (m.events && m.events.length > 0);
       if (!isFinished) return;
 
       const isHome = m.homeTeamId === team.id;
@@ -63,7 +63,7 @@ export function computeStandingsAndFinalsMatch(
       let playerGamesCount = 0;
 
       matchesList.forEach((m) => {
-        const isMatchStarted = m.isFinished || m.status === 'ended' || m.isLive || m.homeScore > 0 || m.awayScore > 0;
+        const isMatchStarted = m.isFinished || m.status === 'ended' || m.isLive || m.homeScore > 0 || m.awayScore > 0 || (m.events && m.events.length > 0);
         const isTeamInMatch = m.homeTeamId === team.id || m.awayTeamId === team.id;
         
         if (isTeamInMatch && isMatchStarted) {
@@ -77,7 +77,7 @@ export function computeStandingsAndFinalsMatch(
         }
 
         // Count MOTM Awards
-        if (m.isFinished || m.status === 'ended') {
+        if (m.isFinished || m.status === 'ended' || m.homeScore > 0 || m.awayScore > 0) {
           if (m.motmPlayerId && m.motmPlayerId === player.id) {
             telemetryMotm += 1;
           } else if (m.motmPlayerName && m.motmPlayerName.toLowerCase().trim() === player.name.toLowerCase().trim()) {
