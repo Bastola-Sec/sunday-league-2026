@@ -386,14 +386,14 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
       case '3-3-1':
       default:
         return [
-          { num: 1, top: '86%', left: '48%', role: 'CB' },
-          { num: 3, top: '70%', left: '20%', role: 'LB' },
-          { num: 4, top: '74%', left: '48%', role: 'CB' },
-          { num: 2, top: '70%', left: '76%', role: 'RB' },
-          { num: 8, top: '48%', left: '24%', role: 'LM' },
-          { num: 6, top: '52%', left: '48%', role: 'CM' },
-          { num: 7, top: '48%', left: '72%', role: 'RM' },
-          { num: 9, top: '24%', left: '48%', role: 'ST' },
+          { num: 1, top: '88%', left: '48%', role: 'CB' },
+          { num: 3, top: '72%', left: '20%', role: 'LB' },
+          { num: 4, top: '72%', left: '48%', role: 'CB' },
+          { num: 2, top: '72%', left: '76%', role: 'RB' },
+          { num: 8, top: '46%', left: '22%', role: 'LM' },
+          { num: 6, top: '46%', left: '48%', role: 'CM' },
+          { num: 7, top: '46%', left: '74%', role: 'RM' },
+          { num: 9, top: '20%', left: '48%', role: 'ST' },
         ];
     }
   };
@@ -697,24 +697,24 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                               >
                                 {/* Glowing Ring Base on Pitch */}
                                 <div
-                                  className={`w-8 h-8 rounded-full border shadow-lg animate-pulse ${jerseyStyle.ringBg}`}
+                                  className={`w-6 h-6 rounded-full border shadow-lg animate-pulse ${jerseyStyle.ringBg}`}
                                 />
 
                                 {/* 3D Vertical Standing Jersey */}
                                 <div
-                                  className="absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center group-hover:scale-125 transition-transform"
+                                  className="absolute -top-4.5 left-1/2 -translate-x-1/2 flex flex-col items-center group-hover:scale-125 transition-transform"
                                 >
                                   <div
-                                    className={`w-9 h-10 border ${jerseyStyle.border} rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${jerseyStyle.gradient}`}
+                                    className={`w-7.5 h-8.5 border ${jerseyStyle.border} rounded-t-lg rounded-b-sm shadow-xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${jerseyStyle.gradient}`}
                                   >
                                     {/* Jersey Collar */}
-                                    <div className={`absolute top-0 w-4 h-1.5 rounded-b-full ${jerseyStyle.collar}`} />
-                                    <span className={`font-black text-xs tracking-tight drop-shadow-md mt-1 ${jerseyStyle.numberText}`}>
+                                    <div className={`absolute top-0 w-3 h-1 rounded-b-full ${jerseyStyle.collar}`} />
+                                    <span className={`font-black text-[10px] tracking-tight drop-shadow-md mt-0.5 ${jerseyStyle.numberText}`}>
                                       {playerNum}
                                     </span>
                                   </div>
                                   <span
-                                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md opacity-90 group-hover:opacity-100 border ${jerseyStyle.nameTagBorder}`}
+                                    className={`text-[8px] font-black px-1.5 py-0.2 rounded-full mt-0.5 whitespace-nowrap shadow-md opacity-90 group-hover:opacity-100 border ${jerseyStyle.nameTagBorder}`}
                                   >
                                     {playerInRoster ? playerInRoster.name.split(' ')[0] : `#${idx + 1}`}
                                   </span>

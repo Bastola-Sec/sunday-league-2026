@@ -134,14 +134,14 @@ export const FORMATIONS_8V8: Record<string, FormationPreset> = {
     description: 'Standard 8v8 balance with a solid defensive back 3 and active midfield width.',
     tactics: 'Maintains solid central defensive cover while wingers track back to aid fullbacks.',
     positions: [
-      { num: 1, top: '86%', left: '48%', role: 'CB', label: 'Defender' },
-      { num: 3, top: '70%', left: '20%', role: 'LB', label: 'Left Back' },
-      { num: 4, top: '74%', left: '48%', role: 'CB', label: 'Center Back' },
-      { num: 2, top: '70%', left: '76%', role: 'RB', label: 'Right Back' },
-      { num: 8, top: '48%', left: '24%', role: 'LM', label: 'Left Mid' },
-      { num: 6, top: '52%', left: '48%', role: 'CM', label: 'Center Mid' },
-      { num: 7, top: '48%', left: '72%', role: 'RM', label: 'Right Mid' },
-      { num: 9, top: '24%', left: '48%', role: 'ST', label: 'Striker' },
+      { num: 1, top: '88%', left: '48%', role: 'CB', label: 'Defender' },
+      { num: 3, top: '72%', left: '20%', role: 'LB', label: 'Left Back' },
+      { num: 4, top: '72%', left: '48%', role: 'CB', label: 'Center Back' },
+      { num: 2, top: '72%', left: '76%', role: 'RB', label: 'Right Back' },
+      { num: 8, top: '46%', left: '22%', role: 'LM', label: 'Left Mid' },
+      { num: 6, top: '46%', left: '48%', role: 'CM', label: 'Center Mid' },
+      { num: 7, top: '46%', left: '74%', role: 'RM', label: 'Right Mid' },
+      { num: 9, top: '20%', left: '48%', role: 'ST', label: 'Striker' },
     ],
   },
   '3-2-2': {
@@ -153,14 +153,14 @@ export const FORMATIONS_8V8: Record<string, FormationPreset> = {
     description: 'Aggressive twin-striker partnership designed to pin down opposition center-backs.',
     tactics: 'Dual forwards overlap channels while two central midfielders hold midfield structure.',
     positions: [
-      { num: 1, top: '86%', left: '48%', role: 'CB', label: 'Defender' },
-      { num: 3, top: '70%', left: '20%', role: 'LB', label: 'Left Back' },
-      { num: 4, top: '74%', left: '48%', role: 'CB', label: 'Center Back' },
-      { num: 2, top: '70%', left: '76%', role: 'RB', label: 'Right Back' },
-      { num: 8, top: '50%', left: '36%', role: 'LCM', label: 'Left Mid' },
-      { num: 6, top: '50%', left: '60%', role: 'RCM', label: 'Right Mid' },
-      { num: 9, top: '26%', left: '36%', role: 'LS', label: 'Left Striker' },
-      { num: 10, top: '26%', left: '60%', role: 'RS', label: 'Right Striker' },
+      { num: 1, top: '88%', left: '48%', role: 'CB', label: 'Defender' },
+      { num: 3, top: '72%', left: '20%', role: 'LB', label: 'Left Back' },
+      { num: 4, top: '72%', left: '48%', role: 'CB', label: 'Center Back' },
+      { num: 2, top: '72%', left: '76%', role: 'RB', label: 'Right Back' },
+      { num: 8, top: '46%', left: '34%', role: 'LCM', label: 'Left Mid' },
+      { num: 6, top: '46%', left: '62%', role: 'RCM', label: 'Right Mid' },
+      { num: 9, top: '20%', left: '34%', role: 'LS', label: 'Left Striker' },
+      { num: 10, top: '20%', left: '62%', role: 'RS', label: 'Right Striker' },
     ],
   },
   '2-3-2': {
@@ -172,14 +172,14 @@ export const FORMATIONS_8V8: Record<string, FormationPreset> = {
     description: 'High-octane offensive layout pushing wide wingers forward for early crosses.',
     tactics: 'Sacrifices a third defender for extra width. High risk, high goal reward style.',
     positions: [
-      { num: 1, top: '86%', left: '48%', role: 'CB', label: 'Defender' },
+      { num: 1, top: '88%', left: '48%', role: 'CB', label: 'Defender' },
       { num: 3, top: '72%', left: '32%', role: 'LCB', label: 'Left CB' },
       { num: 5, top: '72%', left: '64%', role: 'RCB', label: 'Right CB' },
-      { num: 8, top: '48%', left: '20%', role: 'LM', label: 'Left Wing' },
-      { num: 6, top: '52%', left: '48%', role: 'CM', label: 'Central Engine' },
-      { num: 7, top: '48%', left: '80%', role: 'RM', label: 'Right Wing' },
-      { num: 9, top: '26%', left: '36%', role: 'LS', label: 'Left Striker' },
-      { num: 10, top: '26%', left: '60%', role: 'RS', label: 'Right Striker' },
+      { num: 8, top: '46%', left: '20%', role: 'LM', label: 'Left Wing' },
+      { num: 6, top: '46%', left: '48%', role: 'CM', label: 'Central Engine' },
+      { num: 7, top: '46%', left: '80%', role: 'RM', label: 'Right Wing' },
+      { num: 9, top: '20%', left: '34%', role: 'LS', label: 'Left Striker' },
+      { num: 10, top: '20%', left: '62%', role: 'RS', label: 'Right Striker' },
     ],
   },
   '2-4-1': {
@@ -191,14 +191,14 @@ export const FORMATIONS_8V8: Record<string, FormationPreset> = {
     description: 'Dominate possession with a 4-man midfield box that controls game tempo.',
     tactics: 'Overwhelms opposition in central pitch with numerical superiority and quick passing.',
     positions: [
-      { num: 1, top: '86%', left: '48%', role: 'CB', label: 'Defender' },
+      { num: 1, top: '88%', left: '48%', role: 'CB', label: 'Defender' },
       { num: 3, top: '72%', left: '34%', role: 'LCB', label: 'Left CB' },
       { num: 5, top: '72%', left: '62%', role: 'RCB', label: 'Right CB' },
-      { num: 11, top: '48%', left: '16%', role: 'LM', label: 'Left Mid' },
-      { num: 8, top: '52%', left: '38%', role: 'LCM', label: 'Central Mid' },
-      { num: 6, top: '52%', left: '58%', role: 'RCM', label: 'Central Mid' },
-      { num: 7, top: '48%', left: '84%', role: 'RM', label: 'Right Mid' },
-      { num: 9, top: '24%', left: '48%', role: 'ST', label: 'Lone Striker' },
+      { num: 11, top: '46%', left: '16%', role: 'LM', label: 'Left Mid' },
+      { num: 8, top: '46%', left: '38%', role: 'LCM', label: 'Central Mid' },
+      { num: 6, top: '46%', left: '58%', role: 'RCM', label: 'Central Mid' },
+      { num: 7, top: '46%', left: '84%', role: 'RM', label: 'Right Mid' },
+      { num: 9, top: '20%', left: '48%', role: 'ST', label: 'Lone Striker' },
     ],
   },
   '3-1-3': {
@@ -1115,7 +1115,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
                 >
                   {/* Base Pitch Ring */}
                   <div
-                    className={`w-8 h-8 rounded-full border shadow-lg transition-all ${
+                    className={`w-6 h-6 rounded-full border shadow-lg transition-all ${
                       playerInSlot
                         ? isDraggingCurrent
                           ? 'bg-amber-400/60 border-amber-300 shadow-[0_0_25px_#f59e0b] scale-125'
@@ -1128,32 +1128,32 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
 
                   {/* Standing Jersey Overlay */}
                   <div
-                    className={`absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center transition-transform ${
+                    className={`absolute -top-4.5 left-1/2 -translate-x-1/2 flex flex-col items-center transition-transform ${
                       isDraggingCurrent ? 'scale-125' : 'group-hover:scale-125'
                     }`}
                   >
                     {playerInSlot ? (
                       <>
                         <div
-                          className={`w-9 h-10 border ${jerseyStyle.border} rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${jerseyStyle.gradient}`}
+                          className={`w-7.5 h-8.5 border ${jerseyStyle.border} rounded-t-lg rounded-b-sm shadow-xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${jerseyStyle.gradient}`}
                         >
-                          <div className={`absolute top-0 w-4 h-1.5 rounded-b-full ${jerseyStyle.collar}`} />
-                          <span className={`font-black text-xs tracking-tight drop-shadow-md mt-1 ${jerseyStyle.numberText}`}>
+                          <div className={`absolute top-0 w-3 h-1 rounded-b-full ${jerseyStyle.collar}`} />
+                          <span className={`font-black text-[10px] tracking-tight drop-shadow-md mt-0.5 ${jerseyStyle.numberText}`}>
                             {playerInSlot.number}
                           </span>
                           {playerInSlot.isCaptain && (
-                            <span className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full bg-amber-400 text-slate-950 text-[8px] font-black flex items-center justify-center">
+                            <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-amber-400 text-slate-950 text-[7px] font-black flex items-center justify-center">
                               C
                             </span>
                           )}
                           {!isScreenLocked && (
                             <div className="absolute top-0.5 right-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                              <Move className="w-2.5 h-2.5 text-white/90" />
+                              <Move className="w-2 h-2 text-white/90" />
                             </div>
                           )}
                         </div>
                         <span
-                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md border ${
+                          className={`text-[8px] font-black px-1.5 py-0.2 rounded-full mt-0.5 whitespace-nowrap shadow-md border ${
                             isDraggingCurrent || isHighlighted
                               ? 'border-amber-400 text-amber-300 bg-black/90'
                               : jerseyStyle.nameTagBorder
@@ -1163,8 +1163,8 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
                         </span>
                       </>
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-black/70 border border-dashed border-teal-400/70 text-teal-300 flex flex-col items-center justify-center shadow-md">
-                        <span className="text-[9px] font-mono font-black">#{presetPos.num || idx + 1}</span>
+                      <div className="w-7 h-7 rounded-full bg-black/70 border border-dashed border-teal-400/70 text-teal-300 flex flex-col items-center justify-center shadow-md">
+                        <span className="text-[8px] font-mono font-black">#{presetPos.num || idx + 1}</span>
                       </div>
                     )}
                   </div>
