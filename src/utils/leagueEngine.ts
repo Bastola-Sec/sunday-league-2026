@@ -377,3 +377,70 @@ export function rolloverToNewSeason(
     newMatches,
   };
 }
+
+/**
+ * Returns canonical Sunday League jersey colors per team:
+ * - Jhyap Warriors: White icon
+ * - MoMo Strikers: Blue icon
+ * - No Stamina Hustlers (NSW): Red icon
+ */
+export function getTeamJerseyStyle(teamId?: string, isHomeFallback?: boolean) {
+  const normId = (teamId || '').toLowerCase();
+
+  if (normId.includes('jhyap')) {
+    // Jhyap Warriors -> White Color Icon
+    return {
+      gradient: 'from-slate-100 via-white to-slate-200',
+      border: 'border-slate-300',
+      numberText: 'text-slate-950 font-black',
+      ringBg: 'bg-white/40 border-white shadow-[0_0_15px_rgba(255,255,255,0.7)]',
+      nameTagBorder: 'border-white/60 text-white bg-slate-900/90',
+      collar: 'bg-slate-300',
+    };
+  }
+
+  if (normId.includes('momo')) {
+    // MoMo Strikers -> Blue Color Icon
+    return {
+      gradient: 'from-[#4B7CEC] to-[#2B54B8]',
+      border: 'border-blue-300/70',
+      numberText: 'text-white font-black',
+      ringBg: 'bg-[#4B7CEC]/40 border-[#4B7CEC] shadow-[#4B7CEC]',
+      nameTagBorder: 'border-[#4B7CEC]/50 text-white bg-black/85',
+      collar: 'bg-white/80',
+    };
+  }
+
+  if (normId.includes('no-stamina') || normId.includes('nsh') || normId.includes('hustler')) {
+    // No Stamina Hustlers (NSW) -> Red Color Icon
+    return {
+      gradient: 'from-[#EF4444] to-[#991B1B]',
+      border: 'border-rose-300/70',
+      numberText: 'text-white font-black',
+      ringBg: 'bg-rose-500/40 border-rose-500 shadow-rose-500',
+      nameTagBorder: 'border-rose-500/50 text-white bg-black/85',
+      collar: 'bg-white/80',
+    };
+  }
+
+  // Fallback if generic team ID:
+  if (isHomeFallback) {
+    return {
+      gradient: 'from-[#4B7CEC] to-[#2B54B8]',
+      border: 'border-blue-300/70',
+      numberText: 'text-white font-black',
+      ringBg: 'bg-[#4B7CEC]/40 border-[#4B7CEC] shadow-[#4B7CEC]',
+      nameTagBorder: 'border-[#4B7CEC]/50 text-white bg-black/85',
+      collar: 'bg-white/80',
+    };
+  } else {
+    return {
+      gradient: 'from-[#EF4444] to-[#991B1B]',
+      border: 'border-rose-300/70',
+      numberText: 'text-white font-black',
+      ringBg: 'bg-rose-500/40 border-rose-500 shadow-rose-500',
+      nameTagBorder: 'border-rose-500/50 text-white bg-black/85',
+      collar: 'bg-white/80',
+    };
+  }
+}

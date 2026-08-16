@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Match, Team, MatchEvent, Player } from '../types';
 import { TeamLogo } from './TeamLogos';
+import { getTeamJerseyStyle } from '../utils/leagueEngine';
 import { AutoEventWizardModal } from './AutoEventWizardModal';
 import { CompletedMatchAnalytics } from './CompletedMatchAnalytics';
 
@@ -664,6 +665,7 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                             const pos = formationCoords[idx] || { num: idx + 1, top: '50%', left: '50%', role: 'SUB' };
                             const playerNum = playerInRoster?.number || pos.num;
                             const isHome = lineupTeamId === match.homeTeamId;
+                            const jerseyStyle = getTeamJerseyStyle(selectedLineupTeam?.id, isHome);
 
                             const nodePos = (customPositions && customPositions[idx]) ? customPositions[idx] : { top: pos.top, left: pos.left };
 
@@ -681,11 +683,7 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                               >
                                 {/* Glowing Ring Base on Pitch */}
                                 <div
-                                  className={`w-8 h-8 rounded-full border shadow-lg animate-pulse ${
-                                    isHome
-                                      ? 'bg-[#4B7CEC]/30 border-[#4B7CEC] shadow-[#4B7CEC]'
-                                      : 'bg-rose-500/30 border-rose-500 shadow-[#EF4444]'
-                                  }`}
+                                  className={`w-8 h-8 rounded-full border shadow-lg animate-pulse ${jerseyStyle.ringBg}`}
                                 />
 
                                 {/* 3D Vertical Standing Jersey */}
@@ -693,22 +691,16 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
                                   className="absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center group-hover:scale-125 transition-transform"
                                 >
                                   <div
-                                    className={`w-9 h-10 border border-white/60 rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${
-                                      isHome
-                                        ? 'from-[#4B7CEC] to-[#2B54B8]'
-                                        : 'from-[#EF4444] to-[#991B1B]'
-                                    }`}
+                                    className={`w-9 h-10 border ${jerseyStyle.border} rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${jerseyStyle.gradient}`}
                                   >
                                     {/* Jersey Collar */}
-                                    <div className="absolute top-0 w-4 h-1.5 bg-white/80 rounded-b-full" />
-                                    <span className="text-white font-black text-xs tracking-tight drop-shadow-md mt-1">
+                                    <div className={`absolute top-0 w-4 h-1.5 rounded-b-full ${jerseyStyle.collar}`} />
+                                    <span className={`font-black text-xs tracking-tight drop-shadow-md mt-1 ${jerseyStyle.numberText}`}>
                                       {playerNum}
                                     </span>
                                   </div>
                                   <span
-                                    className={`text-[9px] font-extrabold text-white bg-black/80 px-2 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md opacity-90 group-hover:opacity-100 border ${
-                                      isHome ? 'border-[#4B7CEC]/40' : 'border-rose-500/40'
-                                    }`}
+                                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md opacity-90 group-hover:opacity-100 border ${jerseyStyle.nameTagBorder}`}
                                   >
                                     {playerInRoster ? playerInRoster.name.split(' ')[0] : `#${idx + 1}`}
                                   </span>

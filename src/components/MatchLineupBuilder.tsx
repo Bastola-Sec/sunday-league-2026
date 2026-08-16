@@ -3,6 +3,7 @@ import { motion, AnimatePresence, PanInfo } from 'motion/react';
 import { Users, ShieldCheck, CheckCircle2, Sparkles, UserCheck, RefreshCw, Zap, Shield, Lock, Unlock, Clock, Eye, Maximize2, Layers, SlidersHorizontal, ChevronDown, Award, RotateCcw, Move } from 'lucide-react';
 import { Match, Team, AdminUser, Player } from '../types';
 import { TeamLogo } from './TeamLogos';
+import { getTeamJerseyStyle } from '../utils/leagueEngine';
 
 interface MatchLineupBuilderProps {
   match: Match;
@@ -1083,6 +1084,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
               const pos = customPositions[idx] || { top: presetPos.top, left: presetPos.left };
               const isHighlighted = playerInSlot && highlightedPlayerId === playerInSlot.id;
               const isDraggingCurrent = isDraggingNode === idx;
+              const jerseyStyle = getTeamJerseyStyle(activeTeam?.id, isHome);
 
               return (
                 <motion.div
@@ -1107,7 +1109,7 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
                           ? 'bg-amber-400/60 border-amber-300 shadow-[0_0_25px_#f59e0b] scale-125'
                           : isHighlighted
                           ? 'bg-amber-400/40 border-amber-300 shadow-[#F59E0B] scale-125'
-                          : 'bg-[#4B7CEC]/40 border-[#4B7CEC] shadow-[#4B7CEC] animate-pulse'
+                          : `${jerseyStyle.ringBg} animate-pulse`
                         : 'bg-slate-800/80 border-dashed border-gray-400/60 shadow-inner'
                     }`}
                   />
@@ -1121,14 +1123,10 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
                     {playerInSlot ? (
                       <>
                         <div
-                          className={`w-9 h-10 border border-white/70 rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${
-                            isHome
-                              ? 'from-[#4B7CEC] to-[#2B54B8]'
-                              : 'from-[#EF4444] to-[#991B1B]'
-                          }`}
+                          className={`w-9 h-10 border ${jerseyStyle.border} rounded-t-xl rounded-b-md shadow-2xl flex items-center justify-center relative overflow-hidden bg-gradient-to-b ${jerseyStyle.gradient}`}
                         >
-                          <div className="absolute top-0 w-4 h-1.5 bg-white/80 rounded-b-full" />
-                          <span className="text-white font-black text-xs tracking-tight drop-shadow-md mt-1">
+                          <div className={`absolute top-0 w-4 h-1.5 rounded-b-full ${jerseyStyle.collar}`} />
+                          <span className={`font-black text-xs tracking-tight drop-shadow-md mt-1 ${jerseyStyle.numberText}`}>
                             {playerInSlot.number}
                           </span>
                           {playerInSlot.isCaptain && (
@@ -1143,10 +1141,10 @@ export const MatchLineupBuilder: React.FC<MatchLineupBuilderProps> = ({
                           )}
                         </div>
                         <span
-                          className={`text-[9px] font-bold text-white bg-black/85 px-1.5 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md border ${
+                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5 whitespace-nowrap shadow-md border ${
                             isDraggingCurrent || isHighlighted
-                              ? 'border-amber-400 text-amber-300'
-                              : 'border-[#4B7CEC]/50'
+                              ? 'border-amber-400 text-amber-300 bg-black/90'
+                              : jerseyStyle.nameTagBorder
                           }`}
                         >
                           {playerInSlot.name.split(' ')[0]}
