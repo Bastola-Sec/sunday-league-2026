@@ -710,18 +710,20 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   };
 
   const handleRemovePlayerFromRoster = (playerId: string) => {
-    if (!activeSelectedTeam || !canEditActiveTeam) return;
-    const updated = (activeSelectedTeam.roster || []).filter((p) => p.id !== playerId);
-    onUpdateRoster(activeSelectedTeam.id, updated);
+    const targetTeam = teams.find((t) => t.id === selectedTeamId) || teams[0];
+    if (!targetTeam) return;
+    const updated = (targetTeam.roster || []).filter((p) => p.id !== playerId);
+    onUpdateRoster(targetTeam.id, updated);
   };
 
   const handleToggleCaptainStatus = (playerId: string) => {
-    if (!activeSelectedTeam || !canEditActiveTeam) return;
-    const updated = (activeSelectedTeam.roster || []).map((p) => ({
+    const targetTeam = teams.find((t) => t.id === selectedTeamId) || teams[0];
+    if (!targetTeam) return;
+    const updated = (targetTeam.roster || []).map((p) => ({
       ...p,
       isCaptain: p.id === playerId ? !p.isCaptain : false,
     }));
-    onUpdateRoster(activeSelectedTeam.id, updated);
+    onUpdateRoster(targetTeam.id, updated);
   };
 
   // Sync state when fixture selection changes

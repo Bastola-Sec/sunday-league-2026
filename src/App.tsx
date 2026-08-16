@@ -393,14 +393,54 @@ export default function App() {
   };
 
 
-  // Update Roster Admin
+  // Update Roster Admin with automatic multi-component & Firestore lineup sync
   const handleUpdateRoster = (teamId: string, updatedRoster: Player[]) => {
+    // 1. Update teams state
     setTeams((prev) =>
       prev.map((t) => (t.id === teamId ? { ...t, roster: updatedRoster, squadCount: updatedRoster.length } : t))
     );
+
+    // 2. Save updated team roster to Firestore
     saveTeamRosterToFirestore(teamId, updatedRoster);
 
-    // Sync active player profile overlay if open
+    // 3. Automatically clean up deleted player IDs from all matches involving this team
+    const validPlayerIds = new Set(updatedRoster.map((p) => p.id));
+    setMatches((prevMatches) => {
+      let matchesChanged = false;
+      const nextMatches = prevMatches.map((m) => {
+        if (m.homeTeamId !== teamId && m.awayTeamId !== teamId) return m;
+
+        const isHome = m.homeTeamId === teamId;
+        const startingKey = isHome ? 'homeStartingPlayerIds' : 'awayStartingPlayerIds';
+        const subKey = isHome ? 'homeSubstitutePlayerIds' : 'awaySubstitutePlayerIds';
+
+        const currentStart = m[startingKey] || [];
+        const currentSub = m[subKey] || [];
+
+        const cleanStart = currentStart.filter((id) => validPlayerIds.has(id));
+        const cleanSub = currentSub.filter((id) => validPlayerIds.has(id));
+
+        if (cleanStart.length !== currentStart.length || cleanSub.length !== currentSub.length) {
+          matchesChanged = true;
+          const updatedMatch = {
+            ...m,
+            [startingKey]: cleanStart,
+            [subKey]: cleanSub,
+          };
+          saveMatchToFirestore(m.id, {
+            [startingKey]: cleanStart,
+            [subKey]: cleanSub,
+          });
+          return updatedMatch;
+        }
+
+        return m;
+      });
+
+      return matchesChanged ? nextMatches : prevMatches;
+    });
+
+    // 4. Sync active player profile overlay if open
     if (selectedPlayerForProfile) {
       const updatedP = updatedRoster.find((p) => p.id === selectedPlayerForProfile.id);
       if (updatedP) {
@@ -410,6 +450,24 @@ export default function App() {
 
     if (selectedTeamForPlayer && selectedTeamForPlayer.id === teamId) {
       setSelectedTeamForPlayer((prev) => (prev ? { ...prev, roster: updatedRoster, squadCount: updatedRoster.length } : null));
+    }
+
+    // 5. Sync active open match modal if viewing live fixture
+    if (selectedMatchForModal && (selectedMatchForModal.homeTeamId === teamId || selectedMatchForModal.awayTeamId === teamId)) {
+      setSelectedMatchForModal((prev) => {
+        if (!prev) return null;
+        const isHome = prev.homeTeamId === teamId;
+        const startingKey = isHome ? 'homeStartingPlayerIds' : 'awayStartingPlayerIds';
+        const subKey = isHome ? 'homeSubstitutePlayerIds' : 'awaySubstitutePlayerIds';
+        const currentStart = prev[startingKey] || [];
+        const currentSub = prev[subKey] || [];
+
+        return {
+          ...prev,
+          [startingKey]: currentStart.filter((id) => validPlayerIds.has(id)),
+          [subKey]: currentSub.filter((id) => validPlayerIds.has(id)),
+        };
+      });
     }
   };
 
