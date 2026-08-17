@@ -2235,10 +2235,10 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                                   }
                                                 }
                                               }}
-                                              className="w-full py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/50 font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                                              className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/50 font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-md"
                                             >
-                                              <RotateCcw className="w-4 h-4 text-rose-400" />
-                                              <span>🔄 RESET MATCH TO 0-0 SCHEDULED (WIPE ALL EVENTS & LIVE STATE)</span>
+                                              <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
+                                              <span>Reset</span>
                                             </button>
                                           )}
                                         </div>
