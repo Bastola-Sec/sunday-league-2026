@@ -29,7 +29,7 @@ import { PushNotificationToast } from './components/PushNotificationToast';
 import { IPhoneFrame } from './components/IPhoneFrame';
 import { computeStandingsAndFinalsMatch, rolloverToNewSeason } from './utils/leagueEngine';
 
-const CURRENT_CACHE_VERSION = 'v2026_08_17_V8_TEST_FIXTURE_READY';
+const CURRENT_CACHE_VERSION = 'v2026_08_17_V9_MULTI_DEVICE_REALTIME_SYNC';
 
 export default function App() {
   // Application Core State (with LocalStorage cache persistence & versioning)
@@ -111,14 +111,31 @@ export default function App() {
         const localMatchesMap = new Map(currentLocal.map((m) => [m.id, m]));
         const merged = sanitizedRemote.map((remote) => {
           const local = localMatchesMap.get(remote.id);
-          // Preserve local match edits, completed status, or recorded events over stale remote state
-          if (local && (local.isFinished || local.status === 'ended' || (local.events && local.events.length > (remote.events?.length || 0)))) {
+
+          if (!local) return remote;
+
+          const remoteEventsCount = remote.events?.length || 0;
+          const localEventsCount = local.events?.length || 0;
+
+          // 1. If remote snapshot from Cloud Firestore has more/newer events, accept remote update immediately across all devices!
+          if (remoteEventsCount > localEventsCount) {
+            return remote;
+          }
+
+          // 2. If remote match is marked finished, ended, or live, accept remote update!
+          if (remote.isFinished || remote.status === 'ended' || remote.isLive) {
+            return remote;
+          }
+
+          // 3. Only preserve local device state if local has un-synced draft events not yet in remote
+          if (localEventsCount > remoteEventsCount) {
             return local;
           }
+
           return remote;
         });
 
-        // Retain any local matches not present in remote snapshot
+        // Retain any local-only test matches not in remote snapshot
         currentLocal.forEach((local) => {
           if (!merged.some((m) => m.id === local.id)) {
             merged.push(local);
