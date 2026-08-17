@@ -162,13 +162,22 @@ export function sanitizeMatchesData(rawMatches: Match[]): Match[] {
         const calcHomeScore = goalEvents.filter((e) => e.teamId === homeId).length;
         const calcAwayScore = goalEvents.filter((e) => e.teamId === awayId).length;
 
+        // Respect explicit manual score overrides from Commissioner if present, otherwise calculate from goal events
+        const finalHomeScore = (m.homeScore !== undefined && m.homeScore !== 0)
+          ? m.homeScore
+          : (calcHomeScore > 0 ? calcHomeScore : defaultFixture.homeScore);
+
+        const finalAwayScore = (m.awayScore !== undefined && m.awayScore !== 0)
+          ? m.awayScore
+          : (calcAwayScore > 0 ? calcAwayScore : defaultFixture.awayScore);
+
         const isLiveMatch = !isFinishedMatch && (m.isLive ?? false);
 
         return {
           ...defaultFixture,
           ...m,
-          homeScore: calcHomeScore,
-          awayScore: calcAwayScore,
+          homeScore: finalHomeScore,
+          awayScore: finalAwayScore,
           isLive: isLiveMatch,
           isFinished: isFinishedMatch,
           status: isFinishedMatch ? 'ended' : m.status,
