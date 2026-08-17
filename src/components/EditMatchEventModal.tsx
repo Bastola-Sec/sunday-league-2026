@@ -80,17 +80,24 @@ export const EditMatchEventModal: React.FC<EditMatchEventModalProps> = ({
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const finalDescription = description.trim()
-      ? description.trim()
-      : eventType === 'goal'
-      ? `⚽ GOAL! ${playerName || 'Player'} scores for ${activeSelectedTeam?.name}!`
-      : eventType === 'yellow_card'
-      ? `🟨 YELLOW CARD to ${playerName || 'Player'} (${activeSelectedTeam?.shortName})`
-      : eventType === 'red_card'
-      ? `🟥 RED CARD to ${playerName || 'Player'} (${activeSelectedTeam?.shortName})`
-      : eventType === 'sub'
-      ? `🔄 SUB: ${playerName || 'Player'} in for ${subOutPlayerName || 'Player'}`
-      : `${eventType.toUpperCase()} - ${playerName || activeSelectedTeam?.name}`;
+    let finalDescription = description.trim();
+
+    // Dynamically format clean description for goals based on assist selection
+    if (eventType === 'goal') {
+      if (assistPlayerName.trim()) {
+        finalDescription = `⚽ GOAL! ${playerName || 'Player'} scores for ${activeSelectedTeam?.name}! (Assist: ${assistPlayerName.trim()})`;
+      } else {
+        finalDescription = `⚽ GOAL! ${playerName || 'Player'} scores for ${activeSelectedTeam?.name}!`;
+      }
+    } else if (!finalDescription) {
+      finalDescription = eventType === 'yellow_card'
+        ? `🟨 YELLOW CARD to ${playerName || 'Player'} (${activeSelectedTeam?.shortName})`
+        : eventType === 'red_card'
+        ? `🟥 RED CARD to ${playerName || 'Player'} (${activeSelectedTeam?.shortName})`
+        : eventType === 'sub'
+        ? `🔄 SUB: ${playerName || 'Player'} in for ${subOutPlayerName || 'Player'}`
+        : `${eventType.toUpperCase()} - ${playerName || activeSelectedTeam?.name}`;
+    }
 
     const currentPeriodStr =
       minute <= 20 ? '1st_half' : minute <= 40 ? '2nd_half' : 'fulltime';
@@ -101,17 +108,29 @@ export const EditMatchEventModal: React.FC<EditMatchEventModalProps> = ({
       // Edit existing event
       updatedEventsList = updatedEventsList.map((evt) => {
         if (evt.id === eventToEdit.id) {
-          return {
+          const updatedEvt: MatchEvent = {
             ...evt,
             type: eventType,
             teamId: selectedTeamId,
             player: playerName || 'Player',
             minute: Number(minute),
             description: finalDescription,
-            assistPlayer: assistPlayerName || undefined,
-            subOutPlayer: subOutPlayerName || undefined,
             period: currentPeriodStr,
           };
+
+          if (assistPlayerName.trim()) {
+            updatedEvt.assistPlayer = assistPlayerName.trim();
+          } else {
+            delete updatedEvt.assistPlayer;
+          }
+
+          if (subOutPlayerName.trim()) {
+            updatedEvt.subOutPlayer = subOutPlayerName.trim();
+          } else {
+            delete updatedEvt.subOutPlayer;
+          }
+
+          return updatedEvt;
         }
         return evt;
       });
