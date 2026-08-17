@@ -29,7 +29,7 @@ import { PushNotificationToast } from './components/PushNotificationToast';
 import { IPhoneFrame } from './components/IPhoneFrame';
 import { computeStandingsAndFinalsMatch, rolloverToNewSeason } from './utils/leagueEngine';
 
-const CURRENT_CACHE_VERSION = 'v2026_08_17_V12_OFFICIAL_PERFECT_SYNC';
+const CURRENT_CACHE_VERSION = 'v2026_08_17_V99_SUPER_HARD_PURGE';
 
 // Synchronously clear outdated disk caches before component state initialization
 try {
@@ -60,7 +60,7 @@ export default function App() {
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length >= 7) {
-          return parsed;
+          return sanitizeMatchesData(parsed);
         }
       }
     } catch (e) {}
