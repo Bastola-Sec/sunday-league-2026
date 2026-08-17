@@ -907,26 +907,41 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     signOut(auth).catch(() => { });
   };
 
+  // Auto-initialize running timer if current match is live
+  useEffect(() => {
+    if (editingMatch && (editingMatch.status === '1st_half' || editingMatch.status === '2nd_half' || editingMatch.isLive)) {
+      setIsLiveClockRunning(true);
+    }
+  }, [editingMatch?.id, editingMatch?.status, editingMatch?.isLive]);
+
   // Live Timer Interval Ticker (Ticks MM:SS in real-time seconds)
   useEffect(() => {
     let interval: any;
     if (isLiveClockRunning && editingMatchId) {
       interval = setInterval(() => {
-        if (onUpdateFullMatch) {
-          const currentMatch = matches.find((m) => m.id === editingMatchId);
-          const currentSec = currentMatch?.matchSeconds ?? ((currentMatch?.minute || 0) * 60);
+        setEditingMatch((prev) => {
+          if (!prev) return null;
+          const currentSec = prev.matchSeconds ?? ((prev.minute || 0) * 60);
           const nextSec = currentSec + 1;
           const nextMin = Math.floor(nextSec / 60);
-          onUpdateFullMatch(editingMatchId, {
+
+          if (onUpdateFullMatch) {
+            onUpdateFullMatch(editingMatchId, {
+              matchSeconds: nextSec,
+              minute: nextMin,
+            });
+          }
+
+          return {
+            ...prev,
             matchSeconds: nextSec,
             minute: nextMin,
-          });
-          setMatchMinute(nextMin);
-        }
-      }, 1000); // 1 real second tick for authentic MM:SS live match clock!
+          };
+        });
+      }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isLiveClockRunning, editingMatchId, matches, onUpdateFullMatch]);
+  }, [isLiveClockRunning, editingMatchId]);
 
   // Auto Match Simulator Effect
   useEffect(() => {
