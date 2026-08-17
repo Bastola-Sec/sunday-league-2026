@@ -2158,13 +2158,28 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                           </div>
                                         </div>
 
-                                        <div className="flex items-center gap-3 bg-[#02050a] px-6 py-2.5 rounded-2xl border-2 border-emerald-400/80 shadow-[0_0_25px_rgba(16,185,129,0.4)]">
-                                          <Clock className="w-7 h-7 text-emerald-400 animate-pulse" />
-                                          <div className="flex flex-col items-center">
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-[#B7CEEC]">CURRENT MATCH TIME</span>
-                                            <span className="text-3xl sm:text-4xl font-black font-mono tracking-widest text-emerald-300 drop-shadow-[0_0_15px_rgba(52,211,153,0.7)]">
-                                              {formatClockTime(matchMinute, editingMatch?.matchSeconds)}
-                                            </span>
+                                        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3.5">
+                                          {/* LIVE SCORE DISPLAY CARD */}
+                                          <div className="flex items-center gap-3 bg-[#02050a] px-4 sm:px-5 py-2 rounded-2xl border-2 border-teal-400/80 shadow-[0_0_25px_rgba(45,212,191,0.35)]">
+                                            <TeamLogo teamId={editingMatch.homeTeamId} size={28} />
+                                            <div className="flex flex-col items-center">
+                                              <span className="text-[9px] font-black uppercase tracking-widest text-teal-300 font-mono">LIVE SCORE</span>
+                                              <span className="text-2xl sm:text-3xl font-black font-mono tracking-widest text-white drop-shadow-[0_0_15px_rgba(45,212,191,0.6)]">
+                                                {editingMatch.homeScore} - {editingMatch.awayScore}
+                                              </span>
+                                            </div>
+                                            <TeamLogo teamId={editingMatch.awayTeamId} size={28} />
+                                          </div>
+
+                                          {/* DIGITAL MATCH CLOCK */}
+                                          <div className="flex items-center gap-3 bg-[#02050a] px-4 sm:px-5 py-2 rounded-2xl border-2 border-emerald-400/80 shadow-[0_0_25px_rgba(16,185,129,0.4)]">
+                                            <Clock className="w-6 sm:w-7 h-6 sm:h-7 text-emerald-400 animate-pulse" />
+                                            <div className="flex flex-col items-center">
+                                              <span className="text-[9px] font-black uppercase tracking-widest text-[#B7CEEC] font-mono">MATCH TIME</span>
+                                              <span className="text-2xl sm:text-3xl font-black font-mono tracking-widest text-emerald-300 drop-shadow-[0_0_15px_rgba(52,211,153,0.7)]">
+                                                {formatClockTime(matchMinute, editingMatch?.matchSeconds)}
+                                              </span>
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
