@@ -139,6 +139,28 @@ export function subscribeTeams(onUpdate: (teams: Team[]) => void) {
   );
 }
 
+export function sanitizeMatchesData(rawMatches: Match[]): Match[] {
+  const initMap = new Map(INITIAL_MATCHES.map((m) => [m.id, m]));
+
+  return rawMatches.map((m) => {
+    const defaultFixture = initMap.get(m.id);
+
+    // If defaultFixture is marked finished in core dataset, ensure finished state is preserved
+    if (defaultFixture && defaultFixture.isFinished) {
+      if (!m.isFinished || m.status !== 'ended') {
+        return defaultFixture;
+      }
+    }
+
+    // If m is stuck in live state with minute > 30 and hasn't been finished:
+    if (m.isLive && m.minute > 30 && defaultFixture) {
+      return defaultFixture;
+    }
+
+    return m;
+  });
+}
+
 /**
  * Subscribe to real-time updates for Matches collection.
  */
@@ -149,7 +171,7 @@ export function subscribeMatches(onUpdate: (matches: Match[]) => void) {
     (snapshot) => {
       const matchesList: Match[] = snapshot.docs.map((doc) => doc.data() as Match);
       if (matchesList.length > 0) {
-        onUpdate(matchesList);
+        onUpdate(sanitizeMatchesData(matchesList));
       }
     },
     (error) => {

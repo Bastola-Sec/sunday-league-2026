@@ -5,6 +5,7 @@ import {
   initializeFirestoreData,
   subscribeTeams,
   subscribeMatches,
+  sanitizeMatchesData,
   subscribeNotifications,
   saveTeamToFirestore,
   saveTeamRosterToFirestore,
@@ -107,9 +108,10 @@ export default function App() {
       setTeams(updatedTeams);
     });
     const unsubMatches = subscribeMatches((updatedMatches) => {
+      const sanitizedRemote = sanitizeMatchesData(updatedMatches);
       setMatches((currentLocal) => {
         const localMatchesMap = new Map(currentLocal.map((m) => [m.id, m]));
-        const merged = updatedMatches.map((remote) => {
+        const merged = sanitizedRemote.map((remote) => {
           const local = localMatchesMap.get(remote.id);
           // If user locally finished or recorded events for a match, preserve local edits over stale remote live state
           if (local && (local.isFinished || local.status === 'ended' || (local.events && local.events.length > remote.events.length)) && remote.isLive && remote.minute > 30) {
