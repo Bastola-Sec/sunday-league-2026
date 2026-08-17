@@ -267,24 +267,33 @@ export const EditMatchEventModal: React.FC<EditMatchEventModalProps> = ({
                     Primary Player ({activeSelectedTeam?.shortName})
                   </label>
                   {teamRoster.length > 0 ? (
-                    <select
-                      value={playerName}
-                      onChange={(e) => setPlayerName(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-[#101e2e] border border-[#4C787E]/40 text-white font-bold focus:outline-none focus:border-[#B7CEEC]"
-                    >
-                      <option value="">-- Choose Roster Player --</option>
-                      {teamRoster.map((p, idx) => (
-                        <option key={`edit-p-opt-${p.id}-${idx}`} value={p.name}>
-                          #{p.number} {p.name} ({p.position})
-                        </option>
-                      ))}
-                    </select>
+                    <div className="space-y-1.5">
+                      <select
+                        value={playerName}
+                        onChange={(e) => setPlayerName(e.target.value)}
+                        className="w-full p-2.5 rounded-xl bg-[#101e2e] border border-[#4C787E]/40 text-white font-bold focus:outline-none focus:border-[#B7CEEC]"
+                      >
+                        <option value="">-- Select Roster Player --</option>
+                        {teamRoster.map((p, idx) => (
+                          <option key={`edit-p-opt-${p.id}-${idx}`} value={p.name}>
+                            #{p.number} {p.name} ({p.position})
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        value={playerName}
+                        onChange={(e) => setPlayerName(e.target.value)}
+                        placeholder="Or type custom player name / #number"
+                        className="w-full p-2 rounded-lg bg-[#08101a] border border-[#4C787E]/30 text-xs text-amber-300 font-bold focus:outline-none placeholder-gray-500"
+                      />
+                    </div>
                   ) : (
                     <input
                       type="text"
                       value={playerName}
                       onChange={(e) => setPlayerName(e.target.value)}
-                      placeholder="Enter Player Name"
+                      placeholder="Enter Player Name / Shirt Number"
                       className="w-full p-2.5 rounded-xl bg-[#101e2e] border border-[#4C787E]/40 text-white font-bold focus:outline-none"
                     />
                   )}
