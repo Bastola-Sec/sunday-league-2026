@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MoreVertical, X, Trophy, Shield, Activity, Eye, ShieldAlert, Bell, Smartphone, Volume2, VolumeX, Sparkles, ChevronRight } from 'lucide-react';
+import { MoreVertical, X, Trophy, Shield, Activity, Eye, ShieldAlert, Bell, Smartphone, Volume2, VolumeX, Sparkles, ChevronRight, RefreshCw } from 'lucide-react';
 import { AppScrollState, Team } from '../types';
 import { TeamLogo } from './TeamLogos';
 
