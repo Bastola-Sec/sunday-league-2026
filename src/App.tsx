@@ -46,7 +46,11 @@ export default function App() {
       const cached = localStorage.getItem('SUNDAY_LEAGUE_MATCHES_CACHE');
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        // Purge any stale cache stuck in 33:34 live state or with incomplete fixtures
+        const isStuck = Array.isArray(parsed) && parsed.some((m: any) => m.isLive && m.minute > 30);
+        if (Array.isArray(parsed) && parsed.length >= 7 && !isStuck) {
+          return parsed;
+        }
       }
     } catch (e) {}
     return INITIAL_MATCHES;
