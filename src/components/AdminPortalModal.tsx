@@ -2020,6 +2020,29 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                       </button>
                                     </div>
 
+                                    {/* MOTM AWARD OVERRIDE BANNER */}
+                                    <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 border-2 border-amber-400/60 shadow-xl flex items-center justify-between gap-3">
+                                      <div className="flex items-center gap-2.5">
+                                        <Star className="w-5 h-5 text-amber-400 fill-amber-400 animate-spin" />
+                                        <div>
+                                          <span className="text-xs font-black uppercase text-amber-300 block">
+                                            ⭐ Player of the Match (MOTM) Award
+                                          </span>
+                                          <span className="text-[11px] text-gray-300 font-extrabold">
+                                            {editingMatch.motmPlayerName ? `Awarded to: ${editingMatch.motmPlayerName}` : 'Not awarded yet. Tap button to select MOTM!'}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => setShowMotmModal(true)}
+                                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-black text-xs uppercase tracking-wider hover:brightness-110 shadow-lg cursor-pointer transition-all shrink-0"
+                                      >
+                                        {editingMatch.motmPlayerName ? 'Change MOTM' : '⭐ Select MOTM'}
+                                      </button>
+                                    </div>
+
                                     {/* Direct Score Override Row */}
                                     <div className="p-3.5 rounded-2xl bg-[#060e18] border border-[#4C787E]/30 space-y-2">
                                       <span className="text-xs font-black uppercase text-amber-300 block">
