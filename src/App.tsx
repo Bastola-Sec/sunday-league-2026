@@ -136,6 +136,13 @@ export default function App() {
           }
         });
 
+        // Crucial: Always retain official initial matches if missing or empty in remote snapshot
+        INITIAL_MATCHES.forEach((initMatch) => {
+          if (!merged.some((m) => m.id === initMatch.id)) {
+            merged.push(initMatch);
+          }
+        });
+
         return merged;
       });
     });

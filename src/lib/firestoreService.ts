@@ -142,40 +142,43 @@ export function subscribeTeams(onUpdate: (teams: Team[]) => void) {
 export function sanitizeMatchesData(rawMatches: Match[]): Match[] {
   const initMap = new Map(INITIAL_MATCHES.map((m) => [m.id, m]));
 
-  return rawMatches.map((m) => {
-    const defaultFixture = initMap.get(m.id);
+  return rawMatches
+    .map((m) => {
+      if (!m || !m.id) return null;
+      const defaultFixture = initMap.get(m.id);
 
-    if (defaultFixture) {
-      const isFinishedMatch = defaultFixture.isFinished || m.isFinished || m.status === 'ended';
+      if (defaultFixture) {
+        const isFinishedMatch = defaultFixture.isFinished || m.isFinished || m.status === 'ended';
 
-      // Always ensure events count and goal events match defaultFixture or user edits
-      const effectiveEvents = m.events && m.events.length >= (defaultFixture.events?.length || 0)
-        ? m.events
-        : defaultFixture.events;
+        // Always ensure events count and goal events match defaultFixture or user edits
+        const effectiveEvents = m.events && m.events.length >= (defaultFixture.events?.length || 0)
+          ? m.events
+          : defaultFixture.events;
 
-      const goalEvents = effectiveEvents.filter((e) => e.type === 'goal');
-      const homeId = defaultFixture.homeTeamId;
-      const awayId = defaultFixture.awayTeamId;
+        const goalEvents = effectiveEvents.filter((e) => e.type === 'goal');
+        const homeId = defaultFixture.homeTeamId;
+        const awayId = defaultFixture.awayTeamId;
 
-      const calcHomeScore = goalEvents.filter((e) => e.teamId === homeId).length;
-      const calcAwayScore = goalEvents.filter((e) => e.teamId === awayId).length;
+        const calcHomeScore = goalEvents.filter((e) => e.teamId === homeId).length;
+        const calcAwayScore = goalEvents.filter((e) => e.teamId === awayId).length;
 
-      const isLiveMatch = !isFinishedMatch && (m.isLive ?? false);
+        const isLiveMatch = !isFinishedMatch && (m.isLive ?? false);
 
-      return {
-        ...defaultFixture,
-        ...m,
-        homeScore: calcHomeScore,
-        awayScore: calcAwayScore,
-        isLive: isLiveMatch,
-        isFinished: isFinishedMatch,
-        status: isFinishedMatch ? 'ended' : m.status,
-        events: effectiveEvents,
-      };
-    }
+        return {
+          ...defaultFixture,
+          ...m,
+          homeScore: calcHomeScore,
+          awayScore: calcAwayScore,
+          isLive: isLiveMatch,
+          isFinished: isFinishedMatch,
+          status: isFinishedMatch ? 'ended' : m.status,
+          events: effectiveEvents,
+        };
+      }
 
-    return m;
-  });
+      return m;
+    })
+    .filter((m): m is Match => m !== null);
 }
 
 /**
