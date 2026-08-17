@@ -29,7 +29,7 @@ import { PushNotificationToast } from './components/PushNotificationToast';
 import { IPhoneFrame } from './components/IPhoneFrame';
 import { computeStandingsAndFinalsMatch, rolloverToNewSeason } from './utils/leagueEngine';
 
-const CURRENT_CACHE_VERSION = 'v2026_08_17_V101_HARD_PURGE_BUILD';
+const CURRENT_CACHE_VERSION = 'v2026_08_17_V102_TEST_FIXTURE_RESET';
 
 // Synchronously clear outdated disk caches before component state initialization
 try {
