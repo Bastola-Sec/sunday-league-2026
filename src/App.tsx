@@ -29,7 +29,7 @@ import { PushNotificationToast } from './components/PushNotificationToast';
 import { IPhoneFrame } from './components/IPhoneFrame';
 import { computeStandingsAndFinalsMatch, rolloverToNewSeason } from './utils/leagueEngine';
 
-const CURRENT_CACHE_VERSION = 'v2026_08_17_V5_SABIN_2_ASSISTS_MOTM';
+const CURRENT_CACHE_VERSION = 'v2026_08_17_V6_EXACT_ASSISTS';
 
 export default function App() {
   // Application Core State (with LocalStorage cache persistence & versioning)
