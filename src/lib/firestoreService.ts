@@ -165,11 +165,14 @@ export function sanitizeMatchesData(rawMatches: Match[]): Match[] {
         calcAwayScore = goalEvents.filter((e) => e.teamId === awayId).length;
       }
 
+      const isLiveMatch = !isFinishedMatch && (m.isLive ?? false);
+
       return {
         ...defaultFixture,
         ...m,
         homeScore: calcHomeScore,
         awayScore: calcAwayScore,
+        isLive: isLiveMatch,
         isFinished: isFinishedMatch,
         status: isFinishedMatch ? 'ended' : m.status,
         events: m.events && m.events.length >= (defaultFixture.events?.length || 0) ? m.events : defaultFixture.events,
