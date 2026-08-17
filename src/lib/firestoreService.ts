@@ -145,16 +145,17 @@ export function sanitizeMatchesData(rawMatches: Match[]): Match[] {
   return rawMatches.map((m) => {
     const defaultFixture = initMap.get(m.id);
 
-    // If defaultFixture is marked finished in core dataset, ensure finished state is preserved
-    if (defaultFixture && defaultFixture.isFinished) {
-      if (!m.isFinished || m.status !== 'ended') {
-        return defaultFixture;
-      }
-    }
-
-    // If m is stuck in live state with minute > 30 and hasn't been finished:
-    if (m.isLive && m.minute > 30 && defaultFixture) {
-      return defaultFixture;
+    if (defaultFixture) {
+      // If defaultFixture is a completed match, ensure finished status is preserved
+      // while retaining all user-added goals, cards, and assist events
+      const isFinishedMatch = defaultFixture.isFinished || m.isFinished || m.status === 'ended';
+      return {
+        ...defaultFixture,
+        ...m,
+        isFinished: isFinishedMatch,
+        status: isFinishedMatch ? 'ended' : m.status,
+        events: m.events && m.events.length >= (defaultFixture.events?.length || 0) ? m.events : defaultFixture.events,
+      };
     }
 
     return m;
