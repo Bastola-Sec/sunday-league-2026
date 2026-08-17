@@ -29,19 +29,22 @@ import { PushNotificationToast } from './components/PushNotificationToast';
 import { IPhoneFrame } from './components/IPhoneFrame';
 import { computeStandingsAndFinalsMatch, rolloverToNewSeason } from './utils/leagueEngine';
 
-const CURRENT_CACHE_VERSION = 'v2026_08_17_V11_NIRMAL_33_NIRMAL_SABIN_SYNC';
+const CURRENT_CACHE_VERSION = 'v2026_08_17_V12_OFFICIAL_PERFECT_SYNC';
+
+// Synchronously clear outdated disk caches before component state initialization
+try {
+  const storedVer = localStorage.getItem('SUNDAY_LEAGUE_CACHE_VERSION');
+  if (storedVer !== CURRENT_CACHE_VERSION) {
+    localStorage.removeItem('SUNDAY_LEAGUE_MATCHES_CACHE');
+    localStorage.removeItem('SUNDAY_LEAGUE_TEAMS_CACHE');
+    localStorage.setItem('SUNDAY_LEAGUE_CACHE_VERSION', CURRENT_CACHE_VERSION);
+  }
+} catch (e) {}
 
 export default function App() {
   // Application Core State (with LocalStorage cache persistence & versioning)
   const [teams, setTeams] = useState<Team[]>(() => {
     try {
-      const ver = localStorage.getItem('SUNDAY_LEAGUE_CACHE_VERSION');
-      if (ver !== CURRENT_CACHE_VERSION) {
-        localStorage.removeItem('SUNDAY_LEAGUE_MATCHES_CACHE');
-        localStorage.removeItem('SUNDAY_LEAGUE_TEAMS_CACHE');
-        localStorage.setItem('SUNDAY_LEAGUE_CACHE_VERSION', CURRENT_CACHE_VERSION);
-        return INITIAL_TEAMS;
-      }
       const cached = localStorage.getItem('SUNDAY_LEAGUE_TEAMS_CACHE');
       if (cached) {
         const parsed = JSON.parse(cached);
@@ -53,14 +56,11 @@ export default function App() {
 
   const [matches, setMatches] = useState<Match[]>(() => {
     try {
-      const ver = localStorage.getItem('SUNDAY_LEAGUE_CACHE_VERSION');
-      if (ver === CURRENT_CACHE_VERSION) {
-        const cached = localStorage.getItem('SUNDAY_LEAGUE_MATCHES_CACHE');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length >= 7) {
-            return parsed;
-          }
+      const cached = localStorage.getItem('SUNDAY_LEAGUE_MATCHES_CACHE');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length >= 7) {
+          return parsed;
         }
       }
     } catch (e) {}

@@ -147,23 +147,18 @@ export function sanitizeMatchesData(rawMatches: Match[]): Match[] {
 
     if (defaultFixture) {
       const isFinishedMatch = defaultFixture.isFinished || m.isFinished || m.status === 'ended';
-      
-      // Calculate scores dynamically from goal events if scores are 0-0 but goal events exist
-      const goalEvents = (m.events && m.events.length > 0 ? m.events : defaultFixture.events || []).filter((e) => e.type === 'goal');
-      let calcHomeScore = m.homeScore;
-      let calcAwayScore = m.awayScore;
 
-      if (isFinishedMatch && calcHomeScore === 0 && calcAwayScore === 0 && defaultFixture.isFinished) {
-        calcHomeScore = defaultFixture.homeScore;
-        calcAwayScore = defaultFixture.awayScore;
-      }
+      // Always ensure events count and goal events match defaultFixture or user edits
+      const effectiveEvents = m.events && m.events.length >= (defaultFixture.events?.length || 0)
+        ? m.events
+        : defaultFixture.events;
 
-      if (goalEvents.length > 0 && calcHomeScore === 0 && calcAwayScore === 0) {
-        const homeId = defaultFixture.homeTeamId;
-        const awayId = defaultFixture.awayTeamId;
-        calcHomeScore = goalEvents.filter((e) => e.teamId === homeId).length;
-        calcAwayScore = goalEvents.filter((e) => e.teamId === awayId).length;
-      }
+      const goalEvents = effectiveEvents.filter((e) => e.type === 'goal');
+      const homeId = defaultFixture.homeTeamId;
+      const awayId = defaultFixture.awayTeamId;
+
+      const calcHomeScore = goalEvents.filter((e) => e.teamId === homeId).length;
+      const calcAwayScore = goalEvents.filter((e) => e.teamId === awayId).length;
 
       const isLiveMatch = !isFinishedMatch && (m.isLive ?? false);
 
@@ -175,7 +170,7 @@ export function sanitizeMatchesData(rawMatches: Match[]): Match[] {
         isLive: isLiveMatch,
         isFinished: isFinishedMatch,
         status: isFinishedMatch ? 'ended' : m.status,
-        events: m.events && m.events.length >= (defaultFixture.events?.length || 0) ? m.events : defaultFixture.events,
+        events: effectiveEvents,
       };
     }
 
