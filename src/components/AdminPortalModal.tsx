@@ -1981,8 +1981,8 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                   awayTeam={teams.find((t) => t.id === editingMatch.awayTeamId)}
                                 />
 
-                                {/* EXCLUSIVE COMMISSIONER PAST MATCH EVENT & SCORE CORRECTION PORTAL */}
-                                {isCommish && (
+                                {/* EXCLUSIVE COMMISSIONER & ADMIN PAST MATCH EVENT & SCORE CORRECTION PORTAL */}
+                                {currentAdmin && (
                                   <div className="p-5 rounded-3xl bg-gradient-to-br from-[#0c1827] via-[#091320] to-[#050b14] border-2 border-amber-400/50 space-y-4 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-amber-400/30 pb-3 gap-2">
                                       <div>
