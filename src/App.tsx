@@ -58,9 +58,7 @@ export default function App() {
         const cached = localStorage.getItem('SUNDAY_LEAGUE_MATCHES_CACHE');
         if (cached) {
           const parsed = JSON.parse(cached);
-          const finishedCount = Array.isArray(parsed) ? parsed.filter((m: any) => m.isFinished || m.status === 'ended').length : 0;
-          const isStuck = Array.isArray(parsed) && parsed.some((m: any) => m.isLive && m.minute > 30);
-          if (Array.isArray(parsed) && parsed.length >= 7 && finishedCount >= 4 && !isStuck) {
+          if (Array.isArray(parsed) && parsed.length >= 7) {
             return parsed;
           }
         }
@@ -113,12 +111,20 @@ export default function App() {
         const localMatchesMap = new Map(currentLocal.map((m) => [m.id, m]));
         const merged = sanitizedRemote.map((remote) => {
           const local = localMatchesMap.get(remote.id);
-          // If user locally finished or recorded events for a match, preserve local edits over stale remote live state
-          if (local && (local.isFinished || local.status === 'ended' || (local.events && local.events.length > remote.events.length)) && remote.isLive && remote.minute > 30) {
+          // Preserve local match edits, completed status, or recorded events over stale remote state
+          if (local && (local.isFinished || local.status === 'ended' || (local.events && local.events.length > (remote.events?.length || 0)))) {
             return local;
           }
           return remote;
         });
+
+        // Retain any local matches not present in remote snapshot
+        currentLocal.forEach((local) => {
+          if (!merged.some((m) => m.id === local.id)) {
+            merged.push(local);
+          }
+        });
+
         return merged;
       });
     });
