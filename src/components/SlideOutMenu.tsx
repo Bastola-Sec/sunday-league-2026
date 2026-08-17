@@ -173,7 +173,7 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                 <div className="space-y-2 border-t border-[#B7CEEC]/20 pt-4">
                   <button
                     onClick={onToggleSound}
-                    className="w-full p-2.5 rounded-xl bg-[#080d14] border border-[#B7CEEC]/30 text-xs font-medium text-gray-300 hover:text-white flex items-center justify-between"
+                    className="w-full p-2.5 rounded-xl bg-[#080d14] border border-[#B7CEEC]/30 text-xs font-medium text-gray-300 hover:text-white flex items-center justify-between cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       {isSoundEnabled ? <Volume2 className="w-4 h-4 text-[#4C787E]" /> : <VolumeX className="w-4 h-4 text-gray-400" />}
@@ -181,6 +181,25 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                     </div>
                     <span className={`text-[10px] px-2 py-0.5 rounded font-bold font-mono ${isSoundEnabled ? 'bg-[#4C787E]/30 text-[#B7CEEC]' : 'bg-gray-800 text-gray-400'}`}>
                       {isSoundEnabled ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (window.confirm('🔄 CLEAR ALL LOCAL CACHE & RESET TO PRE-KICKOFF?\n\nThis will clear any cached test data on this device and reload the app cleanly.')) {
+                        localStorage.removeItem('SUNDAY_LEAGUE_MATCHES_CACHE');
+                        localStorage.removeItem('SUNDAY_LEAGUE_TEAMS_CACHE');
+                        window.location.reload();
+                      }
+                    }}
+                    className="w-full p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-xs font-bold text-rose-300 hover:bg-rose-500/30 flex items-center justify-between transition-all cursor-pointer shadow-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 text-rose-400" />
+                      <span>Sync Data & Clear Cache</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded font-bold font-mono bg-rose-500/30 text-rose-200">
+                      RESET
                     </span>
                   </button>
                 </div>
