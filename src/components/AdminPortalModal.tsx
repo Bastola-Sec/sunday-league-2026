@@ -917,31 +917,23 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   // Live Timer Interval Ticker (Ticks MM:SS in real-time seconds)
   useEffect(() => {
     let interval: any;
-    if (isLiveClockRunning && editingMatchId) {
+    if (isLiveClockRunning && editingMatchId && onUpdateFullMatch) {
       interval = setInterval(() => {
-        setEditingMatch((prev) => {
-          if (!prev) return null;
-          const currentSec = prev.matchSeconds ?? ((prev.minute || 0) * 60);
+        const currentMatch = matches.find((m) => m.id === editingMatchId);
+        if (currentMatch) {
+          const currentSec = currentMatch.matchSeconds ?? ((currentMatch.minute || 0) * 60);
           const nextSec = currentSec + 1;
           const nextMin = Math.floor(nextSec / 60);
 
-          if (onUpdateFullMatch) {
-            onUpdateFullMatch(editingMatchId, {
-              matchSeconds: nextSec,
-              minute: nextMin,
-            });
-          }
-
-          return {
-            ...prev,
+          onUpdateFullMatch(editingMatchId, {
             matchSeconds: nextSec,
             minute: nextMin,
-          };
-        });
+          });
+        }
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isLiveClockRunning, editingMatchId]);
+  }, [isLiveClockRunning, editingMatchId, matches, onUpdateFullMatch]);
 
   // Auto Match Simulator Effect
   useEffect(() => {

@@ -69,18 +69,50 @@ export default function App() {
   const [notifications, setNotifications] = useState<PushNotification[]>([]);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
 
-  // Mirror teams & matches state changes to LocalStorage cache immediately on edit
+  // Mirror teams & matches state changes to LocalStorage cache and BroadcastChannel for instant cross-window sync
   useEffect(() => {
     try {
       localStorage.setItem('SUNDAY_LEAGUE_TEAMS_CACHE', JSON.stringify(teams));
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('sunday_league_cross_window_sync');
+        bc.postMessage({ type: 'TEAMS_UPDATE', teams });
+        bc.close();
+      }
     } catch (e) {}
   }, [teams]);
 
   useEffect(() => {
     try {
       localStorage.setItem('SUNDAY_LEAGUE_MATCHES_CACHE', JSON.stringify(matches));
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('sunday_league_cross_window_sync');
+        bc.postMessage({ type: 'MATCHES_UPDATE', matches });
+        bc.close();
+      }
     } catch (e) {}
   }, [matches]);
+
+  // Real-time cross-tab & cross-window sync listener
+  useEffect(() => {
+    let syncChannel: BroadcastChannel | null = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        syncChannel = new BroadcastChannel('sunday_league_cross_window_sync');
+        syncChannel.onmessage = (event) => {
+          if (event.data?.type === 'MATCHES_UPDATE' && Array.isArray(event.data.matches)) {
+            const sanitized = sanitizeMatchesData(event.data.matches);
+            setMatches(sanitized);
+          } else if (event.data?.type === 'TEAMS_UPDATE' && Array.isArray(event.data.teams)) {
+            setTeams(event.data.teams);
+          }
+        };
+      }
+    } catch (e) {}
+
+    return () => {
+      syncChannel?.close();
+    };
+  }, []);
 
   const handleRolloverSeason = () => {
     const { nextSeasonNumber, updatedTeams, newMatches } = rolloverToNewSeason(
