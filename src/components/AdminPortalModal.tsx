@@ -2181,6 +2181,49 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                               </span>
                                             </div>
                                           </div>
+                                          {/* MATCH RESET BUTTON (AVAILABLE FOR ALL MATCHES) */}
+                                          {currentAdmin && (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                if (window.confirm(`🔄 RESET FIXTURE ${editingMatch.id}?\n\nThis will reset score to 0-0, set status to Scheduled, and clear all live events for this match.`)) {
+                                                  if (onUpdateFullMatch) {
+                                                    onUpdateFullMatch(editingMatch.id, {
+                                                      homeScore: 0,
+                                                      awayScore: 0,
+                                                      minute: 0,
+                                                      matchSeconds: 0,
+                                                      isLive: false,
+                                                      isFinished: false,
+                                                      status: 'scheduled',
+                                                      events: [],
+                                                      motmPlayerId: undefined,
+                                                      motmPlayerName: undefined,
+                                                      possessionHome: 50,
+                                                      possessionAway: 50,
+                                                      shotsHome: 0,
+                                                      shotsAway: 0,
+                                                      shotsOnTargetHome: 0,
+                                                      shotsOnTargetAway: 0,
+                                                      foulsHome: 0,
+                                                      foulsAway: 0,
+                                                    });
+                                                    setHomeScoreInput(0);
+                                                    setAwayScoreInput(0);
+                                                    setMatchMinute(0);
+                                                    setSelectedMotmPlayerId('');
+                                                    setSelectedMotmPlayerName('');
+                                                    setEditingMatchId(null);
+                                                    alert('🔄 Match reset cleanly to 0-0 Scheduled!');
+                                                  }
+                                                }
+                                              }}
+                                              className="w-full py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/50 font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                                            >
+                                              <RotateCcw className="w-4 h-4 text-rose-400" />
+                                              <span>🔄 RESET MATCH TO 0-0 SCHEDULED (WIPE ALL EVENTS & LIVE STATE)</span>
+                                            </button>
+                                          )}
                                         </div>
                                       </div>
 
