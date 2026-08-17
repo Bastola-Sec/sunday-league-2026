@@ -2159,16 +2159,33 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                         </div>
 
                                         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3.5">
-                                          {/* LIVE SCORE DISPLAY CARD */}
-                                          <div className="flex items-center gap-3 bg-[#02050a] px-4 sm:px-5 py-2 rounded-2xl border-2 border-teal-400/80 shadow-[0_0_25px_rgba(45,212,191,0.35)]">
-                                            <TeamLogo teamId={editingMatch.homeTeamId} size={28} />
-                                            <div className="flex flex-col items-center">
-                                              <span className="text-[9px] font-black uppercase tracking-widest text-teal-300 font-mono">LIVE SCORE</span>
-                                              <span className="text-2xl sm:text-3xl font-black font-mono tracking-widest text-white drop-shadow-[0_0_15px_rgba(45,212,191,0.6)]">
-                                                {editingMatch.homeScore} - {editingMatch.awayScore}
-                                              </span>
+                                          {/* LIVE SCORE & EVENT SUMMARY DISPLAY CARD */}
+                                          <div className="flex flex-col items-center gap-2 bg-[#02050a] px-4 sm:px-5 py-2.5 rounded-2xl border-2 border-teal-400/80 shadow-[0_0_25px_rgba(45,212,191,0.35)] w-full sm:w-auto">
+                                            <div className="flex items-center gap-3">
+                                              <TeamLogo teamId={editingMatch.homeTeamId} size={28} />
+                                              <div className="flex flex-col items-center">
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-teal-300 font-mono">LIVE SCORE</span>
+                                                <span className="text-2xl sm:text-3xl font-black font-mono tracking-widest text-white drop-shadow-[0_0_15px_rgba(45,212,191,0.6)]">
+                                                  {editingMatch.homeScore} - {editingMatch.awayScore}
+                                                </span>
+                                              </div>
+                                              <TeamLogo teamId={editingMatch.awayTeamId} size={28} />
                                             </div>
-                                            <TeamLogo teamId={editingMatch.awayTeamId} size={28} />
+
+                                            {/* LIVE MATCH GOAL SCORERS & EVENTS SUMMARY FEED */}
+                                            {editingMatch.events && editingMatch.events.length > 0 && (
+                                              <div className="w-full pt-1.5 border-t border-teal-400/30 flex flex-col gap-1 text-[10px]">
+                                                {editingMatch.events.slice(-3).map((evt) => (
+                                                  <div key={evt.id} className="flex items-center justify-between gap-2 text-[10px] font-bold text-teal-200">
+                                                    <span className="flex items-center gap-1 truncate max-w-[200px]">
+                                                      {evt.type === 'goal' ? '⚽' : evt.type === 'yellow_card' ? '🟨' : evt.type === 'red_card' ? '🟥' : evt.type === 'sub' ? '🔄' : '⚡'}
+                                                      <span>{evt.player} ({evt.minute}')</span>
+                                                    </span>
+                                                    <span className="text-[9px] text-gray-400 font-mono shrink-0">{evt.timestamp || `${evt.minute}'`}</span>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
                                           </div>
 
                                           {/* DIGITAL MATCH CLOCK */}
@@ -2358,61 +2375,6 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                           </button>
                                         </div>
                                       )}
-
-                                      {/* USER STORY 5: TRACK ADDED TIME & SUNDAY LEAGUE FORMAT CONFIG */}
-                                      <div className="pt-2 border-t border-[#4C787E]/30 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                                        <div className="p-3 rounded-xl bg-[#09131e] border border-[#4C787E]/30 space-y-2">
-                                          <label className="font-bold text-gray-300 block">
-                                            ⏱️ 1st Half Added Time (+Mins)
-                                          </label>
-                                          <div className="flex items-center gap-1.5">
-                                            {[1, 2, 3, 5].map((mins) => (
-                                              <button
-                                                key={`ht1-${mins}`}
-                                                onClick={() => handleSaveAddedTime(1, mins)}
-                                                className={`px-3 py-1.5 rounded-lg font-bold text-xs cursor-pointer transition-all ${addedTime1stHalf === mins
-                                                  ? 'bg-amber-400 text-slate-950'
-                                                  : 'bg-[#15273a] text-gray-300 hover:bg-[#1f3852]'
-                                                  }`}
-                                              >
-                                                +{mins}'
-                                              </button>
-                                            ))}
-                                            <button
-                                              onClick={() => handleSaveAddedTime(1, 0)}
-                                              className="px-2.5 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 font-bold text-[11px]"
-                                            >
-                                              Reset
-                                            </button>
-                                          </div>
-                                        </div>
-
-                                        <div className="p-3 rounded-xl bg-[#09131e] border border-[#4C787E]/30 space-y-2">
-                                          <label className="font-bold text-gray-300 block">
-                                            ⏱️ 2nd Half Added Time (+Mins)
-                                          </label>
-                                          <div className="flex items-center gap-1.5">
-                                            {[1, 2, 3, 5].map((mins) => (
-                                              <button
-                                                key={`ht2-${mins}`}
-                                                onClick={() => handleSaveAddedTime(2, mins)}
-                                                className={`px-3 py-1.5 rounded-lg font-bold text-xs cursor-pointer transition-all ${addedTime2ndHalf === mins
-                                                  ? 'bg-amber-400 text-slate-950'
-                                                  : 'bg-[#15273a] text-gray-300 hover:bg-[#1f3852]'
-                                                  }`}
-                                              >
-                                                +{mins}'
-                                              </button>
-                                            ))}
-                                            <button
-                                              onClick={() => handleSaveAddedTime(2, 0)}
-                                              className="px-2.5 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 font-bold text-[11px]"
-                                            >
-                                              Reset
-                                            </button>
-                                          </div>
-                                        </div>
-                                      </div>
                                     </div>
 
                                     {/* USER STORY 4: INLINE RECORD LIVE MATCH EVENTS WITH TEAM & ROSTER DROPDOWNS */}
