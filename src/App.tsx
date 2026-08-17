@@ -105,45 +105,10 @@ export default function App() {
       setTeams(updatedTeams);
     });
     const unsubMatches = subscribeMatches((updatedMatches) => {
+      if (!updatedMatches || updatedMatches.length === 0) return;
       const sanitizedRemote = sanitizeMatchesData(updatedMatches);
-      setMatches((currentLocal) => {
-        const localMatchesMap = new Map(currentLocal.map((m) => [m.id, m]));
-        const merged = sanitizedRemote.map((remote) => {
-          const local = localMatchesMap.get(remote.id);
-          if (!local) return remote;
-
-          const remoteEventsCount = remote.events?.length || 0;
-          const localEventsCount = local.events?.length || 0;
-
-          // If local device has more events recorded than remote snapshot, keep local!
-          if (localEventsCount > remoteEventsCount) {
-            return local;
-          }
-
-          // If remote snapshot from Cloud Firestore has more events, accept remote update!
-          if (remoteEventsCount > localEventsCount) {
-            return remote;
-          }
-
-          return remote;
-        });
-
-        // Retain any local-only matches not in remote snapshot
-        currentLocal.forEach((local) => {
-          if (!merged.some((m) => m.id === local.id)) {
-            merged.push(local);
-          }
-        });
-
-        // Crucial: Always retain official initial matches if missing or empty in remote snapshot
-        sanitizeMatchesData(INITIAL_MATCHES).forEach((initMatch) => {
-          if (!merged.some((m) => m.id === initMatch.id)) {
-            merged.push(initMatch);
-          }
-        });
-
-        return merged;
-      });
+      
+      setMatches(sanitizedRemote);
     });
     const unsubNotifs = subscribeNotifications((updatedNotifs) => setNotifications(updatedNotifs));
 
