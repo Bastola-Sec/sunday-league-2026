@@ -58,7 +58,15 @@ export default function App() {
       setTeams(updatedTeams);
     });
     const unsubMatches = subscribeMatches((updatedMatches) => {
-      setMatches(updatedMatches);
+      // Ensure any stale live match document from crashed devices is reset to clean pre-kickoff state
+      const cleanMatches = updatedMatches.map((m) => {
+        if (m.isLive && (m.minute > 30 || m.status === '2nd_half')) {
+          const initMatch = INITIAL_MATCHES.find((init) => init.id === m.id);
+          return initMatch || { ...m, isLive: false, isFinished: false, status: 'scheduled', minute: 0, homeScore: 0, awayScore: 0, events: [] };
+        }
+        return m;
+      });
+      setMatches(cleanMatches);
     });
     const unsubNotifs = subscribeNotifications((updatedNotifs) => setNotifications(updatedNotifs));
 
