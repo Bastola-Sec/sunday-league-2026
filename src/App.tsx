@@ -29,14 +29,13 @@ import { PushNotificationToast } from './components/PushNotificationToast';
 import { IPhoneFrame } from './components/IPhoneFrame';
 import { computeStandingsAndFinalsMatch, rolloverToNewSeason } from './utils/leagueEngine';
 
-const CURRENT_CACHE_VERSION = 'v2026_08_17_V100_ULTIMATE_HARD_RESET';
+const CURRENT_CACHE_VERSION = 'v2026_08_17_V101_HARD_PURGE_BUILD';
 
 // Synchronously clear outdated disk caches before component state initialization
 try {
   const storedVer = localStorage.getItem('SUNDAY_LEAGUE_CACHE_VERSION');
   if (storedVer !== CURRENT_CACHE_VERSION) {
-    localStorage.removeItem('SUNDAY_LEAGUE_MATCHES_CACHE');
-    localStorage.removeItem('SUNDAY_LEAGUE_TEAMS_CACHE');
+    localStorage.clear();
     localStorage.setItem('SUNDAY_LEAGUE_CACHE_VERSION', CURRENT_CACHE_VERSION);
   }
 } catch (e) {}
@@ -64,7 +63,7 @@ export default function App() {
         }
       }
     } catch (e) {}
-    return INITIAL_MATCHES;
+    return sanitizeMatchesData(INITIAL_MATCHES);
   });
 
   const [notifications, setNotifications] = useState<PushNotification[]>([]);
@@ -137,7 +136,7 @@ export default function App() {
         });
 
         // Crucial: Always retain official initial matches if missing or empty in remote snapshot
-        INITIAL_MATCHES.forEach((initMatch) => {
+        sanitizeMatchesData(INITIAL_MATCHES).forEach((initMatch) => {
           if (!merged.some((m) => m.id === initMatch.id)) {
             merged.push(initMatch);
           }
