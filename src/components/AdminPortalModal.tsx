@@ -907,24 +907,27 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     signOut(auth).catch(() => { });
   };
 
-  // Auto-initialize running timer if current match is live
+  // Ref to hold exact match seconds without re-triggering timer useEffect cleanup loop
+  const timerSecondsRef = React.useRef<number>(0);
+
   useEffect(() => {
-    if (editingMatch && (editingMatch.status === '1st_half' || editingMatch.status === '2nd_half' || editingMatch.isLive)) {
-      setIsLiveClockRunning(true);
+    if (editingMatch) {
+      timerSecondsRef.current = editingMatch.matchSeconds ?? ((editingMatch.minute || 0) * 60);
     }
-  }, [editingMatch?.id, editingMatch?.status, editingMatch?.isLive]);
+  }, [editingMatch?.id, editingMatch?.status]);
 
   // Live Timer Interval Ticker (Ticks MM:SS in real-time seconds)
   useEffect(() => {
     let interval: any;
-    if (isLiveClockRunning && editingMatchId && onUpdateFullMatch) {
+    if (isLiveClockRunning && editingMatchId) {
       interval = setInterval(() => {
-        const currentMatch = matches.find((m) => m.id === editingMatchId);
-        if (currentMatch) {
-          const currentSec = currentMatch.matchSeconds ?? ((currentMatch.minute || 0) * 60);
-          const nextSec = currentSec + 1;
-          const nextMin = Math.floor(nextSec / 60);
+        timerSecondsRef.current += 1;
+        const nextSec = timerSecondsRef.current;
+        const nextMin = Math.floor(nextSec / 60);
 
+        setMatchMinute(nextMin);
+
+        if (onUpdateFullMatch) {
           onUpdateFullMatch(editingMatchId, {
             matchSeconds: nextSec,
             minute: nextMin,
@@ -933,7 +936,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isLiveClockRunning, editingMatchId, matches, onUpdateFullMatch]);
+  }, [isLiveClockRunning, editingMatchId, onUpdateFullMatch]);
 
   // Auto Match Simulator Effect
   useEffect(() => {
@@ -1034,6 +1037,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     });
 
     setMatchMinute(1);
+    timerSecondsRef.current = 0;
     setIsLiveClockRunning(true);
     onSendPushNotification(
       '🚀 MATCH KICKOFF!',
@@ -1077,6 +1081,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       events: updatedEvents,
     });
 
+    timerSecondsRef.current = htSeconds;
     setIsLiveClockRunning(false);
     onSendPushNotification(
       '⏸️ HALFTIME SCORE UPDATE',
@@ -1122,6 +1127,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     });
 
     setMatchMinute(start2ndHalfMinute + 1);
+    timerSecondsRef.current = start2ndHalfSeconds;
     setIsLiveClockRunning(true);
     onSendPushNotification(
       '▶️ SECOND HALF KICKOFF',
