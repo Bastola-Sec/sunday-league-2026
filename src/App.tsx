@@ -28,10 +28,19 @@ import { PushNotificationToast } from './components/PushNotificationToast';
 import { IPhoneFrame } from './components/IPhoneFrame';
 import { computeStandingsAndFinalsMatch, rolloverToNewSeason } from './utils/leagueEngine';
 
+const CURRENT_CACHE_VERSION = 'v2026_08_17_V4_OFFICIAL_SYNC';
+
 export default function App() {
-  // Application Core State (with LocalStorage cache persistence for offline & Firebase quota resilience)
+  // Application Core State (with LocalStorage cache persistence & versioning)
   const [teams, setTeams] = useState<Team[]>(() => {
     try {
+      const ver = localStorage.getItem('SUNDAY_LEAGUE_CACHE_VERSION');
+      if (ver !== CURRENT_CACHE_VERSION) {
+        localStorage.removeItem('SUNDAY_LEAGUE_MATCHES_CACHE');
+        localStorage.removeItem('SUNDAY_LEAGUE_TEAMS_CACHE');
+        localStorage.setItem('SUNDAY_LEAGUE_CACHE_VERSION', CURRENT_CACHE_VERSION);
+        return INITIAL_TEAMS;
+      }
       const cached = localStorage.getItem('SUNDAY_LEAGUE_TEAMS_CACHE');
       if (cached) {
         const parsed = JSON.parse(cached);
@@ -43,13 +52,16 @@ export default function App() {
 
   const [matches, setMatches] = useState<Match[]>(() => {
     try {
-      const cached = localStorage.getItem('SUNDAY_LEAGUE_MATCHES_CACHE');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        // Purge any stale cache stuck in 33:34 live state or with incomplete fixtures
-        const isStuck = Array.isArray(parsed) && parsed.some((m: any) => m.isLive && m.minute > 30);
-        if (Array.isArray(parsed) && parsed.length >= 7 && !isStuck) {
-          return parsed;
+      const ver = localStorage.getItem('SUNDAY_LEAGUE_CACHE_VERSION');
+      if (ver === CURRENT_CACHE_VERSION) {
+        const cached = localStorage.getItem('SUNDAY_LEAGUE_MATCHES_CACHE');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          const finishedCount = Array.isArray(parsed) ? parsed.filter((m: any) => m.isFinished || m.status === 'ended').length : 0;
+          const isStuck = Array.isArray(parsed) && parsed.some((m: any) => m.isLive && m.minute > 30);
+          if (Array.isArray(parsed) && parsed.length >= 7 && finishedCount >= 4 && !isStuck) {
+            return parsed;
+          }
         }
       }
     } catch (e) {}
