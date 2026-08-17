@@ -29,11 +29,44 @@ import { IPhoneFrame } from './components/IPhoneFrame';
 import { computeStandingsAndFinalsMatch, rolloverToNewSeason } from './utils/leagueEngine';
 
 export default function App() {
-  // Application Core State
-  const [teams, setTeams] = useState<Team[]>(INITIAL_TEAMS);
-  const [matches, setMatches] = useState<Match[]>(INITIAL_MATCHES);
+  // Application Core State (with LocalStorage cache persistence for offline & Firebase quota resilience)
+  const [teams, setTeams] = useState<Team[]>(() => {
+    try {
+      const cached = localStorage.getItem('SUNDAY_LEAGUE_TEAMS_CACHE');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return INITIAL_TEAMS;
+  });
+
+  const [matches, setMatches] = useState<Match[]>(() => {
+    try {
+      const cached = localStorage.getItem('SUNDAY_LEAGUE_MATCHES_CACHE');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return INITIAL_MATCHES;
+  });
+
   const [notifications, setNotifications] = useState<PushNotification[]>([]);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
+
+  // Mirror teams & matches state changes to LocalStorage cache immediately on edit
+  useEffect(() => {
+    try {
+      localStorage.setItem('SUNDAY_LEAGUE_TEAMS_CACHE', JSON.stringify(teams));
+    } catch (e) {}
+  }, [teams]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('SUNDAY_LEAGUE_MATCHES_CACHE', JSON.stringify(matches));
+    } catch (e) {}
+  }, [matches]);
 
   const handleRolloverSeason = () => {
     const { nextSeasonNumber, updatedTeams, newMatches } = rolloverToNewSeason(
@@ -48,7 +81,7 @@ export default function App() {
     newMatches.forEach((m) => saveMatchToFirestore(m.id, m));
   };
 
-  // Initialize and subscribe to Firestore real-time sync
+  // Initialize and subscribe to Firestore real-time sync with local-override protection
   useEffect(() => {
     // Auto-seed Firestore on initial load if collections are empty
     initializeFirestoreData();
@@ -58,7 +91,18 @@ export default function App() {
       setTeams(updatedTeams);
     });
     const unsubMatches = subscribeMatches((updatedMatches) => {
-      setMatches(updatedMatches);
+      setMatches((currentLocal) => {
+        const localMatchesMap = new Map(currentLocal.map((m) => [m.id, m]));
+        const merged = updatedMatches.map((remote) => {
+          const local = localMatchesMap.get(remote.id);
+          // If user locally finished or recorded events for a match, preserve local edits over stale remote live state
+          if (local && (local.isFinished || local.status === 'ended' || (local.events && local.events.length > remote.events.length)) && remote.isLive && remote.minute > 30) {
+            return local;
+          }
+          return remote;
+        });
+        return merged;
+      });
     });
     const unsubNotifs = subscribeNotifications((updatedNotifs) => setNotifications(updatedNotifs));
 
