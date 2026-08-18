@@ -379,28 +379,26 @@ export default function App() {
     awayScore: number,
     newEvent?: MatchEvent
   ) => {
-    const targetMatch = matches.find((m) => m.id === matchId);
-    const updatedEvents = newEvent
-      ? [...(targetMatch?.events || []), newEvent]
-      : targetMatch?.events || [];
+    let finalEvents: MatchEvent[] = [];
 
     setMatches((prev) =>
       prev.map((m) => {
         if (m.id !== matchId) return m;
+        finalEvents = newEvent ? [newEvent, ...(m.events || [])] : m.events || [];
         return {
           ...m,
           homeScore,
           awayScore,
-          events: updatedEvents,
+          events: finalEvents,
         };
       })
     );
 
-    // Save match changes to Firestore
+    // Save match changes safely to Firestore with merge
     saveMatchToFirestore(matchId, {
       homeScore,
       awayScore,
-      events: updatedEvents,
+      events: finalEvents,
     });
 
     // Also update current open match modal if active
@@ -411,15 +409,10 @@ export default function App() {
           ...prev,
           homeScore,
           awayScore,
-          events: updatedEvents,
+          events: finalEvents,
         };
       });
     }
-
-    // Re-calculate standings automatically
-    const { updatedTeams, updatedMatches } = computeStandingsAndFinalsMatch(teams, matches);
-    setTeams(updatedTeams);
-    updatedTeams.forEach((t) => saveTeamToFirestore(t.id, t));
   };
 
   // Update full match properties & automatically recalculate league standings + player telemetry stats

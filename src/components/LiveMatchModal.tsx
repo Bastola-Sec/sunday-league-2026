@@ -102,12 +102,8 @@ export const LiveMatchModal: React.FC<LiveMatchModalProps> = ({
     }
   }, [match?.id, match?.isFinished, match?.status]);
 
-  // Live Clock Interval for Lineup Selection Deadline Countdown
-  const [nowTime, setNowTime] = useState<number>(Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNowTime(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  // Static nowTime timestamp for countdown reference
+  const [nowTime] = useState<number>(Date.now());
 
   const getMatchKickoffDate = (m: Match): Date | null => {
     if (m.kickoffTime) {
