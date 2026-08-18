@@ -17,6 +17,26 @@ interface State5LiveActionProps {
   onSelectTeam?: (team: Team) => void;
 }
 
+const LiveMatchClockBadge: React.FC<{ match: Match }> = ({ match }) => {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    if (match.status === '1st_half' || match.status === '2nd_half' || match.isLive) {
+      const timer = setInterval(() => {
+        setTick((t) => t + 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [match.status, match.isLive, match.kickoffTime]);
+
+  return (
+    <span className="text-emerald-400 flex items-center gap-1.5 bg-emerald-500/10 px-3 py-0.5 rounded-full border border-emerald-500/40 shadow-[0_0_10px_rgba(52,211,153,0.2)]">
+      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+      ⏱ {formatClockTime(match.minute, match.matchSeconds, match.kickoffTime, match.status, match.halfDurationMinutes)}
+    </span>
+  );
+};
+
 export const State5LiveAction: React.FC<State5LiveActionProps> = ({
   matches,
   teams,
@@ -233,10 +253,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
                       <span className="text-xs font-mono font-extrabold uppercase tracking-wider">
                         {match.status === '1st_half' || match.status === '2nd_half' || match.isLive ? (
-                          <span className="text-emerald-400 flex items-center gap-1.5 bg-emerald-500/10 px-3 py-0.5 rounded-full border border-emerald-500/40 shadow-[0_0_10px_rgba(52,211,153,0.2)]">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                            ⏱ {formatClockTime(match.minute, match.matchSeconds, match.kickoffTime, match.status, match.halfDurationMinutes)}
-                          </span>
+                          <LiveMatchClockBadge match={match} />
                         ) : match.status === 'halftime' ? (
                           <span className="text-amber-300 bg-amber-500/10 px-3 py-0.5 rounded-full border border-amber-500/30">
                             Halftime

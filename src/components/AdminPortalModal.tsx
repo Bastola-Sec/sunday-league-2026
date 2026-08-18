@@ -916,7 +916,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     }
   }, [editingMatch?.id, editingMatch?.status]);
 
-  // Live Timer Interval Ticker (Ticks MM:SS in real-time seconds safely with Firestore merge)
+  // Live Timer Local State Interval (Updates local matchMinute ticker without 1-second Firestore snapshot round-trips)
   useEffect(() => {
     let interval: any;
     if (isLiveClockRunning && editingMatchId) {
@@ -926,12 +926,6 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
         const nextMin = Math.floor(nextSec / 60);
 
         setMatchMinute(nextMin);
-
-        // Update clock fields safely without overwriting live events or scores
-        saveMatchToFirestore(editingMatchId, {
-          matchSeconds: nextSec,
-          minute: nextMin,
-        });
       }, 1000);
     }
     return () => clearInterval(interval);
@@ -2229,7 +2223,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                             <div className="flex flex-col items-center">
                                               <span className="text-[9px] font-black uppercase tracking-widest text-[#B7CEEC] font-mono">MATCH TIME</span>
                                               <span className="text-2xl sm:text-3xl font-black font-mono tracking-widest text-emerald-300 drop-shadow-[0_0_15px_rgba(52,211,153,0.7)]">
-                                                {formatClockTime(matchMinute, editingMatch?.matchSeconds)}
+                                                {formatClockTime(matchMinute, editingMatch?.matchSeconds, editingMatch?.kickoffTime, editingMatch?.status, halfDuration)}
                                               </span>
                                             </div>
                                           </div>
@@ -2420,7 +2414,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                           RECORD LIVE EVENT (INLINE CONSOLE)
                                         </span>
                                         <span className="text-[10px] text-emerald-400 font-extrabold font-mono bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/30">
-                                          Timer: ⏱ {formatClockTime(matchMinute, editingMatch?.matchSeconds)}
+                                          Timer: ⏱ {formatClockTime(matchMinute, editingMatch?.matchSeconds, editingMatch?.kickoffTime, editingMatch?.status, halfDuration)}
                                         </span>
                                       </div>
 

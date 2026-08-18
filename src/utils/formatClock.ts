@@ -5,6 +5,13 @@ export const formatClockTime = (
   status?: string,
   halfDurationMinutes: number = 20
 ): string => {
+  if (status === 'halftime') {
+    return `${halfDurationMinutes.toString().padStart(2, '0')}:00`;
+  }
+  if (status === 'ended' || status === 'fulltime') {
+    return `${(halfDurationMinutes * 2).toString().padStart(2, '0')}:00`;
+  }
+
   // If match is live and kickoffTime timestamp is present, calculate exact elapsed seconds from wall clock time
   if ((status === '1st_half' || status === '2nd_half') && kickoffTime) {
     const kickoffMs = new Date(kickoffTime).getTime();
