@@ -54,7 +54,7 @@ import { MatchLineupBuilder } from './MatchLineupBuilder';
 import { CompletedMatchAnalytics } from './CompletedMatchAnalytics';
 import { auth } from '../lib/firebase';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { resetFirestoreToDefaults } from '../lib/firestoreService';
+import { resetFirestoreToDefaults, saveMatchToFirestore } from '../lib/firestoreService';
 import { formatClockTime } from '../utils/formatClock';
 
 interface AdminPortalModalProps {
@@ -916,7 +916,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     }
   }, [editingMatch?.id, editingMatch?.status]);
 
-  // Live Timer Interval Ticker (Ticks MM:SS in real-time seconds)
+  // Live Timer Interval Ticker (Ticks MM:SS in real-time seconds safely with Firestore merge)
   useEffect(() => {
     let interval: any;
     if (isLiveClockRunning && editingMatchId) {
@@ -927,16 +927,15 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
         setMatchMinute(nextMin);
 
-        if (onUpdateFullMatch) {
-          onUpdateFullMatch(editingMatchId, {
-            matchSeconds: nextSec,
-            minute: nextMin,
-          });
-        }
+        // Update clock fields safely without overwriting live events or scores
+        saveMatchToFirestore(editingMatchId, {
+          matchSeconds: nextSec,
+          minute: nextMin,
+        });
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isLiveClockRunning, editingMatchId, onUpdateFullMatch]);
+  }, [isLiveClockRunning, editingMatchId]);
 
   // Auto Match Simulator Effect
   useEffect(() => {

@@ -9,12 +9,12 @@ export function computeStandingsAndFinalsMatch(
   teamsList: Team[],
   matchesList: Match[]
 ): { updatedTeams: Team[]; updatedMatches: Match[] } {
-  // Separate regular matches from finals
+  // Separate regular matches from finals & test friendlies
   const regularMatches = matchesList.filter(
-    (m) => m.matchType !== 'Finals' && m.id !== 'FIX-007'
+    (m) => m.matchType !== 'Finals' && m.matchType !== 'Friendly' && m.id !== 'FIX-007' && m.id !== 'FIX-TEST-99' && (m.weekNumber || 0) < 90
   );
 
-  // Re-calculate stats for each team strictly from regular season matches & events
+  // Re-calculate stats for each team strictly from completed regular season matches & events
   const recalculatedTeams: Team[] = teamsList.map((team) => {
     let played = 0;
     let won = 0;
@@ -26,7 +26,8 @@ export function computeStandingsAndFinalsMatch(
     const playerGoalsCount: Record<string, number> = {};
 
     regularMatches.forEach((m) => {
-      const isFinished = m.isFinished || m.status === 'ended' || m.homeScore > 0 || m.awayScore > 0 || (m.events && m.events.length > 0);
+      // ONLY completed matches count towards team points, wins, losses, and standings
+      const isFinished = m.isFinished === true || m.status === 'ended';
       if (!isFinished) return;
 
       const isHome = m.homeTeamId === team.id;

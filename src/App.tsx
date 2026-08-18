@@ -460,13 +460,8 @@ export default function App() {
       return updatedMatches;
     });
 
-    // Save updated match fields to Firestore
-    const targetMatch = nextMatches.find((m) => m.id === matchId);
-    if (targetMatch) {
-      overwriteMatchInFirestore(matchId, targetMatch);
-    } else {
-      saveMatchToFirestore(matchId, updatedFields);
-    }
+    // Save updated match fields safely to Firestore with merge
+    saveMatchToFirestore(matchId, updatedFields);
 
     // Also update current open match modal if active
     if (selectedMatchForModal && selectedMatchForModal.id === matchId) {

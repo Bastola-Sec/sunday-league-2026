@@ -97,10 +97,6 @@ export async function initializeFirestoreData(): Promise<void> {
       // Seed any missing official match fixtures (e.g. FIX-001..FIX-007) without wiping user edits
       const existingMatchIds = new Set(matchesSnap.docs.map((d) => d.id));
 
-      // Delete any leftover test match fixture (FIX-TEST-99)
-      if (existingMatchIds.has('FIX-TEST-99')) {
-        await deleteDoc(doc(db, MATCHES_COL, 'FIX-TEST-99'));
-      }
 
       for (const match of INITIAL_MATCHES) {
         if (!existingMatchIds.has(match.id)) {
@@ -148,30 +144,32 @@ export function sanitizeMatchesData(rawMatches: Match[]): Match[] {
       const defaultFixture = initMap.get(m.id);
 
       if (defaultFixture) {
-        const isFinishedMatch = defaultFixture.isFinished || m.isFinished || m.status === 'ended';
+        const isFinishedMatch = m.isFinished !== undefined ? m.isFinished : (m.status === 'ended' || defaultFixture.isFinished);
 
-        // Always ensure events count and goal events match defaultFixture or user edits
-        const effectiveEvents = m.events && m.events.length >= (defaultFixture.events?.length || 0)
-          ? m.events
-          : defaultFixture.events;
+        const effectiveEvents = m.events !== undefined ? m.events : (defaultFixture.events || []);
 
         const goalEvents = effectiveEvents.filter((e) => e.type === 'goal');
-        const homeId = defaultFixture.homeTeamId;
-        const awayId = defaultFixture.awayTeamId;
+        const homeId = m.homeTeamId || defaultFixture.homeTeamId;
+        const awayId = m.awayTeamId || defaultFixture.awayTeamId;
 
         const calcHomeScore = goalEvents.filter((e) => e.teamId === homeId).length;
         const calcAwayScore = goalEvents.filter((e) => e.teamId === awayId).length;
 
-        // Respect explicit manual score overrides from Commissioner if present, otherwise calculate from goal events
-        const finalHomeScore = (m.homeScore !== undefined && m.homeScore !== 0)
+        // Respect live telemetry / user edits for scores, fallback to calculated goal count or default fixture score
+        const finalHomeScore = m.homeScore !== undefined
           ? m.homeScore
-          : (calcHomeScore > 0 ? calcHomeScore : defaultFixture.homeScore);
+          : (calcHomeScore > 0 ? calcHomeScore : (defaultFixture.homeScore ?? 0));
 
-        const finalAwayScore = (m.awayScore !== undefined && m.awayScore !== 0)
+        const finalAwayScore = m.awayScore !== undefined
           ? m.awayScore
-          : (calcAwayScore > 0 ? calcAwayScore : defaultFixture.awayScore);
+          : (calcAwayScore > 0 ? calcAwayScore : (defaultFixture.awayScore ?? 0));
 
-        const isLiveMatch = !isFinishedMatch && (m.isLive ?? false);
+        const isLiveMatch = !isFinishedMatch && (
+          m.isLive === true ||
+          m.status === '1st_half' ||
+          m.status === '2nd_half' ||
+          m.status === 'halftime'
+        );
 
         return {
           ...defaultFixture,
@@ -180,7 +178,7 @@ export function sanitizeMatchesData(rawMatches: Match[]): Match[] {
           awayScore: finalAwayScore,
           isLive: isLiveMatch,
           isFinished: isFinishedMatch,
-          status: isFinishedMatch ? 'ended' : m.status,
+          status: isFinishedMatch ? 'ended' : (m.status || defaultFixture.status),
           events: effectiveEvents,
         };
       }
