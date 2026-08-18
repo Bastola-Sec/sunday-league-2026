@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { INITIAL_TEAMS, INITIAL_MATCHES, INITIAL_NOTIFICATIONS } from './data/mockData';
 import { Team, Match, PushNotification, AppScrollState, MatchEvent, Player } from './types';
 import {
@@ -151,36 +151,15 @@ export default function App() {
     };
   }, []);
 
-  // Automatically recalculate regular season standings & update Week 4 Finals (FIX-007) Top 2 Teams
-  useEffect(() => {
-    if (teams.length === 0 || matches.length === 0) return;
-
+  // Pure memoized recalculation of regular season standings & Week 4 Finals (FIX-007) Top 2 Teams
+  // Purely computed on the fly with 0 side-effect state setter loops
+  const { displayTeams, displayMatches } = useMemo(() => {
+    if (teams.length === 0 || matches.length === 0) {
+      return { displayTeams: teams, displayMatches: matches };
+    }
     const { updatedTeams, updatedMatches } = computeStandingsAndFinalsMatch(teams, matches);
-
-    // Check if team stats, points, rankings, or player roster stats changed
-    const teamsNeedUpdate = JSON.stringify(updatedTeams) !== JSON.stringify(teams);
-
-    // Check if Finals fixture home/away team changed
-    const oldFinals = matches.find((m) => m.id === 'FIX-007' || m.matchType === 'Finals');
-    const newFinals = updatedMatches.find((m) => m.id === 'FIX-007' || m.matchType === 'Finals');
-    const finalsNeedUpdate = oldFinals && newFinals && (
-      oldFinals.homeTeamId !== newFinals.homeTeamId ||
-      oldFinals.awayTeamId !== newFinals.awayTeamId
-    );
-
-    if (teamsNeedUpdate) {
-      setTeams(updatedTeams);
-    }
-
-    if (finalsNeedUpdate && newFinals) {
-      setMatches(updatedMatches);
-      saveMatchToFirestore(newFinals.id, {
-        homeTeamId: newFinals.homeTeamId,
-        awayTeamId: newFinals.awayTeamId,
-        venue: newFinals.venue,
-      });
-    }
-  }, [matches]);
+    return { displayTeams: updatedTeams, displayMatches: updatedMatches };
+  }, [teams, matches]);
 
   // Scroll State & Navigation (1..5)
   const [scrollState, setScrollState] = useState<AppScrollState>(1);
@@ -665,11 +644,11 @@ export default function App() {
           <State1Hero onNext={() => handleJumpToState(2)} onJumpToState={handleJumpToState} />
         </div>
 
-        {/* State 2: Live Action & Upcoming Fixtures */}
+        {/* State 2: Live Action Center */}
         <div className="snap-start min-h-full">
           <State5LiveAction
-            matches={matches}
-            teams={teams}
+            matches={displayMatches}
+            teams={displayTeams}
             onOpenMatchModal={(match) => setSelectedMatchForModal(match)}
             onSendPushNotification={handleSendPushNotification}
             onNext={() => handleJumpToState(3)}
@@ -689,7 +668,7 @@ export default function App() {
         {/* State 4: Standings Table */}
         <div className="snap-start min-h-full">
           <State3Standings
-            teams={teams}
+            teams={displayTeams}
             onNext={() => handleJumpToState(5)}
             onSelectTeam={(team) => {
               handleSelectClubCinematic(team);
@@ -704,7 +683,7 @@ export default function App() {
         {/* State 5: Participating Clubs */}
         <div className="snap-start min-h-full">
           <State4TopClubs
-            teams={teams}
+            teams={displayTeams}
             onNext={() => handleJumpToState(1)}
             onOpenAdmin={(team) => {
               if (activeAdminTeamId !== team.id && activeAdminTeamId !== 'all' && activeAdminTeamId !== 'league_commish') {
@@ -723,7 +702,7 @@ export default function App() {
       {/* Modals */}
       <CinematicClubModal
         team={selectedClubForCinematic}
-        allTeams={teams}
+        allTeams={displayTeams}
         onClose={() => setSelectedClubForCinematic(null)}
         onSelectPlayer={handleSelectPlayer}
         onOpenAdmin={(team) => {
@@ -737,8 +716,8 @@ export default function App() {
       <LiveMatchModal
         match={selectedMatchForModal}
         onClose={() => setSelectedMatchForModal(null)}
-        teams={teams}
-        allMatches={matches}
+        teams={displayTeams}
+        allMatches={displayMatches}
         activeAdminTeamId={activeAdminTeamId}
         onUpdateMatchScore={handleUpdateMatchScore}
         onSendPushNotification={handleSendPushNotification}
@@ -759,8 +738,8 @@ export default function App() {
       <AdminPortalModal
         isOpen={isAdminPortalOpen}
         onClose={() => setIsAdminPortalOpen(false)}
-        teams={teams}
-        matches={matches}
+        teams={displayTeams}
+        matches={displayMatches}
         notifications={notifications}
         onUpdateRoster={handleUpdateRoster}
         onUpdateTeamDetails={handleUpdateTeamDetails}
