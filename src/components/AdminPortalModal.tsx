@@ -726,7 +726,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     onUpdateRoster(targetTeam.id, updated);
   };
 
-  // Sync state when fixture selection changes
+  // Sync state when fixture selection or match status changes
   useEffect(() => {
     if (editingMatch) {
       setHomeScoreInput(editingMatch.homeScore);
@@ -744,7 +744,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
         setIsLiveClockRunning(false);
       }
     }
-  }, [editingMatchId, editingMatch]);
+  }, [editingMatchId, editingMatch?.status, editingMatch?.isLive]);
 
   // Sync club form when team changes
   useEffect(() => {
@@ -1445,7 +1445,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
             initial={{ opacity: 0, scale: 0.88, y: 25 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.88, y: 25 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 320 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className="w-full max-w-6xl bg-[#05080c]/95 border-2 border-[#B7CEEC]/30 rounded-3xl text-white shadow-[0_0_50px_rgba(76,120,126,0.2)] overflow-hidden flex flex-col h-[94vh] max-h-[94vh] min-h-0 backdrop-blur-2xl"
           >
             {/* Top Motorsport Telemetry Navigation Header */}

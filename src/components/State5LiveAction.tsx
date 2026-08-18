@@ -119,6 +119,18 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
   };
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+  const [, setLiveTick] = useState(0);
+
+  // Tick live match clock second-by-second on screen for all viewers
+  useEffect(() => {
+    let timer: any;
+    if (actualLiveMatches.length > 0) {
+      timer = setInterval(() => {
+        setLiveTick((t) => t + 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [actualLiveMatches.length]);
 
   useEffect(() => {
     setTimeLeft(calculateTimeLeft());
@@ -191,7 +203,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                       <WeatherWidget compact />
                       <span className="px-2.5 py-0.5 rounded-md bg-[#4C787E]/20 text-[#B7CEEC] font-extrabold border border-[#4C787E]/40 flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#4C787E] animate-ping" />
-                        ⏱ {formatClockTime(match.minute, match.matchSeconds)}
+                        ⏱ {formatClockTime(match.minute, match.matchSeconds, match.kickoffTime, match.status, match.halfDurationMinutes)}
                       </span>
                     </div>
                   </div>
@@ -223,7 +235,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                         {match.status === '1st_half' || match.status === '2nd_half' || match.isLive ? (
                           <span className="text-emerald-400 flex items-center gap-1.5 bg-emerald-500/10 px-3 py-0.5 rounded-full border border-emerald-500/40 shadow-[0_0_10px_rgba(52,211,153,0.2)]">
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                            ⏱ {formatClockTime(match.minute, match.matchSeconds)}
+                            ⏱ {formatClockTime(match.minute, match.matchSeconds, match.kickoffTime, match.status, match.halfDurationMinutes)}
                           </span>
                         ) : match.status === 'halftime' ? (
                           <span className="text-amber-300 bg-amber-500/10 px-3 py-0.5 rounded-full border border-amber-500/30">
