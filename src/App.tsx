@@ -381,8 +381,8 @@ export default function App() {
   ) => {
     let finalEvents: MatchEvent[] = [];
 
-    setMatches((prev) =>
-      prev.map((m) => {
+    setMatches((prev) => {
+      const nextMatches = prev.map((m) => {
         if (m.id !== matchId) return m;
         finalEvents = newEvent ? [newEvent, ...(m.events || [])] : m.events || [];
         return {
@@ -391,8 +391,19 @@ export default function App() {
           awayScore,
           events: finalEvents,
         };
-      })
-    );
+      });
+
+      try {
+        localStorage.setItem('SUNDAY_LEAGUE_MATCHES_CACHE', JSON.stringify(nextMatches));
+        if (typeof BroadcastChannel !== 'undefined') {
+          const bc = new BroadcastChannel('sunday_league_cross_window_sync');
+          bc.postMessage({ type: 'MATCHES_UPDATE', matches: nextMatches });
+          bc.close();
+        }
+      } catch (e) {}
+
+      return nextMatches;
+    });
 
     // Save match changes safely to Firestore with merge
     saveMatchToFirestore(matchId, {
@@ -417,9 +428,20 @@ export default function App() {
 
   // Update full match properties & automatically recalculate league standings + player telemetry stats
   const handleUpdateFullMatch = (matchId: string, updatedFields: Partial<Match>) => {
-    setMatches((prev) =>
-      prev.map((m) => (m.id === matchId ? { ...m, ...updatedFields } : m))
-    );
+    setMatches((prev) => {
+      const nextMatches = prev.map((m) => (m.id === matchId ? { ...m, ...updatedFields } : m));
+
+      try {
+        localStorage.setItem('SUNDAY_LEAGUE_MATCHES_CACHE', JSON.stringify(nextMatches));
+        if (typeof BroadcastChannel !== 'undefined') {
+          const bc = new BroadcastChannel('sunday_league_cross_window_sync');
+          bc.postMessage({ type: 'MATCHES_UPDATE', matches: nextMatches });
+          bc.close();
+        }
+      } catch (e) {}
+
+      return nextMatches;
+    });
 
     // Save updated match fields safely to Firestore with merge
     saveMatchToFirestore(matchId, updatedFields);
