@@ -129,16 +129,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   // Live Controls Unlock window (5 minutes before scheduled kickoff)
   const [forceUnlockLiveControls, setForceUnlockLiveControls] = useState<boolean>(false);
   const [showLineupInLiveMode, setShowLineupInLiveMode] = useState<boolean>(false);
-  const [nowTime, setNowTime] = useState<number>(Date.now());
-
-  // Tick current time every second when match fixture modal is open
-  useEffect(() => {
-    if (!isOpen || !editingMatchId) return;
-    const timer = setInterval(() => {
-      setNowTime(Date.now());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [isOpen, editingMatchId]);
+  const [nowTime] = useState<number>(Date.now());
 
   const handleSelectMatchFixture = (matchItem: Match) => {
     setEditingMatchId(matchItem.id);
@@ -916,21 +907,6 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       timerSecondsRef.current = editingMatch.matchSeconds ?? ((editingMatch.minute || 0) * 60);
     }
   }, [editingMatch?.id, editingMatch?.status]);
-
-  // Live Timer Local State Interval (Updates local matchMinute ticker without 1-second Firestore snapshot round-trips)
-  useEffect(() => {
-    let interval: any;
-    if (isLiveClockRunning && editingMatchId) {
-      interval = setInterval(() => {
-        timerSecondsRef.current += 1;
-        const nextSec = timerSecondsRef.current;
-        const nextMin = Math.floor(nextSec / 60);
-
-        setMatchMinute(nextMin);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isLiveClockRunning, editingMatchId]);
 
   // Auto Match Simulator Effect
   useEffect(() => {
