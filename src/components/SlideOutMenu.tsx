@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { MoreVertical, X, Trophy, Shield, Activity, Eye, ShieldAlert, Bell, Smartphone, Volume2, VolumeX, Sparkles, ChevronRight, RefreshCw } from 'lucide-react';
 import { AppScrollState, Team } from '../types';
 import { TeamLogo } from './TeamLogos';
+import { resetFirestoreToDefaults } from '../lib/firestoreService';
 
 interface SlideOutMenuProps {
   isOpen: boolean;
@@ -185,10 +186,9 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                   </button>
 
                   <button
-                    onClick={() => {
-                      if (window.confirm('🔄 CLEAR ALL LOCAL CACHE & RESET TO PRE-KICKOFF?\n\nThis will clear any cached test data on this device and reload the app cleanly.')) {
-                        localStorage.removeItem('SUNDAY_LEAGUE_MATCHES_CACHE');
-                        localStorage.removeItem('SUNDAY_LEAGUE_TEAMS_CACHE');
+                    onClick={async () => {
+                      if (window.confirm('🔄 RESET CLOUD FIRESTORE TO DEFAULT LEAGUE DATASET?\n\nThis will reseed Cloud Firestore to pristine pre-kickoff state.')) {
+                        await resetFirestoreToDefaults();
                         window.location.reload();
                       }
                     }}
@@ -196,7 +196,7 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                   >
                     <div className="flex items-center gap-2">
                       <RefreshCw className="w-4 h-4 text-rose-400" />
-                      <span>Sync Data & Clear Cache</span>
+                      <span>Reset Cloud Firestore</span>
                     </div>
                     <span className="text-[10px] px-2 py-0.5 rounded font-bold font-mono bg-rose-500/30 text-rose-200">
                       RESET

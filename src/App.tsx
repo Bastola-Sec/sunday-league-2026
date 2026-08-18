@@ -29,90 +29,12 @@ import { PushNotificationToast } from './components/PushNotificationToast';
 import { IPhoneFrame } from './components/IPhoneFrame';
 import { computeStandingsAndFinalsMatch, rolloverToNewSeason } from './utils/leagueEngine';
 
-const CURRENT_CACHE_VERSION = 'v2026_08_17_V104_SOLO_GOAL_ASSIST_FIX';
-
-// Synchronously clear outdated disk caches before component state initialization
-try {
-  const storedVer = localStorage.getItem('SUNDAY_LEAGUE_CACHE_VERSION');
-  if (storedVer !== CURRENT_CACHE_VERSION) {
-    localStorage.clear();
-    localStorage.setItem('SUNDAY_LEAGUE_CACHE_VERSION', CURRENT_CACHE_VERSION);
-  }
-} catch (e) {}
-
 export default function App() {
-  // Application Core State (with LocalStorage cache persistence & versioning)
-  const [teams, setTeams] = useState<Team[]>(() => {
-    try {
-      const cached = localStorage.getItem('SUNDAY_LEAGUE_TEAMS_CACHE');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return INITIAL_TEAMS;
-  });
-
-  const [matches, setMatches] = useState<Match[]>(() => {
-    try {
-      const cached = localStorage.getItem('SUNDAY_LEAGUE_MATCHES_CACHE');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length >= 7) {
-          return sanitizeMatchesData(parsed);
-        }
-      }
-    } catch (e) {}
-    return sanitizeMatchesData(INITIAL_MATCHES);
-  });
-
+  // Core Application State (Cloud Firestore Single Source of Truth)
+  const [teams, setTeams] = useState<Team[]>(INITIAL_TEAMS);
+  const [matches, setMatches] = useState<Match[]>(() => sanitizeMatchesData(INITIAL_MATCHES));
   const [notifications, setNotifications] = useState<PushNotification[]>([]);
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
-
-  // Mirror teams & matches state changes to LocalStorage cache and BroadcastChannel for instant cross-window sync
-  useEffect(() => {
-    try {
-      localStorage.setItem('SUNDAY_LEAGUE_TEAMS_CACHE', JSON.stringify(teams));
-      if (typeof BroadcastChannel !== 'undefined') {
-        const bc = new BroadcastChannel('sunday_league_cross_window_sync');
-        bc.postMessage({ type: 'TEAMS_UPDATE', teams });
-        bc.close();
-      }
-    } catch (e) {}
-  }, [teams]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('SUNDAY_LEAGUE_MATCHES_CACHE', JSON.stringify(matches));
-      if (typeof BroadcastChannel !== 'undefined') {
-        const bc = new BroadcastChannel('sunday_league_cross_window_sync');
-        bc.postMessage({ type: 'MATCHES_UPDATE', matches });
-        bc.close();
-      }
-    } catch (e) {}
-  }, [matches]);
-
-  // Real-time cross-tab & cross-window sync listener
-  useEffect(() => {
-    let syncChannel: BroadcastChannel | null = null;
-    try {
-      if (typeof BroadcastChannel !== 'undefined') {
-        syncChannel = new BroadcastChannel('sunday_league_cross_window_sync');
-        syncChannel.onmessage = (event) => {
-          if (event.data?.type === 'MATCHES_UPDATE' && Array.isArray(event.data.matches)) {
-            const sanitized = sanitizeMatchesData(event.data.matches);
-            setMatches(sanitized);
-          } else if (event.data?.type === 'TEAMS_UPDATE' && Array.isArray(event.data.teams)) {
-            setTeams(event.data.teams);
-          }
-        };
-      }
-    } catch (e) {}
-
-    return () => {
-      syncChannel?.close();
-    };
-  }, []);
 
   const handleRolloverSeason = () => {
     const { nextSeasonNumber, updatedTeams, newMatches } = rolloverToNewSeason(
@@ -381,8 +303,8 @@ export default function App() {
   ) => {
     let finalEvents: MatchEvent[] = [];
 
-    setMatches((prev) => {
-      const nextMatches = prev.map((m) => {
+    setMatches((prev) =>
+      prev.map((m) => {
         if (m.id !== matchId) return m;
         finalEvents = newEvent ? [newEvent, ...(m.events || [])] : m.events || [];
         return {
@@ -391,21 +313,10 @@ export default function App() {
           awayScore,
           events: finalEvents,
         };
-      });
+      })
+    );
 
-      try {
-        localStorage.setItem('SUNDAY_LEAGUE_MATCHES_CACHE', JSON.stringify(nextMatches));
-        if (typeof BroadcastChannel !== 'undefined') {
-          const bc = new BroadcastChannel('sunday_league_cross_window_sync');
-          bc.postMessage({ type: 'MATCHES_UPDATE', matches: nextMatches });
-          bc.close();
-        }
-      } catch (e) {}
-
-      return nextMatches;
-    });
-
-    // Save match changes safely to Firestore with merge
+    // Save match changes safely to Cloud Firestore
     saveMatchToFirestore(matchId, {
       homeScore,
       awayScore,
@@ -428,22 +339,11 @@ export default function App() {
 
   // Update full match properties & automatically recalculate league standings + player telemetry stats
   const handleUpdateFullMatch = (matchId: string, updatedFields: Partial<Match>) => {
-    setMatches((prev) => {
-      const nextMatches = prev.map((m) => (m.id === matchId ? { ...m, ...updatedFields } : m));
+    setMatches((prev) =>
+      prev.map((m) => (m.id === matchId ? { ...m, ...updatedFields } : m))
+    );
 
-      try {
-        localStorage.setItem('SUNDAY_LEAGUE_MATCHES_CACHE', JSON.stringify(nextMatches));
-        if (typeof BroadcastChannel !== 'undefined') {
-          const bc = new BroadcastChannel('sunday_league_cross_window_sync');
-          bc.postMessage({ type: 'MATCHES_UPDATE', matches: nextMatches });
-          bc.close();
-        }
-      } catch (e) {}
-
-      return nextMatches;
-    });
-
-    // Save updated match fields safely to Firestore with merge
+    // Save updated match fields safely to Cloud Firestore
     saveMatchToFirestore(matchId, updatedFields);
 
     // Also update current open match modal if active
