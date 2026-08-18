@@ -424,20 +424,9 @@ export default function App() {
 
   // Update full match properties & automatically recalculate league standings + player telemetry stats
   const handleUpdateFullMatch = (matchId: string, updatedFields: Partial<Match>) => {
-    let nextMatches: Match[] = [];
-
-    setMatches((prev) => {
-      nextMatches = prev.map((m) => (m.id === matchId ? { ...m, ...updatedFields } : m));
-
-      // Recalculate standings and player stats across all matches
-      const { updatedTeams, updatedMatches } = computeStandingsAndFinalsMatch(teams, nextMatches);
-      
-      // Sync recalculated teams state and Firestore
-      setTeams(updatedTeams);
-      updatedTeams.forEach((t) => saveTeamToFirestore(t.id, t));
-
-      return updatedMatches;
-    });
+    setMatches((prev) =>
+      prev.map((m) => (m.id === matchId ? { ...m, ...updatedFields } : m))
+    );
 
     // Save updated match fields safely to Firestore with merge
     saveMatchToFirestore(matchId, updatedFields);
