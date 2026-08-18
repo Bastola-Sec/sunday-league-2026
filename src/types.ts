@@ -122,6 +122,7 @@ export interface Match {
   addedTime1stHalf?: number;
   addedTime2ndHalf?: number;
   kickoffTime?: string;
+  kickoffTime2nd?: string;
   currentPeriod?: '1st_half' | 'halftime' | '2nd_half' | 'fulltime';
   homeStartingPlayerIds?: string[];
   homeSubstitutePlayerIds?: string[];
