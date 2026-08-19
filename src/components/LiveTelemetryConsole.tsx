@@ -364,7 +364,7 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
   };
 
   return (
-    <div className="space-y-4 p-4 sm:p-5 rounded-3xl bg-[#070d18] border-2 border-[#4C787E]/40 text-white shadow-2xl relative overflow-hidden backdrop-blur-xl">
+    <div className="space-y-4 p-4 sm:p-5 rounded-3xl bg-[#070d18] border-2 border-[#4C787E]/40 text-white shadow-2xl relative max-h-[85vh] sm:max-h-none overflow-y-auto custom-scrollbar touch-pan-y overscroll-contain pb-10 sm:pb-5 backdrop-blur-xl">
       {/* Toast Feedback Banner */}
       {feedbackMsg && (
         <motion.div
@@ -554,7 +554,7 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
                 setInlineAssistPlayerName('');
                 setInlineSubOutPlayerName('');
               }}
-              className="w-full px-3 py-2 rounded-xl bg-[#060c16] border border-[#4C787E]/40 text-white font-bold text-xs focus:outline-none focus:border-teal-400 cursor-pointer"
+              className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-[#060c16] border border-[#4C787E]/40 text-white font-bold text-xs focus:outline-none focus:border-teal-400 cursor-pointer touch-manipulation"
             >
               <option value={match.homeTeamId}>🌎 {homeTeam?.name} (Home Team)</option>
               <option value={match.awayTeamId}>✈️ {awayTeam?.name} (Away Team)</option>
@@ -569,7 +569,7 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
             <select
               value={inlinePlayerName}
               onChange={(e) => setInlinePlayerName(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-[#060c16] border border-[#4C787E]/40 text-white font-bold text-xs focus:outline-none focus:border-teal-400 cursor-pointer"
+              className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-[#060c16] border border-[#4C787E]/40 text-white font-bold text-xs focus:outline-none focus:border-teal-400 cursor-pointer touch-manipulation"
             >
               <option value="">-- Choose Roster Player --</option>
               {activeRoster.map((p) => (
@@ -589,7 +589,7 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
               <select
                 value={inlineAssistPlayerName}
                 onChange={(e) => setInlineAssistPlayerName(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#060c16] border border-[#4C787E]/40 text-white font-bold text-xs focus:outline-none focus:border-teal-400 cursor-pointer"
+                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-[#060c16] border border-[#4C787E]/40 text-white font-bold text-xs focus:outline-none focus:border-teal-400 cursor-pointer touch-manipulation"
               >
                 <option value="">None / Solo Goal</option>
                 {activeRoster
@@ -612,7 +612,7 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
               <select
                 value={inlineSubOutPlayerName}
                 onChange={(e) => setInlineSubOutPlayerName(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#060c16] border border-[#4C787E]/40 text-white font-bold text-xs focus:outline-none focus:border-teal-400 cursor-pointer"
+                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-[#060c16] border border-[#4C787E]/40 text-white font-bold text-xs focus:outline-none focus:border-teal-400 cursor-pointer touch-manipulation"
               >
                 <option value="">-- Select Player Being Replaced --</option>
                 {activeRoster
@@ -630,7 +630,7 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
         {/* Submit Event Button */}
         <button
           type="submit"
-          className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 hover:brightness-110 text-slate-950 font-black text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg flex items-center justify-center gap-2"
+          className="w-full min-h-[48px] mt-3 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 hover:brightness-110 active:scale-[0.98] text-slate-950 font-black text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg flex items-center justify-center gap-2 touch-manipulation"
         >
           <Zap className="w-4 h-4 text-slate-950" />
           <span>⚡ CONFIRM & LOG {inlineEventType.toUpperCase()}</span>
