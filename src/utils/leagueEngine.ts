@@ -11,7 +11,7 @@ export function computeStandingsAndFinalsMatch(
 ): { updatedTeams: Team[]; updatedMatches: Match[] } {
   // Separate regular matches from finals & test friendlies
   const regularMatches = matchesList.filter(
-    (m) => m.matchType !== 'Finals' && m.matchType !== 'Friendly' && m.id !== 'FIX-007' && m.id !== 'FIX-TEST-99' && (m.weekNumber || 0) < 90
+    (m) => m.matchType !== 'Finals' && m.matchType !== 'Friendly' && m.id !== 'FIX-007'
   );
 
   // Re-calculate stats for each team strictly from completed regular season matches & events

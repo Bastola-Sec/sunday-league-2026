@@ -228,6 +228,8 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
 
     const updatedEvents = [ftEvt, ...(match.events || [])];
     const update: Partial<Match> = {
+      homeScore: match.homeScore,
+      awayScore: match.awayScore,
       status: 'ended',
       isLive: false,
       isFinished: true,
