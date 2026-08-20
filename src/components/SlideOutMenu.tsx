@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MoreVertical, X, Trophy, Shield, Activity, Eye, ShieldAlert, Bell, Smartphone, Volume2, VolumeX, Sparkles, ChevronRight, RefreshCw } from 'lucide-react';
+import { MoreVertical, X, Trophy, Shield, Activity, Eye, ShieldAlert, Bell, Smartphone, Volume2, VolumeX, Sparkles, ChevronRight, RefreshCw, Home } from 'lucide-react';
 import { AppScrollState, Team } from '../types';
 import { TeamLogo } from './TeamLogos';
 import { resetFirestoreToDefaults } from '../lib/firestoreService';
@@ -109,10 +109,11 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                   </p>
                   <div className="space-y-2">
                     {[
-                      { state: 2 as AppScrollState, label: 'Live Action & Fixtures', icon: Activity, desc: 'Real-Time Match Center' },
-                      { state: 3 as AppScrollState, label: 'Match Venue', icon: Sparkles, desc: 'DeAnza Stadium Specs' },
-                      { state: 4 as AppScrollState, label: 'League Standings', icon: Trophy, desc: 'Official Rankings' },
-                      { state: 5 as AppScrollState, label: 'Participating Clubs', icon: Shield, desc: 'Contenders & Rosters' },
+                      { state: 1 as AppScrollState, label: 'Hero & Overview', icon: Home, desc: 'Welcome & Season Intro' },
+                      { state: 2 as AppScrollState, label: 'Official Leaderboards', icon: Trophy, desc: 'Standings & Cup Brackets' },
+                      { state: 3 as AppScrollState, label: 'Live Action & Fixtures', icon: Activity, desc: 'Real-Time Match Center' },
+                      { state: 4 as AppScrollState, label: '3D Stadium View', icon: Sparkles, desc: 'DeAnza Stadium Specs' },
+                      { state: 5 as AppScrollState, label: 'Top League Clubs', icon: Shield, desc: 'Contenders & Rosters' },
                     ].map((item) => {
                       const Icon = item.icon;
                       const isActive = scrollState === item.state;

@@ -432,41 +432,98 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               </div>
             </div>
 
-            {/* STATS SECTION CARD (MATCHING IMAGE 2) */}
+            {/* STATS SECTION CARD (SEASON & CAREER TOTALS) */}
             {!showTacticalFlip ? (
               <div className="p-4 rounded-[1.75rem] bg-[#7d9cb8]/40 backdrop-blur-xl border border-white/60 shadow-lg text-[#152a38] space-y-4">
-                {/* Stats Summary Grid */}
-                <div className="grid grid-cols-4 text-center py-2 bg-[#ffffff]/20 rounded-2xl border border-white/30 backdrop-blur-md">
-                  <div>
-                    <span className="block text-[11px] font-bold text-[#304859] mb-0.5">Goals</span>
-                    <span className="text-xl sm:text-2xl font-black text-white drop-shadow-md">
-                      {currentPlayer.goals}
-                    </span>
-                    <span className="block text-[8px] font-bold text-[#304859]/80 font-mono">Total</span>
+                {/* Current Season Telemetry Grid */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-[#152a38] uppercase tracking-wider px-1">
+                    <span>Season Telemetry</span>
+                    <span className="font-mono text-amber-900 font-extrabold">Active Season</span>
                   </div>
-
-                  <div className="border-x border-[#1a3244]/20 px-1">
-                    <span className="block text-[11px] font-bold text-[#304859] mb-0.5">Assists</span>
-                    <span className="text-xl sm:text-2xl font-black text-white drop-shadow-md">
-                      {currentPlayer.assists}
-                    </span>
-                    <span className="block text-[8px] font-bold text-[#304859]/80 font-mono">Total</span>
+                  <div className="grid grid-cols-6 text-center py-2 bg-[#ffffff]/25 rounded-2xl border border-white/30 backdrop-blur-md gap-1">
+                    <div>
+                      <span className="block text-[10px] font-bold text-[#304859]">Goals</span>
+                      <span className="text-lg font-black text-white drop-shadow-md">
+                        {currentPlayer.goals || 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] font-bold text-[#304859]">Assists</span>
+                      <span className="text-lg font-black text-white drop-shadow-md">
+                        {currentPlayer.assists || 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] font-bold text-[#304859]">MOTM</span>
+                      <span className="text-lg font-black text-amber-300 drop-shadow-md">
+                        ⭐ {currentPlayer.motmAwards || 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] font-bold text-[#304859]">Yellows</span>
+                      <span className="text-lg font-black text-yellow-300 drop-shadow-md">
+                        🟨 {currentPlayer.yellowCards || 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] font-bold text-[#304859]">Reds</span>
+                      <span className="text-lg font-black text-rose-300 drop-shadow-md">
+                        🟥 {currentPlayer.redCards || 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] font-bold text-[#304859]">Matches</span>
+                      <span className="text-lg font-black text-white drop-shadow-md">
+                        {currentPlayer.matchesPlayed || 0}
+                      </span>
+                    </div>
                   </div>
+                </div>
 
-                  <div className="border-r border-[#1a3244]/20 px-1">
-                    <span className="block text-[11px] font-bold text-[#304859] mb-0.5">MOTM</span>
-                    <span className="text-xl sm:text-2xl font-black text-amber-300 drop-shadow-md flex items-center justify-center gap-0.5">
-                      ⭐ {currentPlayer.motmAwards || 0}
-                    </span>
-                    <span className="block text-[8px] font-bold text-[#304859]/80 font-mono">Awards</span>
+                {/* All-Time Lifetime Career Totals Grid */}
+                <div className="space-y-1 pt-1 border-t border-[#1a3244]/15">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-[#152a38] uppercase tracking-wider px-1">
+                    <span>All-Time Career Totals</span>
+                    <span className="font-mono text-[#152a38] font-extrabold">All Seasons</span>
                   </div>
-
-                  <div>
-                    <span className="block text-[11px] font-bold text-[#304859] mb-0.5">Matches</span>
-                    <span className="text-xl sm:text-2xl font-black text-white drop-shadow-md">
-                      {currentPlayer.matchesPlayed ?? 0}
-                    </span>
-                    <span className="block text-[8px] font-bold text-[#304859]/80 font-mono">Played</span>
+                  <div className="grid grid-cols-6 text-center py-2 bg-[#152a38]/15 rounded-2xl border border-[#152a38]/20 backdrop-blur-md gap-1">
+                    <div>
+                      <span className="block text-[9px] font-extrabold text-[#2a455a]">C-Goals</span>
+                      <span className="text-base font-black text-[#152a38]">
+                        {currentPlayer.careerGoals ?? currentPlayer.goals ?? 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-extrabold text-[#2a455a]">C-Assists</span>
+                      <span className="text-base font-black text-[#152a38]">
+                        {currentPlayer.careerAssists ?? currentPlayer.assists ?? 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-extrabold text-[#2a455a]">C-MOTM</span>
+                      <span className="text-base font-black text-[#152a38]">
+                        {currentPlayer.careerMotmAwards ?? currentPlayer.motmAwards ?? 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-extrabold text-[#2a455a]">C-Yellows</span>
+                      <span className="text-base font-black text-[#152a38]">
+                        {currentPlayer.careerYellowCards ?? currentPlayer.yellowCards ?? 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-extrabold text-[#2a455a]">C-Reds</span>
+                      <span className="text-base font-black text-[#152a38]">
+                        {currentPlayer.careerRedCards ?? currentPlayer.redCards ?? 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-extrabold text-[#2a455a]">C-Apps</span>
+                      <span className="text-base font-black text-[#152a38]">
+                        {currentPlayer.careerMatches ?? currentPlayer.matchesPlayed ?? 0}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

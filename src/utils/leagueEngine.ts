@@ -9,9 +9,13 @@ export function computeStandingsAndFinalsMatch(
   teamsList: Team[],
   matchesList: Match[]
 ): { updatedTeams: Team[]; updatedMatches: Match[] } {
-  // Separate regular matches from finals & test friendlies
+  // Separate regular matches from knockout cups & test friendlies
   const regularMatches = matchesList.filter(
-    (m) => m.matchType !== 'Finals' && m.matchType !== 'Friendly' && m.id !== 'FIX-007'
+    (m) =>
+      (m.matchType === 'Regular' || !m.matchType) &&
+      m.id !== 'FIX-007' &&
+      m.id !== 'FIX-008' &&
+      m.id !== 'FIX-009'
   );
 
   // Re-calculate stats for each team strictly from completed regular season matches & events
@@ -26,7 +30,7 @@ export function computeStandingsAndFinalsMatch(
     const playerGoalsCount: Record<string, number> = {};
 
     regularMatches.forEach((m) => {
-      // ONLY completed matches count towards team points, wins, losses, and standings
+      // ONLY completed regular matches count towards team points, wins, losses, and standings
       const isFinished = m.isFinished === true || m.status === 'ended';
       if (!isFinished) return;
 
@@ -53,6 +57,41 @@ export function computeStandingsAndFinalsMatch(
         formList.push('L');
       }
     });
+
+    // Calculate All-Time Overall Club Stats across ALL matches (League Phase + Cup Knockout Phase across all seasons)
+    let allTimePlayed = 0;
+    let allTimeWins = 0;
+    let allTimeDraws = 0;
+    let allTimeLosses = 0;
+    let allTimeGoalsFor = 0;
+    let allTimeGoalsAgainst = 0;
+
+    matchesList.forEach((m) => {
+      const isFinished = m.isFinished === true || m.status === 'ended';
+      if (!isFinished) return;
+
+      const isHome = m.homeTeamId === team.id;
+      const isAway = m.awayTeamId === team.id;
+      if (!isHome && !isAway) return;
+
+      allTimePlayed += 1;
+      const teamScore = isHome ? m.homeScore : m.awayScore;
+      const oppScore = isHome ? m.awayScore : m.homeScore;
+
+      allTimeGoalsFor += teamScore;
+      allTimeGoalsAgainst += oppScore;
+
+      if (teamScore > oppScore) {
+        allTimeWins += 1;
+      } else if (teamScore === oppScore) {
+        allTimeDraws += 1;
+      } else {
+        allTimeLosses += 1;
+      }
+    });
+
+    const allTimeGoalDifference = allTimeGoalsFor - allTimeGoalsAgainst;
+    const allTimeWinPercentage = allTimePlayed > 0 ? Math.round((allTimeWins / allTimePlayed) * 100) : 0;
 
     // Accumulate player telemetry stats across ALL matches
     const updatedRoster = (team.roster || []).map((player) => {
@@ -127,6 +166,12 @@ export function computeStandingsAndFinalsMatch(
         redCards: telemetryReds,
         motmAwards: telemetryMotm,
         matchesPlayed: playerGamesCount,
+        careerGoals: Math.max(player.careerGoals || 0, telemetryGoals),
+        careerAssists: Math.max(player.careerAssists || 0, telemetryAssists),
+        careerYellowCards: Math.max(player.careerYellowCards || 0, telemetryYellows),
+        careerRedCards: Math.max(player.careerRedCards || 0, telemetryReds),
+        careerMotmAwards: Math.max(player.careerMotmAwards || 0, telemetryMotm),
+        careerMatches: Math.max(player.careerMatches || 0, playerGamesCount),
       };
     });
 
@@ -161,6 +206,14 @@ export function computeStandingsAndFinalsMatch(
       goalsAgainst,
       goalDifference,
       points,
+      allTimePlayed,
+      allTimeWins,
+      allTimeDraws,
+      allTimeLosses,
+      allTimeGoalsFor,
+      allTimeGoalsAgainst,
+      allTimeGoalDifference,
+      allTimeWinPercentage,
       form,
       topScorer,
       roster: updatedRoster,
@@ -181,32 +234,67 @@ export function computeStandingsAndFinalsMatch(
     rank: idx + 1,
   }));
 
-  // Identify Top 2 teams for the Grand Finals ONLY if games have been played
-  const hasPlayedMatches = regularMatches.some(
-    (m) => m.isFinished || m.status === 'ended' || m.homeScore > 0 || m.awayScore > 0
-  );
+  // Identify Top 2 teams for the Grand Finals ONLY if ALL teams have completed all 4 league games
+  const allTeamsFinished4Games =
+    teamsList.length > 0 && teamsList.every((t) => (t.played || 0) >= 4);
 
-  const top1Team = hasPlayedMatches ? (rankedTeams[0] || teamsList[0]) : null;
-  const top2Team = hasPlayedMatches ? (rankedTeams[1] || teamsList[1]) : null;
+  const top1Team = allTeamsFinished4Games ? (rankedTeams[0] || teamsList[0]) : null;
+  const top2Team = allTeamsFinished4Games ? (rankedTeams[1] || teamsList[1]) : null;
+  const top3Team = allTeamsFinished4Games ? (rankedTeams[2] || teamsList[2]) : null;
 
-  // Update Week 4 Finals Match (FIX-007) with dynamic top 2 teams or TBD placeholders
+  // Update Cup Knockout Matches (FIX-007, FIX-008, FIX-009) with dynamic top teams or TBD placeholders
   const updatedMatches = matchesList.map((m) => {
-    if (m.id === 'FIX-007' || m.matchType === 'Finals') {
+    if (m.id === 'FIX-007' || m.matchType === 'League Cup' || m.matchType === 'Finals') {
       if (top1Team && top2Team) {
         return {
           ...m,
           homeTeamId: top1Team.id,
           awayTeamId: top2Team.id,
-          venue: `De Anza Stadium (Finals: ${top1Team.name} vs ${top2Team.name})`,
+          venue: `De Anza Stadium (League Cup Final: ${top1Team.name} vs ${top2Team.name})`,
         };
       }
       return {
         ...m,
         homeTeamId: '1st Place',
         awayTeamId: '2nd Place',
-        venue: 'De Anza Stadium (Finals: 1st Place vs 2nd Place)',
+        venue: 'De Anza Stadium (League Cup Final: 1st Place vs 2nd Place)',
       };
     }
+
+    if (m.id === 'FIX-008' || m.matchType === 'Super Cup Qualifier') {
+      if (top2Team && top3Team) {
+        return {
+          ...m,
+          homeTeamId: top2Team.id,
+          awayTeamId: top3Team.id,
+          venue: `De Anza Stadium (Super Cup Qualifier: ${top2Team.name} vs ${top3Team.name})`,
+        };
+      }
+      return {
+        ...m,
+        homeTeamId: '2nd Place',
+        awayTeamId: '3rd Place',
+        venue: 'De Anza Stadium (Super Cup Qualifier: 2nd Place vs 3rd Place)',
+      };
+    }
+
+    if (m.id === 'FIX-009' || m.matchType === 'Super Cup Final') {
+      if (top1Team) {
+        return {
+          ...m,
+          homeTeamId: top1Team.id,
+          awayTeamId: m.awayTeamId || 'tbd',
+          venue: `De Anza Stadium (Super Cup Final: ${top1Team.name} vs Qualifier Winner)`,
+        };
+      }
+      return {
+        ...m,
+        homeTeamId: '1st Place',
+        awayTeamId: 'tbd',
+        venue: 'De Anza Stadium (Super Cup Final: 1st Place vs Qualifier Winner)',
+      };
+    }
+
     return m;
   });
 
@@ -243,11 +331,15 @@ export function rolloverToNewSeason(
       careerGoals: (player.careerGoals ?? 0) + (player.goals || 0),
       careerAssists: (player.careerAssists ?? 0) + (player.assists || 0),
       careerMatches: (player.careerMatches ?? 0) + (player.matchesPlayed || 0),
+      careerYellowCards: (player.careerYellowCards ?? 0) + (player.yellowCards || 0),
+      careerRedCards: (player.careerRedCards ?? 0) + (player.redCards || 0),
+      careerMotmAwards: (player.careerMotmAwards ?? 0) + (player.motmAwards || 0),
       // Reset current season stats
       goals: 0,
       assists: 0,
       yellowCards: 0,
       redCards: 0,
+      motmAwards: 0,
       matchesPlayed: 0,
     }));
 
@@ -261,6 +353,14 @@ export function rolloverToNewSeason(
       goalsAgainst: 0,
       goalDifference: 0,
       points: 0,
+      allTimePlayed: team.allTimePlayed ?? 0,
+      allTimeWins: team.allTimeWins ?? 0,
+      allTimeDraws: team.allTimeDraws ?? 0,
+      allTimeLosses: team.allTimeLosses ?? 0,
+      allTimeGoalsFor: team.allTimeGoalsFor ?? 0,
+      allTimeGoalsAgainst: team.allTimeGoalsAgainst ?? 0,
+      allTimeGoalDifference: team.allTimeGoalDifference ?? 0,
+      allTimeWinPercentage: team.allTimeWinPercentage ?? 0,
       form: [],
       topScorer: 'N/A',
       achievements: newAchievement ? [newAchievement, ...existingAchievements] : existingAchievements,

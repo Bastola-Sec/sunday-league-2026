@@ -1342,7 +1342,15 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   // Visible matches for active admin persona
   const rawVisibleMatches =
     currentAdmin && currentAdmin.teamId !== 'all'
-      ? matches.filter((m) => m.homeTeamId === currentAdmin.teamId || m.awayTeamId === currentAdmin.teamId)
+      ? matches.filter(
+          (m) =>
+            m.homeTeamId === currentAdmin.teamId ||
+            m.awayTeamId === currentAdmin.teamId ||
+            m.matchType === 'League Cup' ||
+            m.matchType === 'Super Cup Qualifier' ||
+            m.matchType === 'Super Cup Final' ||
+            m.matchType === 'Finals'
+        )
       : matches;
 
   // Helper to extract exact scheduled Kickoff Date for sorting
@@ -1614,21 +1622,21 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                   </div>
                 </div>
 
-                {/* Navigation Tabs - Clean Primary Tabs & 3-Dots Dropdown */}
-                <div className="flex items-center justify-between bg-[#060b12]/90 border-b border-[#B7CEEC]/20 p-2.5 text-xs font-bold relative z-50 backdrop-blur-md">
-                  <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar">
+                {/* Navigation Tabs - Clean Primary Tabs & 3-Dots Dropdown (No Horizontal Scrolling) */}
+                <div className="flex items-center gap-1.5 bg-[#060b12]/90 border-b border-[#B7CEEC]/20 p-2 text-xs font-bold relative z-50 backdrop-blur-md">
+                  <div className="flex-1 grid grid-cols-3 gap-1 min-w-0">
                     <button
                       onClick={() => {
                         setActiveTab('matches');
                         setIsMoreMenuOpen(false);
                       }}
-                      className={`px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${activeTab === 'matches'
-                        ? 'bg-gradient-to-r from-[#4C787E] to-[#122e3d] text-white shadow-[0_0_18px_rgba(76,120,126,0.4)] border border-[#B7CEEC]/50 font-black f1-sub-header tracking-widest uppercase'
-                        : 'text-gray-400 hover:text-white hover:bg-[#03060a] border border-transparent'
+                      className={`py-2 px-1 rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer text-center ${activeTab === 'matches'
+                        ? 'bg-gradient-to-r from-[#4C787E] to-[#122e3d] text-white shadow-[0_0_18px_rgba(76,120,126,0.4)] border border-[#B7CEEC]/50 font-black f1-sub-header tracking-wider uppercase text-[10px] sm:text-xs'
+                        : 'text-gray-400 hover:text-white hover:bg-[#03060a] border border-transparent font-bold text-[10px] sm:text-xs'
                         }`}
                     >
-                      <Radio className="w-4 h-4 text-teal-300" />
-                      <span>LIVE MATCH</span>
+                      <Radio className="w-3.5 h-3.5 text-teal-300 shrink-0" />
+                      <span className="truncate">LIVE MATCH</span>
                     </button>
 
                     <button
@@ -1636,13 +1644,13 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                         setActiveTab('rosters');
                         setIsMoreMenuOpen(false);
                       }}
-                      className={`px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${activeTab === 'rosters'
-                        ? 'bg-gradient-to-r from-[#4C787E] to-[#122e3d] text-white shadow-[0_0_18px_rgba(76,120,126,0.4)] border border-[#B7CEEC]/50 font-black f1-sub-header tracking-widest uppercase'
-                        : 'text-gray-400 hover:text-white hover:bg-[#03060a] border border-transparent'
+                      className={`py-2 px-1 rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer text-center ${activeTab === 'rosters'
+                        ? 'bg-gradient-to-r from-[#4C787E] to-[#122e3d] text-white shadow-[0_0_18px_rgba(76,120,126,0.4)] border border-[#B7CEEC]/50 font-black f1-sub-header tracking-wider uppercase text-[10px] sm:text-xs'
+                        : 'text-gray-400 hover:text-white hover:bg-[#03060a] border border-transparent font-bold text-[10px] sm:text-xs'
                         }`}
                     >
-                      <Users className="w-4 h-4 text-teal-300" />
-                      <span>Squad Rosters</span>
+                      <Users className="w-3.5 h-3.5 text-teal-300 shrink-0" />
+                      <span className="truncate">Squad Rosters</span>
                     </button>
 
                     <button
@@ -1650,21 +1658,21 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                         setActiveTab('club');
                         setIsMoreMenuOpen(false);
                       }}
-                      className={`px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${activeTab === 'club'
-                        ? 'bg-gradient-to-r from-[#4C787E] to-[#122e3d] text-white shadow-[0_0_18px_rgba(76,120,126,0.4)] border border-[#B7CEEC]/50 font-black f1-sub-header tracking-widest uppercase'
-                        : 'text-gray-400 hover:text-white hover:bg-[#03060a] border border-transparent'
+                      className={`py-2 px-1 rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer text-center ${activeTab === 'club'
+                        ? 'bg-gradient-to-r from-[#4C787E] to-[#122e3d] text-white shadow-[0_0_18px_rgba(76,120,126,0.4)] border border-[#B7CEEC]/50 font-black f1-sub-header tracking-wider uppercase text-[10px] sm:text-xs'
+                        : 'text-gray-400 hover:text-white hover:bg-[#03060a] border border-transparent font-bold text-[10px] sm:text-xs'
                         }`}
                     >
-                      <Building2 className="w-4 h-4 text-teal-300" />
-                      <span>Club Profile</span>
+                      <Building2 className="w-3.5 h-3.5 text-teal-300 shrink-0" />
+                      <span className="truncate">Club Profile</span>
                     </button>
                   </div>
 
                   {/* 3-Dots Menu Button */}
-                  <div className="relative">
+                  <div className="relative shrink-0">
                     <button
                       onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-                      className={`p-2 rounded-xl border transition-all flex items-center justify-center cursor-pointer ${isMoreMenuOpen || ['club', 'broadcast', 'database'].includes(activeTab)
+                      className={`p-2 rounded-xl border transition-all flex items-center justify-center cursor-pointer ${isMoreMenuOpen || ['broadcast', 'database'].includes(activeTab)
                         ? 'bg-[#4C787E]/30 border-[#4C787E] text-white'
                         : 'bg-[#05080c] border-[#B7CEEC]/20 text-gray-400 hover:text-white hover:border-[#B7CEEC]/40'
                         }`}
@@ -2941,10 +2949,12 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                     onChange={(e) => setEditFixtureMatchType(e.target.value)}
                     className="w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl px-2 py-2 text-white text-xs font-semibold focus:border-[#4C787E] focus:outline-none"
                   >
-                    <option value="Regular">Regular</option>
-                    <option value="Finals">Finals</option>
-                    <option value="Playoffs">Playoffs</option>
-                    <option value="Friendly">Friendly</option>
+                    <option value="Regular">League (Regular)</option>
+                    <option value="League Cup">League Cup</option>
+                    <option value="Super Cup Qualifier">Super Cup Qualifier</option>
+                    <option value="Super Cup Final">Super Cup Final</option>
+                    <option value="Special Event">Special Event</option>
+                    <option value="Friendly">Friendly / Exhibition</option>
                   </select>
                 </div>
 

@@ -46,6 +46,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
   onSelectTeam,
 }) => {
   const [simulatedNoLive, setSimulatedNoLive] = useState(false);
+  const [fixtureFilter, setFixtureFilter] = useState<'league' | 'cups' | 'special' | 'past'>('league');
 
   // Helper to extract exact scheduled Kickoff Date
   const getKickoffDate = (m?: Match): Date | null => {
@@ -603,210 +604,299 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
           </div>
         )}
 
-        {/* UPCOMING MATCH FIXTURES */}
-        <div>
-          <div className="flex items-center justify-between mb-3 px-1">
-            <span className="text-xs f1-header tracking-[0.18em] text-[#B7CEEC] uppercase flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#4C787E]" />
-              Official Sunday League Schedule
-            </span>
-            <span className="text-[10px] f1-sub-header text-[#B7CEEC]/60">{upcomingMatches.length} Fixtures Scheduled</span>
-          </div>
+        {/* REDESIGNED FIXTURES & RESULTS SECTION */}
+        {(() => {
+          // Dynamic fixture sub-lists
+          const leagueFixtures = upcomingMatches.filter(
+            (m) => m.matchType === 'Regular' || !m.matchType || m.matchType === 'Regular Season'
+          );
+          const cupFixtures = upcomingMatches.filter(
+            (m) =>
+              m.matchType === 'League Cup' ||
+              m.matchType === 'Super Cup Qualifier' ||
+              m.matchType === 'Super Cup Final' ||
+              m.matchType === 'Finals' ||
+              m.id.includes('FIX-007') ||
+              m.id.includes('FIX-008') ||
+              m.id.includes('FIX-009') ||
+              m.id.includes('FIX-SC')
+          );
+          const specialFixtures = upcomingMatches.filter(
+            (m) => m.matchType === 'Special Event' || m.matchType === 'Exhibition' || m.matchType === 'Friendly'
+          );
 
-          <div className="space-y-3">
-            {upcomingMatches.map((match, idx) => {
-              const home = getTeam(match.homeTeamId);
-              const away = getTeam(match.awayTeamId);
+          const activeList =
+            fixtureFilter === 'league'
+              ? leagueFixtures
+              : fixtureFilter === 'cups'
+              ? cupFixtures
+              : fixtureFilter === 'special'
+              ? specialFixtures
+              : finishedMatches;
 
-              return (
-                <TiltCard
-                  key={`upcoming-match-${match.id}-${idx}`}
-                  onClick={() => onOpenMatchModal(match)}
-                  maxTilt={6}
-                  scale={1.02}
-                  glowColor="rgba(183, 206, 236, 0.25)"
-                  className="p-4 rounded-2xl border border-[#B7CEEC]/25 bg-[#05080c]/80 backdrop-blur-xl text-white shadow-lg cursor-pointer flex items-center justify-between hover:border-[#4C787E] transition-all"
+          return (
+            <div>
+              {/* Header Title */}
+              <div className="flex items-center justify-between mb-2 px-1">
+                <span className="text-xs f1-header tracking-[0.18em] text-[#B7CEEC] uppercase flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[#4C787E]" />
+                  {fixtureFilter === 'past' ? 'Past Matches & Results' : 'Upcoming Fixtures'}
+                </span>
+                <span className="text-[10px] f1-sub-header text-[#B7CEEC]/60">
+                  {activeList.length} {fixtureFilter === 'past' ? 'Results Saved' : 'Scheduled'}
+                </span>
+              </div>
+
+              {/* 4-CATEGORY TOGGLE FILTER BAR */}
+              <div className="grid grid-cols-4 gap-1 p-1 rounded-2xl bg-[#080d15] border border-white/10 text-xs mb-3">
+                <button
+                  type="button"
+                  onClick={() => setFixtureFilter('league')}
+                  className={`py-1.5 rounded-xl font-bold text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                    fixtureFilter === 'league'
+                      ? 'bg-[#4C787E] text-white shadow-md border border-[#B7CEEC]/40 font-black'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center -space-x-2">
-                      <TeamLogo teamId={match.homeTeamId} size={36} />
-                      <TeamLogo teamId={match.awayTeamId} size={36} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-extrabold text-xs sm:text-sm text-white font-mono">
-                          {home?.name || match.homeTeamId} vs {away?.name || match.awayTeamId}
-                        </p>
-                        {match.weekNumber && (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-[#4C787E]/30 text-[#B7CEEC] border border-[#4C787E]/40 uppercase">
-                            W{match.weekNumber} {match.matchType || 'Regular'}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-[#B7CEEC]/70 flex items-center gap-1 mt-0.5">
-                        <Clock className="w-3 h-3 text-[#4C787E]" />
-                        {match.startTime} • {match.venue}
-                      </p>
-                    </div>
-                  </div>
+                  <span>⚽ League</span>
+                </button>
 
-                  <div className="text-right">
-                    <span className="px-3 py-1.5 rounded-xl bg-[#080d14] text-[10px] f1-sub-header text-[#B7CEEC] hover:text-white border border-[#B7CEEC]/30 shadow-md flex items-center gap-1.5 cursor-pointer hover:border-[#4C787E] transition-all">
-                      <span>Match Center & Lineups</span>
-                      <ArrowRight className="w-3 h-3 text-[#4C787E]" />
-                    </span>
-                  </div>
-                </TiltCard>
-              );
-            })}
-          </div>
-        </div>
+                <button
+                  type="button"
+                  onClick={() => setFixtureFilter('cups')}
+                  className={`py-1.5 rounded-xl font-bold text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                    fixtureFilter === 'cups'
+                      ? 'bg-[#4C787E] text-white shadow-md border border-[#B7CEEC]/40 font-black'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <span>🏆 Cups</span>
+                </button>
 
-        {/* COMPLETED MATCH RESULTS ARCHIVE */}
-        {finishedMatches.length > 0 && (
-          <div className="pt-2">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <span className="text-xs f1-header tracking-[0.18em] text-emerald-400 uppercase flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                Completed Match Results ({finishedMatches.length})
-              </span>
-              <span className="text-[10px] f1-sub-header text-emerald-300/80">Full Telemetry Saved</span>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setFixtureFilter('special')}
+                  className={`py-1.5 rounded-xl font-bold text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                    fixtureFilter === 'special'
+                      ? 'bg-[#4C787E] text-white shadow-md border border-[#B7CEEC]/40 font-black'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <span>⭐ Special</span>
+                </button>
 
-            <div className="space-y-3">
-              {finishedMatches.map((match, idx) => {
-                const home = getTeam(match.homeTeamId);
-                const away = getTeam(match.awayTeamId);
+                <button
+                  type="button"
+                  onClick={() => setFixtureFilter('past')}
+                  className={`py-1.5 rounded-xl font-bold text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                    fixtureFilter === 'past'
+                      ? 'bg-emerald-600 text-white shadow-md border border-emerald-300/40 font-black'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <span>✅ Past</span>
+                </button>
+              </div>
 
-                return (
-                  <TiltCard
-                    key={`finished-match-${match.id}-${idx}`}
-                    onClick={() => onOpenMatchModal(match)}
-                    maxTilt={6}
-                    scale={1.02}
-                    glowColor="rgba(52, 211, 153, 0.25)"
-                    className="p-4 rounded-2xl border border-emerald-500/30 bg-[#05080c]/90 backdrop-blur-xl text-white shadow-xl cursor-pointer hover:border-emerald-400 transition-all space-y-3"
-                  >
-                    {/* Header: Scoreline & FT Pill */}
-                    <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono font-black text-[10px] border border-emerald-500/40">
-                          FT RESULT
-                        </span>
-                        <span className="text-[11px] text-gray-400 font-mono">
-                          Week {match.weekNumber || 1} • {match.venue}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
-                        Tap for Match Center <ArrowRight className="w-3 h-3" />
-                      </span>
-                    </div>
+              {/* RENDER ACTIVE FIXTURES OR PAST MATCHES */}
+              {activeList.length === 0 ? (
+                <div className="p-6 rounded-2xl bg-[#05080c]/80 border border-white/10 text-center text-xs text-gray-400 font-mono space-y-1">
+                  <p className="font-extrabold text-white text-sm">
+                    {fixtureFilter === 'special'
+                      ? 'No Special Events Scheduled'
+                      : fixtureFilter === 'cups'
+                      ? 'No Cup Fixtures Pending'
+                      : fixtureFilter === 'past'
+                      ? 'No Completed Matches Yet'
+                      : 'No Upcoming League Fixtures'}
+                  </p>
+                  <p className="text-[10px] text-[#B7CEEC]/60">
+                    {fixtureFilter === 'special'
+                      ? 'Special event exhibition matches will be posted here when announced.'
+                      : 'Check back after official match telemetry is recorded.'}
+                  </p>
+                </div>
+              ) : fixtureFilter !== 'past' ? (
+                /* UPCOMING FIXTURES CARDS */
+                <div className="space-y-3">
+                  {activeList.map((match, idx) => {
+                    const home = getTeam(match.homeTeamId);
+                    const away = getTeam(match.awayTeamId);
 
-                    {/* Scoreline Grid (FlashScore Style) */}
-                    <div className="grid grid-cols-7 items-center text-center py-1">
-                      <div className="col-span-2 flex flex-col items-center">
-                        <TeamLogo teamId={match.homeTeamId} size={40} />
-                        <p className="font-extrabold text-xs mt-1 text-white">{home?.name}</p>
-                      </div>
-
-                      <div className="col-span-3 flex flex-col items-center justify-center space-y-0.5">
-                        <span className="text-2xl font-black font-mono tracking-widest text-emerald-400">
-                          {match.homeScore} - {match.awayScore}
-                        </span>
-                        <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider">
-                          Full Time (FT)
-                        </span>
-                      </div>
-
-                      <div className="col-span-2 flex flex-col items-center">
-                        <TeamLogo teamId={match.awayTeamId} size={40} />
-                        <p className="font-extrabold text-xs mt-1 text-white">{away?.name}</p>
-                      </div>
-                    </div>
-
-                    {/* Timeline Summary Table (FlashScore Style - Key Match Events Only) */}
-                    {(() => {
-                      const keyMatchEvents = (match.events || []).filter(
-                        (e) => e.type === 'goal' || e.type === 'yellow_card' || e.type === 'red_card' || e.type === 'sub'
-                      );
-
-                      if (keyMatchEvents.length === 0) {
-                        return (
-                          <div className="pt-2 border-t border-white/5 text-center text-[10px] text-gray-500 italic">
-                            No goals, cards, or substitutions recorded in match timeline
+                    return (
+                      <TiltCard
+                        key={`upcoming-match-${match.id}-${idx}`}
+                        onClick={() => onOpenMatchModal(match)}
+                        maxTilt={6}
+                        scale={1.02}
+                        glowColor="rgba(183, 206, 236, 0.25)"
+                        className="p-4 rounded-2xl border border-[#B7CEEC]/25 bg-[#05080c]/80 backdrop-blur-xl text-white shadow-lg cursor-pointer flex items-center justify-between hover:border-[#4C787E] transition-all"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center -space-x-2">
+                            <TeamLogo teamId={match.homeTeamId} size={36} />
+                            <TeamLogo teamId={match.awayTeamId} size={36} />
                           </div>
-                        );
-                      }
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-extrabold text-xs sm:text-sm text-white font-mono">
+                                {home?.name || match.homeTeamId} vs {away?.name || match.awayTeamId}
+                              </p>
+                              {match.weekNumber && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-[#4C787E]/30 text-[#B7CEEC] border border-[#4C787E]/40 uppercase">
+                                  W{match.weekNumber} {match.matchType || 'Regular'}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-[#B7CEEC]/70 flex items-center gap-1 mt-0.5">
+                              <Clock className="w-3 h-3 text-[#4C787E]" />
+                              {match.startTime} • {match.venue}
+                            </p>
+                          </div>
+                        </div>
 
-                      return (
-                        <div className="pt-2 border-t border-white/5 space-y-1">
-                          {keyMatchEvents.map((evt, eIdx) => {
-                            const isHomeEvent = evt.teamId === match.homeTeamId;
-                            const isTeamNameLabel = evt.player === home?.name || evt.player === away?.name;
-                            const icon =
-                              evt.type === 'goal' ? '⚽' :
-                              evt.type === 'yellow_card' ? '🟨' :
-                              evt.type === 'red_card' ? '🟥' :
-                              evt.type === 'sub' ? '🔄' :
-                              evt.type === 'corner' ? '⛳' :
-                              evt.type === 'shot_on_target' ? '🎯' : '⚡';
+                        <div className="text-right">
+                          <span className="px-3 py-1.5 rounded-xl bg-[#080d14] text-[10px] f1-sub-header text-[#B7CEEC] hover:text-white border border-[#B7CEEC]/30 shadow-md flex items-center gap-1.5 cursor-pointer hover:border-[#4C787E] transition-all">
+                            <span>Match Center & Lineups</span>
+                            <ArrowRight className="w-3 h-3 text-[#4C787E]" />
+                          </span>
+                        </div>
+                      </TiltCard>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* PAST MATCHES RESULTS CARDS */
+                <div className="space-y-3">
+                  {finishedMatches.map((match, idx) => {
+                    const home = getTeam(match.homeTeamId);
+                    const away = getTeam(match.awayTeamId);
 
-                            let displayLabel = evt.player;
-                            if (!displayLabel || displayLabel === 'Match Official' || isTeamNameLabel) {
-                              if (evt.type === 'goal') displayLabel = 'GOAL!';
-                              else if (evt.type === 'yellow_card') displayLabel = 'Yellow Card';
-                              else if (evt.type === 'red_card') displayLabel = 'Red Card';
-                              else if (evt.type === 'sub') displayLabel = 'Substitution';
-                              else if (evt.type === 'corner') displayLabel = 'Corner Kick';
-                              else displayLabel = isTeamNameLabel ? `${evt.type.toUpperCase()}` : 'Match Event';
-                            }
+                    return (
+                      <TiltCard
+                        key={`finished-match-${match.id}-${idx}`}
+                        onClick={() => onOpenMatchModal(match)}
+                        maxTilt={6}
+                        scale={1.02}
+                        glowColor="rgba(52, 211, 153, 0.25)"
+                        className="p-4 rounded-2xl border border-emerald-500/30 bg-[#05080c]/90 backdrop-blur-xl text-white shadow-xl cursor-pointer hover:border-emerald-400 transition-all space-y-3"
+                      >
+                        {/* Header: Scoreline & FT Pill */}
+                        <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono font-black text-[10px] border border-emerald-500/40">
+                              FT RESULT
+                            </span>
+                            <span className="text-[11px] text-gray-400 font-mono">
+                              Week {match.weekNumber || 1} • {match.venue}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                            Tap for Match Center <ArrowRight className="w-3 h-3" />
+                          </span>
+                        </div>
 
+                        {/* Scoreline Grid (FlashScore Style) */}
+                        <div className="grid grid-cols-7 items-center text-center py-1">
+                          <div className="col-span-2 flex flex-col items-center">
+                            <TeamLogo teamId={match.homeTeamId} size={40} />
+                            <p className="font-extrabold text-xs mt-1 text-white">{home?.name}</p>
+                          </div>
+
+                          <div className="col-span-3 flex flex-col items-center justify-center space-y-0.5">
+                            <span className="text-2xl font-black font-mono tracking-widest text-emerald-400">
+                              {match.homeScore} - {match.awayScore}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider">
+                              Full Time (FT)
+                            </span>
+                          </div>
+
+                          <div className="col-span-2 flex flex-col items-center">
+                            <TeamLogo teamId={match.awayTeamId} size={40} />
+                            <p className="font-extrabold text-xs mt-1 text-white">{away?.name}</p>
+                          </div>
+                        </div>
+
+                        {/* Timeline Summary Table (FlashScore Style) */}
+                        {(() => {
+                          const keyMatchEvents = (match.events || []).filter(
+                            (e) => e.type === 'goal' || e.type === 'yellow_card' || e.type === 'red_card' || e.type === 'sub'
+                          );
+
+                          if (keyMatchEvents.length === 0) {
                             return (
-                              <div
-                                key={`ft-evt-${evt.id}-${eIdx}`}
-                                className="flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg bg-[#080d14]/80 text-gray-300 font-mono border border-white/5"
-                              >
-                                {isHomeEvent ? (
-                                  <div className="flex items-center gap-1.5 text-left flex-1">
-                                    <span className="font-bold text-gray-400 text-[10px]">{evt.minute}'</span>
-                                    <span className="text-sm">{icon}</span>
-                                    <span className="font-bold text-white text-xs">{displayLabel}</span>
-                                    {evt.type === 'goal' && displayLabel !== 'GOAL!' && (
-                                      <span className="font-mono font-black text-emerald-400 text-xs ml-1">
-                                        GOAL!
-                                      </span>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div className="flex-1" />
-                                )}
-
-                                {!isHomeEvent ? (
-                                  <div className="flex items-center gap-1.5 text-right flex-1 justify-end">
-                                    {evt.type === 'goal' && displayLabel !== 'GOAL!' && (
-                                      <span className="font-mono font-black text-emerald-400 text-xs mr-1">
-                                        GOAL!
-                                      </span>
-                                    )}
-                                    <span className="font-bold text-white text-xs">{displayLabel}</span>
-                                    <span className="text-sm">{icon}</span>
-                                    <span className="font-bold text-gray-400 text-[10px]">{evt.minute}'</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex-1" />
-                                )}
+                              <div className="pt-2 border-t border-white/5 text-center text-[10px] text-gray-500 italic">
+                                No goals, cards, or substitutions recorded in match timeline
                               </div>
                             );
-                          })}
-                        </div>
-                      );
-                    })()}
-                  </TiltCard>
-                );
-              })}
+                          }
+
+                          return (
+                            <div className="pt-2 border-t border-white/5 space-y-1">
+                              {keyMatchEvents.map((evt, eIdx) => {
+                                const isHomeEvent = evt.teamId === match.homeTeamId;
+                                const isTeamNameLabel = evt.player === home?.name || evt.player === away?.name;
+                                const icon =
+                                  evt.type === 'goal'
+                                    ? '⚽'
+                                    : evt.type === 'yellow_card'
+                                    ? '🟨'
+                                    : evt.type === 'red_card'
+                                    ? '🟥'
+                                    : evt.type === 'sub'
+                                    ? '🔄'
+                                    : '⚡';
+
+                                const displayLabel = isTeamNameLabel
+                                  ? evt.description || evt.player
+                                  : evt.player;
+
+                                return (
+                                  <div key={eIdx} className="flex items-center text-[11px] py-0.5">
+                                    {isHomeEvent ? (
+                                      <div className="flex items-center gap-1.5 text-left flex-1">
+                                        <span className="font-bold text-gray-400 text-[10px]">{evt.minute}'</span>
+                                        <span className="text-sm">{icon}</span>
+                                        <span className="font-bold text-white text-xs">{displayLabel}</span>
+                                        {evt.type === 'goal' && displayLabel !== 'GOAL!' && (
+                                          <span className="font-mono font-black text-emerald-400 text-xs ml-1">
+                                            GOAL!
+                                          </span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <div className="flex-1" />
+                                    )}
+
+                                    {!isHomeEvent ? (
+                                      <div className="flex items-center gap-1.5 text-right flex-1 justify-end">
+                                        {evt.type === 'goal' && displayLabel !== 'GOAL!' && (
+                                          <span className="font-mono font-black text-emerald-400 text-xs mr-1">
+                                            GOAL!
+                                          </span>
+                                        )}
+                                        <span className="font-bold text-white text-xs">{displayLabel}</span>
+                                        <span className="text-sm">{icon}</span>
+                                        <span className="font-bold text-gray-400 text-[10px]">{evt.minute}'</span>
+                                      </div>
+                                    ) : (
+                                      <div className="flex-1" />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
+                      </TiltCard>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Footer Info & Scroll Prompt */}
@@ -831,7 +921,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
           </motion.div>
         )}
         <p className="text-[10px] text-[#B7CEEC]/60 font-mono">
-          SUNDAY LEAGUE 2026 • OFFICIAL MATCH TELEMETRY & LIVE CENTER
+          SUNDAY LEAGUE (EST: 2026) • OFFICIAL MATCH TELEMETRY & LIVE CENTER
         </p>
       </div>
     </div>

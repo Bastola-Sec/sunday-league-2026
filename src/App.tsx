@@ -20,6 +20,7 @@ import { State2Stadium } from './components/State2Stadium';
 import { State3Standings } from './components/State3Standings';
 import { State4TopClubs } from './components/State4TopClubs';
 import { State5LiveAction } from './components/State5LiveAction';
+import { State6CupBrackets } from './components/State6CupBrackets';
 import { LiveMatchModal } from './components/LiveMatchModal';
 import { TeamAdminModal } from './components/TeamAdminModal';
 import { AdminPortalModal } from './components/AdminPortalModal';
@@ -207,17 +208,19 @@ export default function App() {
       const progress = Math.min(Math.max(scrollTop / (scrollHeight || 1), 0), 1);
       setScrollProgress(progress);
 
-      // Sensitive threshold for State 1 -> State 2 transition
+      // Sensitive threshold for State 1 -> State 2 -> ... -> State 6 transitions
       if (progress < 0.08 && scrollTop < 80) {
         setScrollState(1);
-      } else if (progress < 0.30) {
+      } else if (progress < 0.25) {
         setScrollState(2);
-      } else if (progress < 0.55) {
+      } else if (progress < 0.45) {
         setScrollState(3);
-      } else if (progress < 0.78) {
+      } else if (progress < 0.65) {
         setScrollState(4);
-      } else {
+      } else if (progress < 0.85) {
         setScrollState(5);
+      } else {
+        setScrollState(6);
       }
     };
 
@@ -242,14 +245,16 @@ export default function App() {
 
     if (progress < 0.08 && scrollTop < 80) {
       if (scrollState !== 1) setScrollState(1);
-    } else if (progress < 0.30) {
+    } else if (progress < 0.25) {
       if (scrollState !== 2) setScrollState(2);
-    } else if (progress < 0.55) {
+    } else if (progress < 0.45) {
       if (scrollState !== 3) setScrollState(3);
-    } else if (progress < 0.78) {
+    } else if (progress < 0.65) {
       if (scrollState !== 4) setScrollState(4);
-    } else {
+    } else if (progress < 0.85) {
       if (scrollState !== 5) setScrollState(5);
+    } else {
+      if (scrollState !== 6) setScrollState(6);
     }
   };
 
@@ -261,9 +266,9 @@ export default function App() {
     const stateRatios: Record<AppScrollState, number> = {
       1: 0,
       2: 0.25,
-      3: 0.5,
+      3: 0.50,
       4: 0.75,
-      5: 0.98,
+      5: 1.0,
     };
     containerRef.current.scrollTo({
       top: height * stateRatios[state],
@@ -543,37 +548,17 @@ export default function App() {
         onScroll={handleScroll}
         className="h-full overflow-y-auto scroll-smooth snap-y snap-mandatory relative z-10 custom-scrollbar"
       >
-        {/* State 1: Opening Screen */}
+        {/* State 1: Opening Hero Screen */}
         <div className="snap-start min-h-full">
           <State1Hero onNext={() => handleJumpToState(2)} onJumpToState={handleJumpToState} />
         </div>
 
-        {/* State 2: Live Action Center */}
-        <div className="snap-start min-h-full">
-          <State5LiveAction
-            matches={displayMatches}
-            teams={displayTeams}
-            onOpenMatchModal={(match) => setSelectedMatchForModal(match)}
-            onSendPushNotification={handleSendPushNotification}
-            onNext={() => handleJumpToState(3)}
-            onSelectTeam={handleSelectClubCinematic}
-          />
-        </div>
-
-        {/* State 3: Match Venue / Stadium */}
-        <div className="snap-start min-h-full">
-          <State2Stadium
-            onNext={() => handleJumpToState(4)}
-            isSoundEnabled={isSoundEnabled}
-            onToggleSound={() => setIsSoundEnabled((prev) => !prev)}
-          />
-        </div>
-
-        {/* State 4: Standings Table */}
+        {/* State 2: Official Leaderboards (Standings & Cup Brackets) */}
         <div className="snap-start min-h-full">
           <State3Standings
             teams={displayTeams}
-            onNext={() => handleJumpToState(5)}
+            matches={displayMatches}
+            onNext={() => handleJumpToState(3)}
             onSelectTeam={(team) => {
               handleSelectClubCinematic(team);
               if (activeAdminTeamId === team.id) {
@@ -581,10 +566,32 @@ export default function App() {
               }
             }}
             onSelectPlayer={handleSelectPlayer}
+            onOpenMatchModal={(match) => setSelectedMatchForModal(match)}
           />
         </div>
 
-        {/* State 5: Participating Clubs */}
+        {/* State 3: Live Action & Fixtures */}
+        <div className="snap-start min-h-full">
+          <State5LiveAction
+            matches={displayMatches}
+            teams={displayTeams}
+            onOpenMatchModal={(match) => setSelectedMatchForModal(match)}
+            onSendPushNotification={handleSendPushNotification}
+            onNext={() => handleJumpToState(4)}
+            onSelectTeam={handleSelectClubCinematic}
+          />
+        </div>
+
+        {/* State 4: Match Venue / Stadium */}
+        <div className="snap-start min-h-full">
+          <State2Stadium
+            onNext={() => handleJumpToState(5)}
+            isSoundEnabled={isSoundEnabled}
+            onToggleSound={() => setIsSoundEnabled((prev) => !prev)}
+          />
+        </div>
+
+        {/* State 5: Participating Clubs & Rosters */}
         <div className="snap-start min-h-full">
           <State4TopClubs
             teams={displayTeams}

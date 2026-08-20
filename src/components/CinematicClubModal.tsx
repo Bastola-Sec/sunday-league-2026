@@ -287,40 +287,57 @@ export const CinematicClubModal: React.FC<CinematicClubModalProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {/* Stats Bar Grid */}
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-5">
-                {[
-                  { label: 'PTS', val: team.points, highlight: true },
-                  { label: 'PL', val: team.played },
-                  { label: 'W', val: team.won },
-                  { label: 'D', val: team.drawn },
-                  { label: 'L', val: team.lost },
-                  {
-                    label: 'GD',
-                    val: team.goalDifference >= 0 ? `+${team.goalDifference}` : team.goalDifference,
-                  },
-                ].map((stat, idx) => (
-                  <div
-                    key={`cinematic-stat-${stat.label}-${idx}`}
-                    className={`p-2 rounded-xl text-center border ${
-                      stat.highlight
-                        ? 'bg-[#122428] border-[#B7CEEC] shadow-[0_0_12px_rgba(183,206,236,0.3)]'
-                        : 'bg-[#0A1118]/80 border-[#4C787E]/30'
-                    }`}
-                  >
-                    <p className="text-[10px] font-bold text-[#B7CEEC]/80 uppercase tracking-wider">
-                      {stat.label}
-                    </p>
-                    <p
-                      className={`text-base font-black ${
-                        stat.highlight ? 'text-amber-300' : 'text-white'
-                      }`}
-                    >
-                      {stat.val}
-                    </p>
+              {/* All-Time Overall Club Stats Grid (All Competitions Across Seasons) */}
+              {(() => {
+                const allTimePlayed = team.allTimePlayed ?? team.played ?? 0;
+                const allTimeWins = team.allTimeWins ?? team.won ?? 0;
+                const allTimeDraws = team.allTimeDraws ?? team.drawn ?? 0;
+                const allTimeLosses = team.allTimeLosses ?? team.lost ?? 0;
+                const allTimeGD = team.allTimeGoalDifference ?? team.goalDifference ?? 0;
+                const allTimeWinPct = team.allTimeWinPercentage ?? (allTimePlayed > 0 ? Math.round((allTimeWins / allTimePlayed) * 100) : 0);
+
+                return (
+                  <div className="mb-5 space-y-1.5">
+                    <div className="flex items-center justify-between text-[10px] font-mono text-[#B7CEEC]/80 uppercase tracking-widest px-0.5">
+                      <span>Overall Club Stats (All Competitions)</span>
+                      <span className="text-amber-300 font-bold">{allTimeWinPct}% WIN RATE</span>
+                    </div>
+                    <div className="grid grid-cols-6 gap-2">
+                      {[
+                        { label: 'PL', val: allTimePlayed },
+                        { label: 'W', val: allTimeWins },
+                        { label: 'D', val: allTimeDraws },
+                        { label: 'L', val: allTimeLosses },
+                        { label: 'WIN %', val: `${allTimeWinPct}%`, highlight: true },
+                        {
+                          label: 'GD',
+                          val: allTimeGD >= 0 ? `+${allTimeGD}` : allTimeGD,
+                        },
+                      ].map((stat, idx) => (
+                        <div
+                          key={`cinematic-stat-${stat.label}-${idx}`}
+                          className={`p-2 rounded-xl text-center border ${
+                            stat.highlight
+                              ? 'bg-[#122428] border-[#B7CEEC] shadow-[0_0_12px_rgba(183,206,236,0.3)]'
+                              : 'bg-[#0A1118]/80 border-[#4C787E]/30'
+                          }`}
+                        >
+                          <p className="text-[10px] font-bold text-[#B7CEEC]/80 uppercase tracking-wider">
+                            {stat.label}
+                          </p>
+                          <p
+                            className={`text-base font-black ${
+                              stat.highlight ? 'text-amber-300' : 'text-white'
+                            }`}
+                          >
+                            {stat.val}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })()}
 
               {/* Top Players / Squad Preview */}
               <div className="mb-2">

@@ -279,29 +279,29 @@ export const ThreeSoccerCanvas: React.FC<ThreeSoccerCanvasProps> = ({
       let lookZ = 0;
 
       switch (scrollStateRef.current) {
-        case 1: // Sweeping Field High View
+        case 1: // Sweeping Field High View (Hero & Overview)
           targetX = Math.sin(scrollProgressRef.current * Math.PI) * 10;
           targetY = 40;
           targetZ = 50;
           break;
-        case 2: // Live Action & Fixtures Pitch Focus
+        case 2: // Standings & Leaderboards Overlay
+          targetX = 0;
+          targetY = 25;
+          targetZ = 35;
+          break;
+        case 3: // Live Action & Fixtures Pitch Focus
           targetX = 0;
           targetY = 8;
           targetZ = 20;
           lookY = 1;
           lookZ = -10;
           break;
-        case 3: // Match Venue Ground Level
+        case 4: // Match Venue Ground Level
           targetX = -12;
           targetY = 7;
           targetZ = 22;
           lookY = 2;
           lookZ = -5;
-          break;
-        case 4: // Standings Overlay
-          targetX = 0;
-          targetY = 25;
-          targetZ = 35;
           break;
         case 5: // Participating Clubs Stage Angle
           targetX = 18;

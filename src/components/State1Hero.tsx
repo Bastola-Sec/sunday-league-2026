@@ -23,9 +23,14 @@ export const State1Hero: React.FC<State1HeroProps> = ({ onNext, onJumpToState })
           <div className="p-1.5 rounded-lg bg-[#080d14] border border-[#B7CEEC]/30 text-[#B7CEEC] shadow-md">
             <Shield className="w-5 h-5 text-[#4C787E]" />
           </div>
-          <span className="f1-header text-xs sm:text-sm tracking-[0.2em] text-white font-black">
-            SUNDAY LEAGUE
-          </span>
+          <div>
+            <span className="f1-header text-xs sm:text-sm tracking-[0.2em] text-white font-black block leading-tight">
+              SUNDAY LEAGUE
+            </span>
+            <span className="text-[10px] font-mono text-teal-300 font-bold tracking-widest block mt-0.5">
+              Est: 2026
+            </span>
+          </div>
         </div>
 
         {/* Clean Header Bar */}
@@ -42,7 +47,7 @@ export const State1Hero: React.FC<State1HeroProps> = ({ onNext, onJumpToState })
         >
           <span className="w-2 h-2 rounded-full bg-[#4C787E] animate-pulse" />
           <span className="text-xs font-mono tracking-widest text-[#B7CEEC] font-semibold uppercase">
-            SEASON 2026
+            SEASON 1
           </span>
         </motion.div>
 
@@ -86,7 +91,7 @@ export const State1Hero: React.FC<State1HeroProps> = ({ onNext, onJumpToState })
         onClick={onNext}
       >
         <p className="text-[10px] f1-header text-[#B7CEEC] group-hover:text-white transition-colors tracking-[0.22em]">
-          SCROLL TO LIVE ACTION & FIXTURES
+          SCROLL TO OFFICIAL LEADERBOARDS
         </p>
         <motion.div
           animate={{ y: [0, 6, 0] }}

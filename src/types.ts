@@ -27,6 +27,9 @@ export interface Player {
   careerGoals?: number;
   careerAssists?: number;
   careerMatches?: number;
+  careerYellowCards?: number;
+  careerRedCards?: number;
+  careerMotmAwards?: number;
 }
 
 export interface BoardMember {
@@ -60,6 +63,14 @@ export interface Team {
   goalsAgainst: number;
   goalDifference: number;
   points: number;
+  allTimePlayed?: number;
+  allTimeWins?: number;
+  allTimeDraws?: number;
+  allTimeLosses?: number;
+  allTimeGoalsFor?: number;
+  allTimeGoalsAgainst?: number;
+  allTimeGoalDifference?: number;
+  allTimeWinPercentage?: number;
   form: ('W' | 'D' | 'L')[];
   topScorer: string;
   squadCount: number;
