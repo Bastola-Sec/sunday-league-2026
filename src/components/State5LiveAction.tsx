@@ -166,6 +166,37 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
   const isTimeUp = isPastKickoffTime || (timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0);
   const isDelayed = isTimeUp && (!nextMatch || (!nextMatch.isLive && nextMatch.status !== '1st_half' && nextMatch.status !== '2nd_half'));
 
+  // Smart Auto-Default Tab Selection: Automatically focus tab with active upcoming fixtures
+  useEffect(() => {
+    const leagueFixtures = upcomingMatches.filter(
+      (m) => m.matchType === 'Regular' || !m.matchType || m.matchType === 'Regular Season'
+    );
+    const cupFixtures = upcomingMatches.filter(
+      (m) =>
+        m.matchType === 'League Cup' ||
+        m.matchType === 'Super Cup Qualifier' ||
+        m.matchType === 'Super Cup Final' ||
+        m.matchType === 'Finals' ||
+        m.id.includes('FIX-007') ||
+        m.id.includes('FIX-008') ||
+        m.id.includes('FIX-009') ||
+        m.id.includes('FIX-SC')
+    );
+    const specialFixtures = upcomingMatches.filter(
+      (m) => m.matchType === 'Special Event' || m.matchType === 'Exhibition' || m.matchType === 'Friendly'
+    );
+
+    if (leagueFixtures.length > 0) {
+      setFixtureFilter('league');
+    } else if (cupFixtures.length > 0) {
+      setFixtureFilter('cups');
+    } else if (specialFixtures.length > 0) {
+      setFixtureFilter('special');
+    } else if (finishedMatches.length > 0) {
+      setFixtureFilter('past');
+    }
+  }, [matches.length, upcomingMatches.length, finishedMatches.length]);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 sm:px-6 py-6 sm:py-8 relative z-10 select-none">
       {/* Top Header Tag */}

@@ -29,10 +29,18 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
     return (a.rank || 99) - (b.rank || 99);
   });
 
-  // RULE REQUIREMENT: Club names are updated ONLY after each team played all 4 league games
-  const totalLeagueGamesRequired = 4;
+  const regularMatches = matches.filter(
+    (m) =>
+      (m.matchType === 'Regular' || !m.matchType || m.matchType === 'Regular Season') &&
+      m.id !== 'FIX-007' &&
+      m.id !== 'FIX-008' &&
+      m.id !== 'FIX-009'
+  );
+
   const isLeagueComplete =
-    teams.length > 0 && teams.every((t) => (t.played || 0) >= totalLeagueGamesRequired);
+    regularMatches.length > 0
+      ? regularMatches.every((m) => m.isFinished === true || m.status === 'ended')
+      : teams.length > 0 && teams.every((t) => (t.played || 0) >= 4);
 
   // Teams resolved dynamically or TBD depending on 4-game completion rule
   const rank1Team = sortedTeams[0] || teams[0];

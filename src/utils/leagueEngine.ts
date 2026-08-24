@@ -234,13 +234,34 @@ export function computeStandingsAndFinalsMatch(
     rank: idx + 1,
   }));
 
-  // Identify Top 2 teams for the Grand Finals ONLY if ALL teams have completed all 4 league games
-  const allTeamsFinished4Games =
-    teamsList.length > 0 && teamsList.every((t) => (t.played || 0) >= 4);
+  // Check if regular season is complete (all regular season matches finished OR teams completed required games)
+  const isRegularSeasonFinished =
+    regularMatches.length > 0
+      ? regularMatches.every((m) => m.isFinished === true || m.status === 'ended')
+      : recalculatedTeams.length > 0 && recalculatedTeams.every((t) => (t.played || 0) >= 4);
 
-  const top1Team = allTeamsFinished4Games ? (rankedTeams[0] || teamsList[0]) : null;
-  const top2Team = allTeamsFinished4Games ? (rankedTeams[1] || teamsList[1]) : null;
-  const top3Team = allTeamsFinished4Games ? (rankedTeams[2] || teamsList[2]) : null;
+  const top1Team = isRegularSeasonFinished ? (rankedTeams[0] || recalculatedTeams[0]) : null;
+  const top2Team = isRegularSeasonFinished ? (rankedTeams[1] || recalculatedTeams[1]) : null;
+  const top3Team = isRegularSeasonFinished ? (rankedTeams[2] || recalculatedTeams[2]) : null;
+
+  // Determine Super Cup Qualifier (FIX-008) Winner if completed
+  const fix008Match = matchesList.find(
+    (m) => m.id === 'FIX-008' || m.matchType === 'Super Cup Qualifier'
+  );
+  let qualifierWinnerTeamId = 'tbd';
+  let qualifierWinnerName = 'Qualifier Winner';
+
+  if (fix008Match && (fix008Match.isFinished || fix008Match.status === 'ended' || fix008Match.homeScore !== fix008Match.awayScore)) {
+    if (fix008Match.homeScore > fix008Match.awayScore) {
+      qualifierWinnerTeamId = fix008Match.homeTeamId;
+      const wTeam = rankedTeams.find((t) => t.id === fix008Match.homeTeamId);
+      if (wTeam) qualifierWinnerName = wTeam.name;
+    } else if (fix008Match.awayScore > fix008Match.homeScore) {
+      qualifierWinnerTeamId = fix008Match.awayTeamId;
+      const wTeam = rankedTeams.find((t) => t.id === fix008Match.awayTeamId);
+      if (wTeam) qualifierWinnerName = wTeam.name;
+    }
+  }
 
   // Update Cup Knockout Matches (FIX-007, FIX-008, FIX-009) with dynamic top teams or TBD placeholders
   const updatedMatches = matchesList.map((m) => {
@@ -283,15 +304,15 @@ export function computeStandingsAndFinalsMatch(
         return {
           ...m,
           homeTeamId: top1Team.id,
-          awayTeamId: m.awayTeamId || 'tbd',
-          venue: `De Anza Stadium (Super Cup Final: ${top1Team.name} vs Qualifier Winner)`,
+          awayTeamId: qualifierWinnerTeamId,
+          venue: `De Anza Stadium (Super Cup Final: ${top1Team.name} vs ${qualifierWinnerName})`,
         };
       }
       return {
         ...m,
         homeTeamId: '1st Place',
-        awayTeamId: 'tbd',
-        venue: 'De Anza Stadium (Super Cup Final: 1st Place vs Qualifier Winner)',
+        awayTeamId: qualifierWinnerTeamId,
+        venue: `De Anza Stadium (Super Cup Final: 1st Place vs ${qualifierWinnerName})`,
       };
     }
 

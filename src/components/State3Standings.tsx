@@ -59,9 +59,18 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
     return b.goalDifference - a.goalDifference;
   });
 
-  const totalLeagueGamesRequired = 4;
+  const regularMatches = seasonMatches.filter(
+    (m) =>
+      (m.matchType === 'Regular' || !m.matchType || m.matchType === 'Regular Season') &&
+      m.id !== 'FIX-007' &&
+      m.id !== 'FIX-008' &&
+      m.id !== 'FIX-009'
+  );
+
   const isLeagueComplete =
-    displayTeams.length > 0 && displayTeams.every((t) => (t.played || 0) >= totalLeagueGamesRequired);
+    regularMatches.length > 0
+      ? regularMatches.every((m) => m.isFinished === true || m.status === 'ended')
+      : displayTeams.length > 0 && displayTeams.every((t) => (t.played || 0) >= 4);
 
   const rank1Team = sortedTeams[0] || displayTeams[0];
   const rank2Team = sortedTeams[1] || displayTeams[1] || displayTeams[0];
