@@ -98,8 +98,16 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
     return null;
   };
 
+  // Filter out Super Cup fixtures for Season 1 since it's disabled
+  const validMatches = matches.filter(m => {
+    const isSuperCup = m.matchType === 'Super Cup Qualifier' || m.matchType === 'Super Cup Final' || m.id.includes('FIX-008') || m.id.includes('FIX-009') || m.id.includes('FIX-SC');
+    const isSeason1 = m.seasonNumber === 1 || m.id.includes('-S1-') || (!m.seasonNumber && m.id.startsWith('FIX-00'));
+    if (isSuperCup && isSeason1) return false;
+    return true;
+  });
+
   // Sort matches chronologically strictly by Kickoff Date & Time, then Week Number
-  const sortedMatches = [...matches].sort((a, b) => {
+  const sortedMatches = [...validMatches].sort((a, b) => {
     const dateA = getKickoffDate(a);
     const dateB = getKickoffDate(b);
     if (dateA && dateB) {
