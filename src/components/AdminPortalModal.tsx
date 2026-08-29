@@ -303,7 +303,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   const [inlineSuccessToast, setInlineSuccessToast] = useState<string | null>(null);
 
   // Category Filter State for Admin Match Selector (Upcoming | Past)
-  const [adminFixtureFilter, setAdminFixtureFilter] = useState<'upcoming' | 'past'>('past');
+  const [adminFixtureFilter, setAdminFixtureFilter] = useState<'upcoming' | 'past'>('upcoming');
   const [selectedAdminSpecialTourneyId, setSelectedAdminSpecialTourneyId] = useState<string>('all');
 
   const getAdminTeam = (id: string): Team => {
@@ -1610,10 +1610,10 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     return a.id.localeCompare(b.id);
   });
 
-  // Set default category to past results on modal open
+  // Set default category to upcoming results on modal open
   useEffect(() => {
     if (isOpen) {
-      setAdminFixtureFilter('past');
+      setAdminFixtureFilter('upcoming');
     }
   }, [isOpen]);
 
