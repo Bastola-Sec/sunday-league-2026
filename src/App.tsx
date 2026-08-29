@@ -33,6 +33,7 @@ import { AdminPortalModal } from './components/AdminPortalModal';
 import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { CinematicClubModal } from './components/CinematicClubModal';
 import { PushNotificationToast } from './components/PushNotificationToast';
+import { PushNotificationPrompt } from './components/PushNotificationPrompt';
 import { IPhoneFrame } from './components/IPhoneFrame';
 import { computeStandingsAndFinalsMatch, rolloverToNewSeason, rolloverToNewSeasonWithOptions, SeasonSetupOptions } from './utils/leagueEngine';
 
@@ -658,6 +659,9 @@ export default function App() {
       />
 
 
+
+      {/* Global Push Notification Permission Prompt */}
+      <PushNotificationPrompt />
 
       {/* Scrollable Container with the 5 Sequential States */}
       <div
