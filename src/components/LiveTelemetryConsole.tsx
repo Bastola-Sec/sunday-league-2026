@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { Match, Team, MatchEvent, Player } from '../types';
 import { TeamLogo } from './TeamLogos';
-import { formatClockTime } from '../utils/formatClock';
+import { formatClockTime, getLiveMatchMinute } from '../utils/formatClock';
 import { saveMatchToFirestore } from '../lib/firestoreService';
 
 interface LiveTelemetryConsoleProps {
@@ -298,7 +298,7 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
       else newAwayScore += 1;
     }
 
-    const currentMin = Math.max(1, match.minute || 1);
+    const currentMin = getLiveMatchMinute(match, halfDuration);
     const newEvt: MatchEvent = {
       id: `evt-${Date.now()}`,
       minute: currentMin,
