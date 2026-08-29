@@ -1,3 +1,11 @@
+export interface PlayerMatchStat {
+  matchId: string;
+  goals: number;
+  assists: number;
+  isMotm: boolean;
+  played: boolean;
+}
+
 export interface Player {
   id: string;
   name: string;
@@ -17,7 +25,7 @@ export interface Player {
   hypeVotes?: number;
   overallRating?: number;
   preferredFoot?: string;
-  lastMatchesStats?: number[];
+  lastMatchesStats?: PlayerMatchStat[];
   pace?: number;
   shooting?: number;
   passing?: number;
@@ -54,6 +62,7 @@ export interface Team {
   colorPrimary: string;
   colorSecondary: string;
   textColor: string;
+  logoUrl?: string;
   rank: number;
   played: number;
   won: number;
@@ -143,12 +152,27 @@ export interface Match {
   awayFormation?: string;
   homeCustomPositions?: { [key: number]: { top: string; left: string } };
   awayCustomPositions?: { [key: number]: { top: string; left: string } };
-  matchFormat?: '7v7' | '8v8';
+  matchFormat?: '7v7' | '8v8' | '11v11';
   seasonNumber?: number;
+  tournamentId?: string;
+  eventId?: string;
   homeLineupSubmitted?: boolean;
   awayLineupSubmitted?: boolean;
   motmPlayerName?: string;
   motmPlayerId?: string;
+}
+
+export interface SpecialTournament {
+  id: string;
+  name: string;
+  teams: Team[];
+  matchFormat: '7v7' | '8v8' | '11v11';
+  halfDurationMinutes: number;
+  tournamentType: 'league_only' | 'league_and_playoffs';
+  leagueRounds: number; // 1, 2, 3
+  playoffFormat?: 'top_2_final' | 'top_4_knockout' | 'super_cup';
+  createdAt: string;
+  isCompleted?: boolean;
 }
 
 export interface PushNotification {

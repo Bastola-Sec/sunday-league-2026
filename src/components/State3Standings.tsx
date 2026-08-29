@@ -1,38 +1,175 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { ChevronDown, Trophy, Info, Flame, Award, Star, Zap, Swords, ArrowRight, Sparkles, Clock } from 'lucide-react';
-import { Team, Player, Match } from '../types';
+import { Team, Player, Match, SpecialTournament } from '../types';
 import { TeamLogo } from './TeamLogos';
 import { TiltCard } from './TiltCard';
+import { CreateSpecialTournamentModal } from './CreateSpecialTournamentModal';
 import { computeStandingsAndFinalsMatch } from '../utils/leagueEngine';
+
+export const BootIcon: React.FC<{ className?: string }> = ({ className = "w-3.5 h-3.5" }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M3 14l2-4 4-1 4.5-3.5a2 2 0 0 1 2.5 0l2 1.5a2 2 0 0 1 .5 2.5L16 14H3z" fill="currentColor" fillOpacity="0.25" />
+    <path d="M3 15h14.5a2.5 2.5 0 0 0 2.5-2.5" />
+    <path d="M5 16v2.5M9 16v2.5M13 16v2.5M17 15v2" strokeWidth="2.5" strokeLinecap="round" />
+    <path d="M9 10l2 2M11 9l2 2" strokeWidth="1.5" />
+  </svg>
+);
+
+export const SoccerBallIcon: React.FC<{ className?: string }> = ({ className = "w-3.5 h-3.5" }) => (
+  <span className={`inline-block leading-none text-center ${className}`}>⚽</span>
+);
 
 interface State3StandingsProps {
   teams: Team[];
   matches?: Match[];
+  specialTournaments?: SpecialTournament[];
   onNext: () => void;
   onSelectTeam: (team: Team) => void;
   onSelectPlayer?: (player: Player, team: Team) => void;
   onOpenMatchModal?: (match: Match) => void;
+  onDeleteSpecialTournament?: (tournamentId: string) => void;
+  onCreateSpecialTournament?: (tournament: SpecialTournament, generatedMatches: Match[]) => void;
 }
 
 export const State3Standings: React.FC<State3StandingsProps> = ({
   teams,
   matches = [],
+  specialTournaments = [],
   onNext,
   onSelectTeam,
   onSelectPlayer,
   onOpenMatchModal,
+  onDeleteSpecialTournament,
+  onCreateSpecialTournament,
 }) => {
+  const [editingSpecialTournament, setEditingSpecialTournament] = useState<SpecialTournament | null>(null);
   // Main Phase Switcher: LEAGUE PHASE vs CUP PHASE
   const [currentPhase, setCurrentPhase] = useState<'league' | 'cup'>('league');
 
-  // Season Selector State
+  // Season & Special Tournament Options
   const availableSeasons = Array.from(
     new Set(matches.map((m) => m.seasonNumber || 1))
   ).sort((a, b) => b - a);
   if (availableSeasons.length === 0) availableSeasons.push(1);
 
-  const [selectedSeasonNumber, setSelectedSeasonNumber] = useState<number>(() => availableSeasons[0] || 1);
+  // Combine explicit Firestore specialTournaments with any implied Special Tournaments extracted from matches
+  const impliedTourneysFromMatches: SpecialTournament[] = [];
+  const specialMatches = matches.filter(
+    (m) => m.matchType === 'Special Event' || m.matchType === 'Exhibition' || !!m.tournamentId
+  );
+
+  if (specialMatches.length > 0) {
+    const groupedByTourney = new Map<string, Match[]>();
+    specialMatches.forEach((m) => {
+      let tId = m.tournamentId;
+      if (!tId) {
+        const venueMatch = m.venue?.match(/\(([^)]+)\)/);
+        const nameFromVenue = venueMatch ? venueMatch[1] : 'Special Event Tournament';
+        tId = `implied-${nameFromVenue.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+      }
+      if (!groupedByTourney.has(tId)) {
+        groupedByTourney.set(tId, []);
+      }
+      groupedByTourney.get(tId)!.push(m);
+    });
+
+    groupedByTourney.forEach((mList, tId) => {
+      if (!specialTournaments.some((st) => st.id === tId)) {
+        const sampleMatch = mList[0];
+        const venueMatch = sampleMatch.venue?.match(/\(([^)]+)\)/);
+        const tName = venueMatch ? venueMatch[1] : 'Special Event Tournament';
+
+        const teamIds = Array.from(new Set(mList.flatMap((m) => [m.homeTeamId, m.awayTeamId])));
+        const tourneyTeams: Team[] = teamIds.map((id, idx) => {
+          const found = teams.find((t) => t.id === id);
+          if (found) return found;
+
+          let name = id;
+          if (id.startsWith('spec-team-')) {
+            const num = id.replace('spec-team-', '');
+            const letter = String.fromCharCode(64 + (parseInt(num, 10) || 1));
+            name = `Team ${letter}`;
+          }
+          return {
+            id,
+            name,
+            shortName: name.substring(0, 4).toUpperCase(),
+            colorPrimary: '#4C787E',
+            colorSecondary: '#3498DB',
+            textColor: '#FFFFFF',
+            rank: idx + 1,
+            played: 0,
+            won: 0,
+            drawn: 0,
+            lost: 0,
+            goalsFor: 0,
+            goalsAgainst: 0,
+            goalDifference: 0,
+            points: 0,
+            form: [],
+            topScorer: 'N/A',
+            squadCount: 10,
+            adminName: 'Tournament Admin',
+            roster: [],
+          };
+        });
+
+        impliedTourneysFromMatches.push({
+          id: tId,
+          name: tName,
+          teams: tourneyTeams,
+          matchFormat: sampleMatch.matchFormat || '8v8',
+          halfDurationMinutes: sampleMatch.halfDurationMinutes || 20,
+          tournamentType: 'league_and_playoffs',
+          leagueRounds: 1,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    });
+  }
+
+  const combinedSpecialTournaments = [...specialTournaments, ...impliedTourneysFromMatches];
+
+  interface SeasonOption {
+    id: string;
+    label: string;
+    isSpecial: boolean;
+    seasonNum?: number;
+    tournament?: SpecialTournament;
+  }
+
+  const seasonOptions: SeasonOption[] = [];
+  availableSeasons.forEach((sNum) => {
+    seasonOptions.push({
+      id: `season-${sNum}`,
+      label: `SEASON ${sNum}`,
+      isSpecial: false,
+      seasonNum: sNum,
+    });
+  });
+
+  combinedSpecialTournaments.forEach((st) => {
+    seasonOptions.push({
+      id: st.id,
+      label: `⭐ ${st.name}`,
+      isSpecial: true,
+      tournament: st,
+    });
+  });
+
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>(() => seasonOptions[0]?.id || 'season-1');
+  const activeSeasonOption = seasonOptions.find((opt) => opt.id === selectedSeasonId) || seasonOptions[0];
+  const isSpecialEventActive = activeSeasonOption?.isSpecial || false;
+  const activeSpecialTournament = activeSeasonOption?.tournament;
 
   // Sub-tabs for League Phase (6 categories + Honours)
   const [activeTab, setActiveTab] = useState<'standings' | 'scorers' | 'assists' | 'motm' | 'yellows' | 'reds' | 'honours'>('standings');
@@ -40,18 +177,27 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
   // Sub-tabs for Cup Phase
   const [cupTab, setCupTab] = useState<'league_cup' | 'super_cup'>('league_cup');
 
-  // Filter matches strictly by selected season (defaulting undefined to season 1)
-  const seasonMatches = matches.filter(
-    (m) => (m.seasonNumber ?? 1) === selectedSeasonNumber
-  );
+  // Filter matches strictly by selected season or special tournament
+  const seasonMatches = matches.filter((m) => {
+    if (activeSeasonOption?.isSpecial && activeSeasonOption.tournament) {
+      return m.tournamentId === activeSeasonOption.tournament.id || m.matchType === 'Special Event';
+    }
+    const targetSeasonNum = activeSeasonOption?.seasonNum || 1;
+    return (m.seasonNumber ?? 1) === targetSeasonNum && !m.tournamentId;
+  });
 
-  // Compute season-isolated standings and player telemetry for selected season
+  // Base teams array for standings calculation
+  const targetTeams = isSpecialEventActive && activeSpecialTournament?.teams && activeSpecialTournament.teams.length > 0
+    ? activeSpecialTournament.teams
+    : teams;
+
+  // Compute season-isolated standings and player telemetry for selected season/tournament
   const { updatedTeams: seasonTeams } = computeStandingsAndFinalsMatch(
-    teams,
+    targetTeams,
     seasonMatches
   );
 
-  const displayTeams = seasonTeams.length > 0 ? seasonTeams : teams;
+  const displayTeams = seasonTeams.length > 0 ? seasonTeams : targetTeams;
 
   // Sort teams by points, then goal difference for selected season
   const sortedTeams = [...displayTeams].sort((a, b) => {
@@ -81,14 +227,15 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
   const display3rdPlaceName = isLeagueComplete ? (rank3Team?.name || '3rd Place') : '3rd Place (TBD)';
 
   // Cup matches lookup strictly for selected season
+  const activeSeasonNum = activeSeasonOption?.seasonNum || 1;
   const leagueCupMatch = seasonMatches.find(
-    (m) => m.matchType === 'League Cup' || m.matchType === 'Finals' || m.id === `FIX-S${selectedSeasonNumber}-007` || m.id === 'FIX-007'
+    (m) => m.matchType === 'League Cup' || m.matchType === 'Finals' || m.id === `FIX-S${activeSeasonNum}-007` || m.id === 'FIX-007'
   );
   const superCupQualifier = seasonMatches.find(
-    (m) => m.matchType === 'Super Cup Qualifier' || m.id === `FIX-S${selectedSeasonNumber}-008` || m.id === 'FIX-SC-QUAL' || m.id === 'FIX-008'
+    (m) => m.matchType === 'Super Cup Qualifier' || m.id === `FIX-S${activeSeasonNum}-008` || m.id === 'FIX-SC-QUAL' || m.id === 'FIX-008'
   );
   const superCupFinal = seasonMatches.find(
-    (m) => m.matchType === 'Super Cup Final' || m.id === `FIX-S${selectedSeasonNumber}-009` || m.id === 'FIX-SC-FINAL' || m.id === 'FIX-009'
+    (m) => m.matchType === 'Super Cup Final' || m.id === `FIX-S${activeSeasonNum}-009` || m.id === 'FIX-SC-FINAL' || m.id === 'FIX-009'
   );
 
   // Aggregate all players across season team rosters for leaderboards
@@ -211,17 +358,17 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
-            {/* Season Selector Dropdown */}
-            {availableSeasons.length >= 1 && (
+            {/* Season & Special Tournament Selector Dropdown */}
+            {seasonOptions.length >= 1 && (
               <div className="relative">
                 <select
-                  value={selectedSeasonNumber}
-                  onChange={(e) => setSelectedSeasonNumber(Number(e.target.value))}
-                  className="px-3 py-1.5 rounded-xl bg-[#080d14] border border-amber-400/50 text-amber-300 text-[10px] font-mono font-black uppercase tracking-wider appearance-none cursor-pointer pr-7 shadow-md hover:border-amber-400 transition-all"
+                  value={selectedSeasonId}
+                  onChange={(e) => setSelectedSeasonId(e.target.value)}
+                  className="px-3 py-1.5 rounded-xl bg-[#080d14] border border-amber-400/50 text-amber-300 text-[10px] font-mono font-black uppercase tracking-wider appearance-none cursor-pointer pr-7 shadow-md hover:border-amber-400 transition-all max-w-[180px] truncate"
                 >
-                  {availableSeasons.map((sNum) => (
-                    <option key={`season-selector-opt-${sNum}`} value={sNum} className="bg-[#05080c] text-white font-mono">
-                      SEASON {sNum}
+                  {seasonOptions.map((opt) => (
+                    <option key={`season-opt-${opt.id}`} value={opt.id} className="bg-[#05080c] text-white font-mono">
+                      {opt.label}
                     </option>
                   ))}
                 </select>
@@ -256,6 +403,47 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
             </div>
           </div>
         </div>
+
+        {/* SPECIAL EVENT TOURNAMENT BADGE BANNER */}
+        {isSpecialEventActive && activeSpecialTournament && (
+          <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-500/20 via-[#080d14] to-[#080d14] border border-amber-400/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-lg">
+            <div className="flex items-center gap-2">
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400 animate-pulse shrink-0" />
+              <div>
+                <p className="text-xs font-black text-amber-300 uppercase tracking-wider">
+                  ⭐ {activeSpecialTournament.name}
+                </p>
+                <p className="text-[10px] text-gray-300 font-mono">
+                  {displayTeams.length} Teams • {activeSpecialTournament.matchFormat} • {activeSpecialTournament.halfDurationMinutes}' Halves
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setEditingSpecialTournament(activeSpecialTournament)}
+                className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400/50 text-amber-300 font-mono font-bold text-[10px] uppercase transition-all cursor-pointer"
+              >
+                ✏️ Edit
+              </button>
+
+              {onDeleteSpecialTournament && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm(`🗑️ DELETE TOURNAMENT?\n\nAre you sure you want to delete "${activeSpecialTournament.name}"?\n\nThis will remove the event and all associated matches.`)) {
+                      onDeleteSpecialTournament(activeSpecialTournament.id);
+                    }
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 text-red-300 font-mono font-bold text-[10px] uppercase transition-all cursor-pointer"
+                >
+                  🗑️ Delete
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* PHASE 1: LEAGUE PHASE CONTENT */}
         {currentPhase === 'league' && (
@@ -322,7 +510,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 shrink-0" />
+                  <SoccerBallIcon className="w-3 h-3 text-amber-400 shrink-0" />
                   <span className="truncate">Goals</span>
                 </button>
 
@@ -335,7 +523,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  <Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-cyan-400 shrink-0" />
+                  <BootIcon className="w-3 h-3 text-cyan-400 shrink-0" />
                   <span className="truncate">Assists</span>
                 </button>
 
@@ -471,7 +659,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-black font-mono text-xs">
-                        <Flame className="w-3.5 h-3.5 text-amber-400" />
+                        <SoccerBallIcon className="w-3.5 h-3.5" />
                         <span>{player.goals}</span>
                       </div>
                     </motion.div>
@@ -506,7 +694,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-black font-mono text-xs">
-                        <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                        <BootIcon className="w-3.5 h-3.5 text-cyan-400" />
                         <span>{player.assists}</span>
                       </div>
                     </motion.div>
@@ -624,7 +812,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
             {activeTab === 'honours' && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-[11px] font-mono text-[#B7CEEC]/70 px-1 border-b border-white/10 pb-1">
-                  <span>SEASON {selectedSeasonNumber} OFFICIAL HONOURS</span>
+                  <span>{activeSeasonOption?.label || 'SEASON 1'} OFFICIAL HONOURS</span>
                   <span className="font-bold text-amber-300 uppercase">AWARDS & HIGHLIGHTS</span>
                 </div>
 
@@ -729,8 +917,15 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                         </p>
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                      {topPlaymakerWinner ? `⚡ ${topPlaymakerWinner.assists} A` : 'LEADER'}
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1">
+                      {topPlaymakerWinner ? (
+                        <>
+                          <BootIcon className="w-3 h-3 text-cyan-300" />
+                          <span>{topPlaymakerWinner.assists} A</span>
+                        </>
+                      ) : (
+                        'LEADER'
+                      )}
                     </span>
                   </div>
 
@@ -1226,7 +1421,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
             <div className="flex items-center gap-2 bg-[#080d14] px-3.5 py-1.5 rounded-lg border border-amber-400/30">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)] shrink-0" />
               <span className="text-amber-300 font-extrabold f1-sub-header text-[10px] uppercase tracking-wide">
-                Season {selectedSeasonNumber} Official Telemetry
+                {activeSeasonOption?.label || 'Season 1'} Official Telemetry
               </span>
             </div>
           )}
@@ -1251,6 +1446,22 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
           <ChevronDown className="w-5 h-5" />
         </motion.div>
       </motion.div>
+
+      {/* EDIT SPECIAL TOURNAMENT MODAL */}
+      {editingSpecialTournament && (
+        <CreateSpecialTournamentModal
+          isOpen={!!editingSpecialTournament}
+          onClose={() => setEditingSpecialTournament(null)}
+          existingTeams={teams}
+          tournamentToEdit={editingSpecialTournament}
+          onCreateTournament={(updatedTourney, generatedMatches) => {
+            if (onCreateSpecialTournament) {
+              onCreateSpecialTournament(updatedTourney, generatedMatches);
+            }
+            setEditingSpecialTournament(null);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -107,12 +107,45 @@ export const TeamAdminModal: React.FC<TeamAdminModalProps> = ({
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const result = reader.result as string;
-        if (isEdit && editingPlayer) {
-          setEditingPlayer({ ...editingPlayer, imageUrl: result });
-        } else {
-          setNewPlayerImageUrl(result);
-        }
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const max_size = 512;
+          
+          if (width > height) {
+            if (width > max_size) {
+              height *= max_size / width;
+              width = max_size;
+            }
+          } else {
+            if (height > max_size) {
+              width *= max_size / height;
+              height = max_size;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            if (isEdit && editingPlayer) {
+              setEditingPlayer({ ...editingPlayer, imageUrl: compressedBase64 });
+            } else {
+              setNewPlayerImageUrl(compressedBase64);
+            }
+          } else {
+            if (isEdit && editingPlayer) {
+              setEditingPlayer({ ...editingPlayer, imageUrl: reader.result as string });
+            } else {
+              setNewPlayerImageUrl(reader.result as string);
+            }
+          }
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }

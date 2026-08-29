@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Activity, Calendar, MapPin, Clock, ArrowRight, Zap, Radio, BellRing, AlertTriangle, ChevronDown, CheckCircle2 } from 'lucide-react';
-import { Match, Team } from '../types';
+import { Match, Team, SpecialTournament } from '../types';
 import { TeamLogo } from './TeamLogos';
 import { WeatherWidget } from './WeatherWidget';
 import { TiltCard } from './TiltCard';
@@ -11,6 +11,7 @@ import { formatClockTime } from '../utils/formatClock';
 interface State5LiveActionProps {
   matches: Match[];
   teams: Team[];
+  specialTournaments?: SpecialTournament[];
   onOpenMatchModal: (match: Match) => void;
   onSendPushNotification: (title: string, message: string, teamId?: string) => void;
   onNext?: () => void;
@@ -40,13 +41,14 @@ const LiveMatchClockBadge: React.FC<{ match: Match }> = ({ match }) => {
 export const State5LiveAction: React.FC<State5LiveActionProps> = ({
   matches,
   teams,
+  specialTournaments = [],
   onOpenMatchModal,
   onSendPushNotification,
   onNext,
   onSelectTeam,
 }) => {
   const [simulatedNoLive, setSimulatedNoLive] = useState(false);
-  const [fixtureFilter, setFixtureFilter] = useState<'league' | 'cups' | 'special' | 'past'>('league');
+  const [fixtureFilter, setFixtureFilter] = useState<'upcoming' | 'past'>('past');
 
   // Helper to extract exact scheduled Kickoff Date
   const getKickoffDate = (m?: Match): Date | null => {
@@ -637,33 +639,94 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
         {/* REDESIGNED FIXTURES & RESULTS SECTION */}
         {(() => {
-          // Dynamic fixture sub-lists
-          const leagueFixtures = upcomingMatches.filter(
-            (m) => m.matchType === 'Regular' || !m.matchType || m.matchType === 'Regular Season'
-          );
-          const cupFixtures = upcomingMatches.filter(
-            (m) =>
+          const getCompetitionBadge = (m: Match) => {
+            if (m.tournamentId || m.matchType === 'Special Event' || m.matchType === 'Exhibition') {
+              let name = 'SPECIAL EVENT';
+              if (m.tournamentId) {
+                const st = specialTournaments.find((t) => t.id === m.tournamentId);
+                if (st) name = st.name.toUpperCase();
+              } else if (m.venue) {
+                const venueMatch = m.venue.match(/\(([^)]+)\)/);
+                if (venueMatch) name = venueMatch[1].toUpperCase();
+              }
+              return {
+                label: `⭐ ${name}`,
+                style: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40 shadow-[0_0_10px_rgba(234,179,8,0.2)]',
+              };
+            }
+
+            if (
               m.matchType === 'League Cup' ||
               m.matchType === 'Super Cup Qualifier' ||
               m.matchType === 'Super Cup Final' ||
               m.matchType === 'Finals' ||
+              m.matchType === 'Knockout' ||
               m.id.includes('FIX-007') ||
               m.id.includes('FIX-008') ||
               m.id.includes('FIX-009') ||
               m.id.includes('FIX-SC')
-          );
-          const specialFixtures = upcomingMatches.filter(
-            (m) => m.matchType === 'Special Event' || m.matchType === 'Exhibition' || m.matchType === 'Friendly'
-          );
+            ) {
+              return {
+                label: `🏆 ${m.matchType || 'CUP MATCH'}`,
+                style: 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]',
+              };
+            }
 
-          const activeList =
-            fixtureFilter === 'league'
-              ? leagueFixtures
-              : fixtureFilter === 'cups'
-              ? cupFixtures
-              : fixtureFilter === 'special'
-              ? specialFixtures
-              : finishedMatches;
+            return {
+              label: `⚽ ${m.weekNumber ? `W${m.weekNumber} ` : ''}LEAGUE MATCH`,
+              style: 'bg-teal-500/20 text-teal-300 border-teal-500/40 shadow-[0_0_10px_rgba(76,120,126,0.2)]',
+            };
+          };
+
+          const renderMatchCard = (match: Match, idx: number) => {
+            const home = getTeam(match.homeTeamId);
+            const away = getTeam(match.awayTeamId);
+            const compBadge = getCompetitionBadge(match);
+
+            return (
+              <TiltCard
+                key={`upcoming-match-${match.id}-${idx}`}
+                onClick={() => onOpenMatchModal(match)}
+                maxTilt={6}
+                scale={1.02}
+                glowColor="rgba(183, 206, 236, 0.25)"
+                className="p-4 rounded-2xl border border-[#B7CEEC]/25 bg-[#05080c]/80 backdrop-blur-xl text-white shadow-lg cursor-pointer flex items-center justify-between hover:border-[#4C787E] transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center -space-x-2">
+                    <TeamLogo teamId={match.homeTeamId} size={36} />
+                    <TeamLogo teamId={match.awayTeamId} size={36} />
+                  </div>
+                  <div>
+                    {/* Top Competition Badge */}
+                    <div className="flex items-center mb-1">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black uppercase border ${compBadge.style}`}>
+                        {compBadge.label}
+                      </span>
+                    </div>
+
+                    {/* Team Names */}
+                    <p className="font-extrabold text-xs sm:text-sm text-white font-mono">
+                      {home?.name || match.homeTeamId} vs {away?.name || match.awayTeamId}
+                    </p>
+
+                    {/* Time & Venue */}
+                    <p className="text-[10px] text-[#B7CEEC]/70 flex items-center gap-1 mt-0.5">
+                      <Clock className="w-3 h-3 text-[#4C787E]" />
+                      {match.startTime} • {match.venue}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="px-3 py-1.5 rounded-xl bg-[#080d14] text-[10px] f1-sub-header text-[#B7CEEC] hover:text-white border border-[#B7CEEC]/30 shadow-md flex items-center gap-1.5 cursor-pointer hover:border-[#4C787E] transition-all">
+                    <span>Match Center & Lineups</span>
+                    <ArrowRight className="w-3 h-3 text-[#4C787E]" />
+                  </span>
+                </div>
+              </TiltCard>
+            );
+          };
 
           return (
             <div>
@@ -674,128 +737,49 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                   {fixtureFilter === 'past' ? 'Past Matches & Results' : 'Upcoming Fixtures'}
                 </span>
                 <span className="text-[10px] f1-sub-header text-[#B7CEEC]/60">
-                  {activeList.length} {fixtureFilter === 'past' ? 'Results Saved' : 'Scheduled'}
+                  {fixtureFilter === 'past' ? 'Completed Results' : 'Chronological Schedule'}
                 </span>
               </div>
 
-              {/* 4-CATEGORY TOGGLE FILTER BAR */}
-              <div className="grid grid-cols-4 gap-1 p-1 rounded-2xl bg-[#080d15] border border-white/10 text-xs mb-3">
+              {/* 2-OPTION TOGGLE FILTER BAR */}
+              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[#080d15] border border-white/10 text-xs mb-4 shadow-md">
                 <button
                   type="button"
-                  onClick={() => setFixtureFilter('league')}
-                  className={`py-1.5 rounded-xl font-bold text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                    fixtureFilter === 'league'
-                      ? 'bg-[#4C787E] text-white shadow-md border border-[#B7CEEC]/40 font-black'
+                  onClick={() => setFixtureFilter('upcoming')}
+                  className={`py-2 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    fixtureFilter === 'upcoming'
+                      ? 'bg-gradient-to-r from-[#4C787E] to-teal-500 text-white shadow-md border border-teal-300/40'
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <span>⚽ League</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setFixtureFilter('cups')}
-                  className={`py-1.5 rounded-xl font-bold text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                    fixtureFilter === 'cups'
-                      ? 'bg-[#4C787E] text-white shadow-md border border-[#B7CEEC]/40 font-black'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <span>🏆 Cups</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setFixtureFilter('special')}
-                  className={`py-1.5 rounded-xl font-bold text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                    fixtureFilter === 'special'
-                      ? 'bg-[#4C787E] text-white shadow-md border border-[#B7CEEC]/40 font-black'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <span>⭐ Special</span>
+                  <span>📅 Upcoming Fixtures</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setFixtureFilter('past')}
-                  className={`py-1.5 rounded-xl font-bold text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  className={`py-2 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
                     fixtureFilter === 'past'
-                      ? 'bg-emerald-600 text-white shadow-md border border-emerald-300/40 font-black'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md border border-emerald-300/40'
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <span>✅ Past</span>
+                  <span>✅ Past Results</span>
                 </button>
               </div>
 
               {/* RENDER ACTIVE FIXTURES OR PAST MATCHES */}
-              {activeList.length === 0 ? (
-                <div className="p-6 rounded-2xl bg-[#05080c]/80 border border-white/10 text-center text-xs text-gray-400 font-mono space-y-1">
-                  <p className="font-extrabold text-white text-sm">
-                    {fixtureFilter === 'special'
-                      ? 'No Special Events Scheduled'
-                      : fixtureFilter === 'cups'
-                      ? 'No Cup Fixtures Pending'
-                      : fixtureFilter === 'past'
-                      ? 'No Completed Matches Yet'
-                      : 'No Upcoming League Fixtures'}
-                  </p>
-                  <p className="text-[10px] text-[#B7CEEC]/60">
-                    {fixtureFilter === 'special'
-                      ? 'Special event exhibition matches will be posted here when announced.'
-                      : 'Check back after official match telemetry is recorded.'}
-                  </p>
-                </div>
-              ) : fixtureFilter !== 'past' ? (
-                /* UPCOMING FIXTURES CARDS */
-                <div className="space-y-3">
-                  {activeList.map((match, idx) => {
-                    const home = getTeam(match.homeTeamId);
-                    const away = getTeam(match.awayTeamId);
-
-                    return (
-                      <TiltCard
-                        key={`upcoming-match-${match.id}-${idx}`}
-                        onClick={() => onOpenMatchModal(match)}
-                        maxTilt={6}
-                        scale={1.02}
-                        glowColor="rgba(183, 206, 236, 0.25)"
-                        className="p-4 rounded-2xl border border-[#B7CEEC]/25 bg-[#05080c]/80 backdrop-blur-xl text-white shadow-lg cursor-pointer flex items-center justify-between hover:border-[#4C787E] transition-all"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center -space-x-2">
-                            <TeamLogo teamId={match.homeTeamId} size={36} />
-                            <TeamLogo teamId={match.awayTeamId} size={36} />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-extrabold text-xs sm:text-sm text-white font-mono">
-                                {home?.name || match.homeTeamId} vs {away?.name || match.awayTeamId}
-                              </p>
-                              {match.weekNumber && (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-[#4C787E]/30 text-[#B7CEEC] border border-[#4C787E]/40 uppercase">
-                                  W{match.weekNumber} {match.matchType || 'Regular'}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[10px] text-[#B7CEEC]/70 flex items-center gap-1 mt-0.5">
-                              <Clock className="w-3 h-3 text-[#4C787E]" />
-                              {match.startTime} • {match.venue}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <span className="px-3 py-1.5 rounded-xl bg-[#080d14] text-[10px] f1-sub-header text-[#B7CEEC] hover:text-white border border-[#B7CEEC]/30 shadow-md flex items-center gap-1.5 cursor-pointer hover:border-[#4C787E] transition-all">
-                            <span>Match Center & Lineups</span>
-                            <ArrowRight className="w-3 h-3 text-[#4C787E]" />
-                          </span>
-                        </div>
-                      </TiltCard>
-                    );
-                  })}
-                </div>
+              {fixtureFilter === 'upcoming' ? (
+                upcomingMatches.length === 0 ? (
+                  <div className="p-6 rounded-2xl bg-[#05080c]/80 border border-white/10 text-center text-xs text-gray-400 font-mono space-y-1">
+                    <p className="font-extrabold text-white text-sm">No Upcoming Fixtures Scheduled</p>
+                    <p className="text-[10px] text-[#B7CEEC]/60">Check back after official match telemetry is recorded.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {upcomingMatches.map((m, idx) => renderMatchCard(m, idx))}
+                  </div>
+                )
               ) : (
                 /* PAST MATCHES RESULTS CARDS */
                 <div className="space-y-3">

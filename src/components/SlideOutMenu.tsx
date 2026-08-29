@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MoreVertical, X, Trophy, Shield, Activity, Eye, ShieldAlert, Bell, Smartphone, Volume2, VolumeX, Sparkles, ChevronRight, RefreshCw, Home } from 'lucide-react';
+import { MoreVertical, X, Trophy, Shield, Activity, Eye, ShieldAlert, Bell, Smartphone, Sparkles, ChevronRight, Home } from 'lucide-react';
 import { AppScrollState, Team } from '../types';
 import { TeamLogo } from './TeamLogos';
-import { resetFirestoreToDefaults } from '../lib/firestoreService';
+import { requestPushNotificationPermission, getNotificationPermissionStatus } from '../lib/pushNotificationService';
 
 interface SlideOutMenuProps {
   isOpen: boolean;
@@ -40,6 +40,7 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
   onOpenNotifications,
   onOpenAdminPortal,
 }) => {
+  const [pushPermission, setPushPermission] = useState<'granted' | 'denied' | 'default'>(getNotificationPermissionStatus());
   return (
     <>
       {/* 3-Dot Floating Trigger Button (Top Right Corner - Safe Area Offset) */}
@@ -149,7 +150,42 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                 </div>
 
                 {/* Admin Console Section */}
-                <div className="mb-6 p-3 rounded-2xl bg-[#080d14] border border-[#B7CEEC]/30 shadow-inner">
+                <div className="mb-6 space-y-2 p-3 rounded-2xl bg-[#080d14] border border-[#B7CEEC]/30 shadow-inner">
+                  {/* PWA Phone Web Push Notification Button */}
+                  <button
+                    onClick={async () => {
+                      const res = await requestPushNotificationPermission();
+                      if (res.granted) {
+                        alert('🔔 MATCH ALERTS ENABLED!\n\nYou will now receive live background alerts on your phone for Goals, Kickoffs & Tournament events!');
+                        setPushPermission('granted');
+                      } else {
+                        alert(res.error || 'Notification permission was not granted.');
+                      }
+                    }}
+                    className={`w-full py-3 px-3 rounded-xl border font-bold text-xs flex items-center justify-between transition-all cursor-pointer shadow-md ${
+                      pushPermission === 'granted'
+                        ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300'
+                        : 'bg-[#0a141d] border-amber-400/40 text-amber-300 hover:bg-amber-500/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Bell className={`w-4 h-4 ${pushPermission === 'granted' ? 'text-emerald-400' : 'text-amber-400 animate-bounce'}`} />
+                      <div className="text-left">
+                        <p className="font-extrabold text-[11px] leading-tight">
+                          {pushPermission === 'granted' ? '✅ Phone Match Alerts Active' : '🔔 Enable Phone Match Alerts'}
+                        </p>
+                        <p className="text-[9px] opacity-80 font-mono">
+                          {pushPermission === 'granted' ? 'Receiving Goal & Kickoff Alerts' : 'Get background alerts even when closed'}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase ${
+                      pushPermission === 'granted' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-400/20 text-amber-300'
+                    }`}>
+                      {pushPermission === 'granted' ? 'ON' : 'ENABLE'}
+                    </span>
+                  </button>
+
                   <button
                     onClick={() => {
                       onSelectState(5);
@@ -168,40 +204,6 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                       </div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-[#B7CEEC] group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </div>
-
-                {/* System Toggles */}
-                <div className="space-y-2 border-t border-[#B7CEEC]/20 pt-4">
-                  <button
-                    onClick={onToggleSound}
-                    className="w-full p-2.5 rounded-xl bg-[#080d14] border border-[#B7CEEC]/30 text-xs font-medium text-gray-300 hover:text-white flex items-center justify-between cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      {isSoundEnabled ? <Volume2 className="w-4 h-4 text-[#4C787E]" /> : <VolumeX className="w-4 h-4 text-gray-400" />}
-                      <span>Match Audio FX</span>
-                    </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold font-mono ${isSoundEnabled ? 'bg-[#4C787E]/30 text-[#B7CEEC]' : 'bg-gray-800 text-gray-400'}`}>
-                      {isSoundEnabled ? 'ON' : 'OFF'}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      if (window.confirm('🔄 RESET CLOUD FIRESTORE TO DEFAULT LEAGUE DATASET?\n\nThis will reseed Cloud Firestore to pristine pre-kickoff state.')) {
-                        await resetFirestoreToDefaults();
-                        window.location.reload();
-                      }
-                    }}
-                    className="w-full p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-xs font-bold text-rose-300 hover:bg-rose-500/30 flex items-center justify-between transition-all cursor-pointer shadow-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 text-rose-400" />
-                      <span>Reset Cloud Firestore</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded font-bold font-mono bg-rose-500/30 text-rose-200">
-                      RESET
-                    </span>
                   </button>
                 </div>
               </div>

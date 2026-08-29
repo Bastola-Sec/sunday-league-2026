@@ -2,11 +2,26 @@ import React from 'react';
 
 interface TeamLogoProps {
   teamId: 'no-stamina' | 'momo-strikers' | 'jhyap-warriors' | string;
+  logoUrl?: string;
   className?: string;
   size?: number;
 }
 
-export const TeamLogo: React.FC<TeamLogoProps> = ({ teamId, className = '', size = 48 }) => {
+export const TeamLogo: React.FC<TeamLogoProps> = ({ teamId, logoUrl, className = '', size = 48 }) => {
+  const customSrc = logoUrl || (typeof teamId === 'string' && (teamId.startsWith('data:image') || teamId.startsWith('http://') || teamId.startsWith('https://') || teamId.startsWith('/logos/')) ? teamId : null);
+
+  if (customSrc) {
+    return (
+      <img
+        src={customSrc}
+        alt="Team Logo"
+        width={size}
+        height={size}
+        style={{ width: `${size}px`, height: `${size}px` }}
+        className={`inline-block object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] shrink-0 rounded-full ${className}`}
+      />
+    );
+  }
   if (teamId === '1st Place' || teamId === '1st-place' || teamId === '1st') {
     return (
       <svg width={size} height={size} viewBox="0 0 200 200" className={`inline-block drop-shadow-md ${className}`} fill="none" xmlns="http://www.w3.org/2000/svg">

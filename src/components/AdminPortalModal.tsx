@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -43,8 +43,9 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
+  Calendar,
 } from 'lucide-react';
-import { Team, Match, Player, PushNotification, AdminUser, BoardMember, MatchEvent } from '../types';
+import { Team, Match, Player, PushNotification, AdminUser, BoardMember, MatchEvent, SpecialTournament } from '../types';
 import { TeamLogo } from './TeamLogos';
 import { Player3DAvatar } from './Player3DAvatar';
 import { PlayerFormModal } from './PlayerFormModal';
@@ -53,6 +54,9 @@ import { EditMatchEventModal } from './EditMatchEventModal';
 import { MatchLineupBuilder } from './MatchLineupBuilder';
 import { CompletedMatchAnalytics } from './CompletedMatchAnalytics';
 import { LiveTelemetryConsole } from './LiveTelemetryConsole';
+import { CreateSpecialTournamentModal } from './CreateSpecialTournamentModal';
+import { SeasonSetupModal } from './SeasonSetupModal';
+import { SeasonSetupOptions } from '../utils/leagueEngine';
 import { auth } from '../lib/firebase';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { resetFirestoreToDefaults, saveMatchToFirestore } from '../lib/firestoreService';
@@ -72,7 +76,11 @@ interface AdminPortalModalProps {
   activeAdminTeamId: string | null;
   onSelectAdminTeam: (teamId: string | null) => void;
   onSelectPlayer?: (player: Player, team: Team) => void;
+  specialTournaments?: SpecialTournament[];
   onRolloverSeason?: () => void;
+  onConfirmSeasonSetup?: (options: SeasonSetupOptions) => void;
+  onCreateSpecialTournament?: (tournament: SpecialTournament, generatedMatches: Match[]) => void;
+  onDeleteSpecialTournament?: (tournamentId: string) => void;
   currentSeasonNumber?: number;
 }
 
@@ -82,6 +90,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   teams,
   matches,
   notifications,
+  specialTournaments = [],
   onUpdateRoster,
   onUpdateTeamDetails,
   onUpdateMatchScore,
@@ -91,8 +100,14 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   onSelectAdminTeam,
   onSelectPlayer,
   onRolloverSeason,
+  onConfirmSeasonSetup,
+  onCreateSpecialTournament,
+  onDeleteSpecialTournament,
   currentSeasonNumber = 1,
 }) => {
+  const [isCreateTournamentModalOpen, setIsCreateTournamentModalOpen] = useState(false);
+  const [isSeasonSetupModalOpen, setIsSeasonSetupModalOpen] = useState(false);
+  const [tournamentToEdit, setTournamentToEdit] = useState<SpecialTournament | null>(null);
   // Login / Authentication State
   const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(() => {
     if (activeAdminTeamId) {
@@ -273,6 +288,33 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   const [inlineCustomNote, setInlineCustomNote] = useState<string>('');
   const [inlineSuccessToast, setInlineSuccessToast] = useState<string | null>(null);
 
+  // Category Filter State for Admin Match Selector (Upcoming | Past)
+  const [adminFixtureFilter, setAdminFixtureFilter] = useState<'upcoming' | 'past'>('past');
+  const [selectedAdminSpecialTourneyId, setSelectedAdminSpecialTourneyId] = useState<string>('all');
+
+  const getAdminTeam = (id: string): Team => {
+    const found = teams.find((t) => t.id === id);
+    if (found) return found;
+
+    for (const st of specialTournaments || []) {
+      const stTeam = st.teams?.find((t) => t.id === id);
+      if (stTeam) return stTeam;
+    }
+
+    if (id === '1st Place' || id === '1st') return { id, name: '1st Place', shortName: '1ST', colorPrimary: '#D4AF37' } as Team;
+    if (id === '2nd Place' || id === '2nd') return { id, name: '2nd Place', shortName: '2ND', colorPrimary: '#7F8C8D' } as Team;
+    if (id === '3rd Place' || id === '3rd') return { id, name: '3rd Place', shortName: '3RD', colorPrimary: '#CD7F32' } as Team;
+    if (id === '4th Place' || id === '4th') return { id, name: '4th Place', shortName: '4TH', colorPrimary: '#8C531B' } as Team;
+
+    if (id.startsWith('spec-team-')) {
+      const num = id.replace('spec-team-', '');
+      const letter = String.fromCharCode(64 + (parseInt(num, 10) || 1));
+      return { id, name: `Team ${letter}`, shortName: `TM${letter}`, colorPrimary: '#4C787E' } as Team;
+    }
+
+    return { id, name: id, shortName: id.substring(0, 5).toUpperCase(), colorPrimary: '#4C787E' } as Team;
+  };
+
   // Player of the Match (MOTM) Selection Modal State
   const [showMotmModal, setShowMotmModal] = useState<boolean>(false);
   const [selectedMotmPlayerId, setSelectedMotmPlayerId] = useState<string>('');
@@ -295,6 +337,73 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   const [editFixtureAwayScore, setEditFixtureAwayScore] = useState<number>(0);
   const [editFixtureMotmPlayerName, setEditFixtureMotmPlayerName] = useState<string>('');
 
+  // Date & Time Picker state for Fixture Schedule Editor
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  const timeInputRef = useRef<HTMLInputElement>(null);
+  const [editFixtureDate, setEditFixtureDate] = useState<string>('');
+  const [editFixtureTime, setEditFixtureTime] = useState<string>('09:00');
+  const [editFixtureKickoffIso, setEditFixtureKickoffIso] = useState<string>('');
+
+  const parseKickoffToDateTime = (matchItem: Match) => {
+    const d = getMatchKickoffDate(matchItem) || new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+
+    return {
+      dateStr: `${year}-${month}-${day}`,
+      timeStr: `${hours}:${minutes}`,
+      iso: d.toISOString(),
+    };
+  };
+
+  const formatKickoffFromInputs = (dateVal: string, timeVal: string) => {
+    if (!dateVal || !timeVal) return { formatted: '', iso: '' };
+    const [year, month, day] = dateVal.split('-').map(Number);
+    const [hours, minutes] = timeVal.split(':').map(Number);
+
+    const d = new Date(year, month - 1, day, hours, minutes);
+    if (isNaN(d.getTime())) return { formatted: '', iso: '' };
+
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    const dayName = dayNames[d.getDay()];
+    const monthName = monthNames[d.getMonth()];
+    const dateNum = d.getDate();
+
+    let h12 = d.getHours();
+    const ampm = h12 >= 12 ? 'PM' : 'AM';
+    h12 = h12 % 12;
+    if (h12 === 0) h12 = 12;
+    const minStr = String(d.getMinutes()).padStart(2, '0');
+
+    return {
+      formatted: `${dayName}, ${monthName} ${dateNum} • ${h12}:${minStr} ${ampm}`,
+      iso: d.toISOString(),
+    };
+  };
+
+  const handleDateChange = (newDate: string) => {
+    setEditFixtureDate(newDate);
+    const { formatted, iso } = formatKickoffFromInputs(newDate, editFixtureTime);
+    if (formatted) {
+      setEditFixtureStartTime(formatted);
+      setEditFixtureKickoffIso(iso);
+    }
+  };
+
+  const handleTimeChange = (newTime: string) => {
+    setEditFixtureTime(newTime);
+    const { formatted, iso } = formatKickoffFromInputs(editFixtureDate, newTime);
+    if (formatted) {
+      setEditFixtureStartTime(formatted);
+      setEditFixtureKickoffIso(iso);
+    }
+  };
+
   const handleOpenEditFixtureModal = (matchItem: Match) => {
     setFixtureToEdit(matchItem);
     setEditFixtureHomeId(matchItem.homeTeamId);
@@ -309,6 +418,11 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     setEditFixtureHomeScore(matchItem.homeScore || 0);
     setEditFixtureAwayScore(matchItem.awayScore || 0);
     setEditFixtureMotmPlayerName(matchItem.motmPlayerName || '');
+
+    const { dateStr, timeStr, iso } = parseKickoffToDateTime(matchItem);
+    setEditFixtureDate(dateStr);
+    setEditFixtureTime(timeStr);
+    setEditFixtureKickoffIso(iso);
     setIsFixtureEditModalOpen(true);
   };
 
@@ -355,6 +469,76 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     setEditFixtureHomeScore(0);
     setEditFixtureAwayScore(0);
     setEditFixtureMotmPlayerName('');
+
+    const nowD = new Date();
+    const year = nowD.getFullYear();
+    const month = String(nowD.getMonth() + 1).padStart(2, '0');
+    const day = String(nowD.getDate()).padStart(2, '0');
+    const defaultDate = `${year}-${month}-${day}`;
+    const defaultTime = '08:30';
+    setEditFixtureDate(defaultDate);
+    setEditFixtureTime(defaultTime);
+    const { formatted, iso } = formatKickoffFromInputs(defaultDate, defaultTime);
+    setEditFixtureStartTime(formatted || draftMatch.startTime);
+    setEditFixtureKickoffIso(iso);
+    setIsFixtureEditModalOpen(true);
+  };
+
+  const handleOpenCreateSpecialEventModal = () => {
+    const newId = `FIX-SE-00${matches.length + 1}`;
+    const defaultHome = teams[0]?.id || 'momo-strikers';
+    const defaultAway = teams[1]?.id || 'jhyap-warriors';
+    const draftMatch: Match = {
+      id: newId,
+      homeTeamId: defaultHome,
+      awayTeamId: defaultAway,
+      homeScore: 0,
+      awayScore: 0,
+      minute: 0,
+      isLive: false,
+      isFinished: false,
+      startTime: 'Sun, Aug 30 • 8:30 AM',
+      venue: 'De Anza Stadium (Special Event Showcase)',
+      possessionHome: 50,
+      possessionAway: 50,
+      shotsHome: 0,
+      shotsAway: 0,
+      shotsOnTargetHome: 0,
+      shotsOnTargetAway: 0,
+      foulsHome: 0,
+      foulsAway: 0,
+      events: [],
+      weekNumber: matches.length > 0 ? (matches[matches.length - 1].weekNumber || 1) : 1,
+      matchType: 'Special Event',
+      status: 'scheduled',
+      matchFormat: '7v7',
+      halfDurationMinutes: 20,
+    };
+    setFixtureToEdit(draftMatch);
+    setEditFixtureHomeId(draftMatch.homeTeamId);
+    setEditFixtureAwayId(draftMatch.awayTeamId);
+    setEditFixtureStartTime(draftMatch.startTime);
+    setEditFixtureVenue(draftMatch.venue);
+    setEditFixtureWeekNumber(draftMatch.weekNumber || 1);
+    setEditFixtureMatchType('Special Event');
+    setEditFixtureMatchFormat(draftMatch.matchFormat || '7v7');
+    setEditFixtureHalfDuration(draftMatch.halfDurationMinutes || 20);
+    setEditFixtureStatus('scheduled');
+    setEditFixtureHomeScore(0);
+    setEditFixtureAwayScore(0);
+    setEditFixtureMotmPlayerName('');
+
+    const nowD = new Date();
+    const year = nowD.getFullYear();
+    const month = String(nowD.getMonth() + 1).padStart(2, '0');
+    const day = String(nowD.getDate()).padStart(2, '0');
+    const defaultDate = `${year}-${month}-${day}`;
+    const defaultTime = '08:30';
+    setEditFixtureDate(defaultDate);
+    setEditFixtureTime(defaultTime);
+    const { formatted, iso } = formatKickoffFromInputs(defaultDate, defaultTime);
+    setEditFixtureStartTime(formatted || draftMatch.startTime);
+    setEditFixtureKickoffIso(iso);
     setIsFixtureEditModalOpen(true);
   };
 
@@ -369,6 +553,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       homeTeamId: editFixtureHomeId,
       awayTeamId: editFixtureAwayId,
       startTime: editFixtureStartTime,
+      kickoffTime: editFixtureKickoffIso || (editFixtureDate && editFixtureTime ? formatKickoffFromInputs(editFixtureDate, editFixtureTime).iso : undefined),
       venue: editFixtureVenue,
       weekNumber: Number(editFixtureWeekNumber) || 1,
       matchType: editFixtureMatchType,
@@ -1406,6 +1591,13 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     return a.id.localeCompare(b.id);
   });
 
+  // Set default category to past results on modal open
+  useEffect(() => {
+    if (isOpen) {
+      setAdminFixtureFilter('past');
+    }
+  }, [isOpen]);
+
   // Selected Team Roster list
   const activeTeamRoster = activeSelectedTeam?.roster || [];
 
@@ -1741,11 +1933,24 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                   <span>Firestore Sync</span>
                                 </button>
 
-                                {onRolloverSeason && (
+                                <button
+                                   onClick={() => {
+                                     setIsMoreMenuOpen(false);
+                                     setIsCreateTournamentModalOpen(true);
+                                   }}
+                                   className="w-full text-left px-3 py-2 rounded-xl transition-all flex items-center gap-2.5 text-xs font-bold text-[#B7CEEC] hover:bg-[#080d14] hover:text-white cursor-pointer"
+                                 >
+                                   <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                                   <span>Add Special Event</span>
+                                 </button>
+
+                                 {(onConfirmSeasonSetup || onRolloverSeason) && (
                                   <button
                                     onClick={() => {
                                       setIsMoreMenuOpen(false);
-                                      if (window.confirm(`🏆 LAUNCH SEASON ${currentSeasonNumber + 1}?\n\nThis will:\n1. Reset League Table standings to 0-0-0 for Season ${currentSeasonNumber + 1}.\n2. Archive Season ${currentSeasonNumber} Champion to Club History.\n3. Preserve all player career stats and H2H match records.`)) {
+                                      if (onConfirmSeasonSetup) {
+                                        setIsSeasonSetupModalOpen(true);
+                                      } else if (window.confirm(`🏆 LAUNCH SEASON ${currentSeasonNumber + 1}?\n\nThis will:\n1. Reset League Table standings to 0-0-0 for Season ${currentSeasonNumber + 1}.\n2. Archive Season ${currentSeasonNumber} Champion to Club History.\n3. Preserve all player career stats and H2H match records.`)) {
                                         onRolloverSeason();
                                       }
                                     }}
@@ -1767,178 +1972,323 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                 {/* Content Body */}
                 <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 min-h-0 custom-scrollbar">
                   {/* TAB 1: LIVE MATCH EVENT RECORDING PORTAL */}
-                  {activeTab === 'matches' && (
-                    <div className="space-y-6">
-                      {/* SELECT FIXTURE FOR LIVE MATCH */}
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-xs font-black uppercase tracking-widest text-[#B7CEEC] f1-sub-header flex items-center gap-2">
-                            <span>1. SELECT FIXTURE FOR LIVE MATCH</span>
-                            <span className="px-2 py-0.5 rounded-full bg-[#4C787E]/20 text-teal-300 text-[10px] font-mono border border-[#4C787E]/40">
-                              {visibleMatches.length} Fixtures
+                  {activeTab === 'matches' && (() => {
+                    const activeCategoryMatches = visibleMatches.filter((m) => {
+                      const isEnded = m.isFinished || m.status === 'ended';
+                      if (adminFixtureFilter === 'past') return isEnded;
+                      return !isEnded;
+                    });
+
+                    const getAdminCompetitionBadge = (m: Match) => {
+                      if (m.tournamentId || m.matchType === 'Special Event' || m.matchType === 'Exhibition') {
+                        let name = 'SPECIAL EVENT';
+                        if (m.tournamentId) {
+                          const st = specialTournaments.find((t) => t.id === m.tournamentId);
+                          if (st) name = st.name.toUpperCase();
+                        } else if (m.venue) {
+                          const venueMatch = m.venue.match(/\(([^)]+)\)/);
+                          if (venueMatch) name = venueMatch[1].toUpperCase();
+                        }
+                        return {
+                          label: `⭐ ${name}`,
+                          style: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40 shadow-[0_0_10px_rgba(234,179,8,0.2)]',
+                        };
+                      }
+
+                      if (
+                        m.matchType === 'League Cup' ||
+                        m.matchType === 'Super Cup Qualifier' ||
+                        m.matchType === 'Super Cup Final' ||
+                        m.matchType === 'Finals' ||
+                        m.matchType === 'Knockout' ||
+                        m.id.includes('FIX-007') ||
+                        m.id.includes('FIX-008') ||
+                        m.id.includes('FIX-009') ||
+                        m.id.includes('FIX-SC')
+                      ) {
+                        return {
+                          label: `🏆 ${m.matchType || 'CUP MATCH'}`,
+                          style: 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]',
+                        };
+                      }
+
+                      return {
+                        label: `⚽ ${m.weekNumber ? `W${m.weekNumber} ` : ''}LEAGUE MATCH`,
+                        style: 'bg-teal-500/20 text-teal-300 border-teal-500/40 shadow-[0_0_10px_rgba(76,120,126,0.2)]',
+                      };
+                    };
+
+                    const renderAdminMatchCard = (m: Match, idx: number) => {
+                      const isSelected = editingMatchId === m.id;
+                      const hTeam = getAdminTeam(m.homeTeamId);
+                      const aTeam = getAdminTeam(m.awayTeamId);
+                      const isEnded = m.isFinished || m.status === 'ended';
+                      const isLive = m.isLive || m.status === '1st_half' || m.status === '2nd_half' || m.status === 'halftime';
+                      const compBadge = getAdminCompetitionBadge(m);
+
+                      let badgeBg = 'bg-teal-500/20 text-teal-300 border-teal-500/40';
+                      let badgeText = `⚪ UPCOMING (${m.startTime})`;
+
+                      if (isEnded) {
+                        badgeBg = 'bg-slate-800/90 text-emerald-400 border-emerald-500/40 shadow-sm';
+                        badgeText = `🏁 FULL TIME`;
+                      } else if (m.status === '1st_half' || m.status === '2nd_half') {
+                        badgeBg = 'bg-rose-500/25 text-rose-300 border-rose-500/50 shadow-[0_0_12px_rgba(244,63,94,0.4)] animate-pulse';
+                        badgeText = `🔴 LIVE ${m.status === '1st_half' ? '1ST HALF' : '2ND HALF'} (${m.minute}')`;
+                      } else if (m.status === 'halftime') {
+                        badgeBg = 'bg-amber-500/25 text-amber-300 border-amber-500/50 animate-pulse';
+                        badgeText = `⏸️ HALFTIME BREAK`;
+                      }
+
+                      return (
+                        <button
+                          key={`admin-fixture-card-${m.id}-${idx}`}
+                          type="button"
+                          onClick={() => {
+                            setEditingMatchId(m.id);
+                            setHomeScoreInput(m.homeScore || 0);
+                            setAwayScoreInput(m.awayScore || 0);
+                          }}
+                          className={`w-full text-left p-3.5 rounded-2xl border transition-all cursor-pointer shadow-md flex flex-col justify-between gap-2.5 ${
+                            isSelected
+                              ? 'bg-gradient-to-r from-[#0d1d2b] to-[#122b3f] border-teal-400 shadow-[0_0_20px_rgba(76,120,126,0.35)] ring-2 ring-teal-400/40'
+                              : 'bg-[#050911] border-[#B7CEEC]/20 hover:border-teal-400/60 hover:bg-[#070e1b]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2 border-b border-[#B7CEEC]/15 pb-2">
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-extrabold uppercase border truncate ${compBadge.style}`}>
+                              {compBadge.label}
                             </span>
-                          </h4>
-                          <div className="flex items-center gap-2">
-                            {isCommish && (
-                              <button
-                                type="button"
-                                onClick={handleOpenCreateFixtureModal}
-                                className="px-3 py-1 rounded-xl bg-gradient-to-r from-[#4C787E] to-teal-500 hover:from-[#3a5d62] hover:to-teal-400 text-white text-xs font-black flex items-center gap-1.5 shadow-lg transition-all cursor-pointer border border-teal-300/40"
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                                <span>+ Add Fixture</span>
-                              </button>
-                            )}
-                            <span className="hidden sm:inline text-[11px] text-[#B7CEEC]/70 font-medium">
-                              Click any match tile to launch live recorder console
-                            </span>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className={`px-2 py-0.5 rounded-md text-[9px] font-mono font-black uppercase border ${badgeBg}`}>
+                                {badgeText}
+                              </span>
+                            </div>
                           </div>
+
+                          <div className="flex items-center justify-between gap-2 py-1">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <TeamLogo teamId={m.homeTeamId} size={26} />
+                              <span className={`font-black text-xs sm:text-sm uppercase tracking-wider truncate ${isEnded && m.homeScore > m.awayScore ? 'text-amber-300' : 'text-white'}`}>
+                                {hTeam.shortName || hTeam.name}
+                              </span>
+                            </div>
+
+                            <div className={`px-3 py-1 rounded-xl font-mono text-sm sm:text-base font-black border text-center shrink-0 ${
+                              isLive
+                                ? 'bg-rose-950/80 border-rose-500/50 text-rose-300 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
+                                : 'bg-[#020509] border-[#B7CEEC]/30 text-white'
+                            }`}>
+                              {m.homeScore} - {m.awayScore}
+                            </div>
+
+                            <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
+                              <span className={`font-black text-xs sm:text-sm uppercase tracking-wider text-right truncate ${isEnded && m.awayScore > m.homeScore ? 'text-amber-300' : 'text-white'}`}>
+                                {aTeam.shortName || aTeam.name}
+                              </span>
+                              <TeamLogo teamId={m.awayTeamId} size={26} />
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    };
+
+                    return (
+                      <div className="space-y-6">
+                        {/* SELECT FIXTURE FOR LIVE MATCH */}
+                        <div>
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+                            <h4 className="text-xs font-black uppercase tracking-widest text-[#B7CEEC] f1-sub-header flex items-center gap-2">
+                              <span>1. SELECT FIXTURE FOR LIVE MATCH</span>
+                            </h4>
+                            <div className="flex items-center gap-2">
+                              {isCommish && (
+                                <button
+                                  type="button"
+                                  onClick={handleOpenCreateFixtureModal}
+                                  className="px-3 py-1 rounded-xl bg-gradient-to-r from-[#4C787E] to-teal-500 hover:from-[#3a5d62] hover:to-teal-400 text-white text-xs font-black flex items-center gap-1.5 shadow-lg transition-all cursor-pointer border border-teal-300/40"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>+ Add Fixture</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                        {/* 2-OPTION TOGGLE FILTER BAR IN ADMIN PORTAL */}
+                        <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[#080d15] border border-white/10 text-xs mb-4 shadow-md">
+                          <button
+                            type="button"
+                            onClick={() => setAdminFixtureFilter('upcoming')}
+                            className={`py-2 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                              adminFixtureFilter === 'upcoming'
+                                ? 'bg-gradient-to-r from-[#4C787E] to-teal-500 text-white shadow-md border border-teal-300/40'
+                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                          >
+                            <span>📅 Upcoming Fixtures</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setAdminFixtureFilter('past')}
+                            className={`py-2 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                              adminFixtureFilter === 'past'
+                                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md border border-emerald-300/40'
+                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                          >
+                            <span>✅ Past Results</span>
+                          </button>
                         </div>
 
-                        {(() => {
-                          const nextMatchObj = visibleMatches.find((m) => !m.isFinished && m.status !== 'ended');
-                          const nextMatchId = nextMatchObj?.id;
+                        {/* COMMISSIONER EXCLUSIVE SPECIAL EVENT SELECTOR & MANAGEMENT BAR */}
+                        {isCommish && (() => {
+                          const impliedTourneys: SpecialTournament[] = [];
+                          const rawSpecialMatches = visibleMatches.filter(
+                            (m) => (m.matchType === 'Special Event' || m.matchType === 'Exhibition' || !!m.tournamentId) && !m.isFinished && m.status !== 'ended'
+                          );
+
+                          if (rawSpecialMatches.length > 0) {
+                            const grouped = new Map<string, Match[]>();
+                            rawSpecialMatches.forEach((m) => {
+                              let tId = m.tournamentId;
+                              if (!tId) {
+                                const venueMatch = m.venue?.match(/\(([^)]+)\)/);
+                                const nameFromVenue = venueMatch ? venueMatch[1] : 'Special Event Tournament';
+                                tId = `implied-${nameFromVenue.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+                              }
+                              if (!grouped.has(tId)) grouped.set(tId, []);
+                              grouped.get(tId)!.push(m);
+                            });
+
+                            grouped.forEach((mList, tId) => {
+                              if (!specialTournaments.some((st) => st.id === tId)) {
+                                const sample = mList[0];
+                                const venueMatch = sample.venue?.match(/\(([^)]+)\)/);
+                                const tName = venueMatch ? venueMatch[1] : 'Special Event Tournament';
+                                const teamIds = Array.from(new Set(mList.flatMap((m) => [m.homeTeamId, m.awayTeamId])));
+                                const tourneyTeams = teamIds.map((id) => getAdminTeam(id));
+
+                                impliedTourneys.push({
+                                  id: tId,
+                                  name: tName,
+                                  teams: tourneyTeams,
+                                  matchFormat: sample.matchFormat || '8v8',
+                                  halfDurationMinutes: sample.halfDurationMinutes || 20,
+                                  tournamentType: 'league_and_playoffs',
+                                  leagueRounds: 1,
+                                  createdAt: new Date().toISOString(),
+                                });
+                              }
+                            });
+                          }
+
+                          const combinedAdminTourneys = [...specialTournaments, ...impliedTourneys];
+                          if (combinedAdminTourneys.length === 0) return null;
 
                           return (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                              {visibleMatches.map((m, idx) => {
-                                const isSelected = editingMatchId === m.id;
-                                const hTeam = teams.find((t) => t.id === m.homeTeamId);
-                                const aTeam = teams.find((t) => t.id === m.awayTeamId);
-                                const isEnded = m.isFinished || m.status === 'ended';
-                                const isLive = m.isLive || m.status === '1st_half' || m.status === '2nd_half' || m.status === 'halftime';
-                                const isNext = !isEnded && !isLive && m.id === nextMatchId;
-
-                                // Match Status Badge Styling
-                                let badgeBg = 'bg-teal-500/20 text-teal-300 border-teal-500/40';
-                                let badgeText = `⚪ UPCOMING (${m.startTime})`;
-
-                                if (isEnded) {
-                                  badgeBg = 'bg-slate-800/90 text-emerald-400 border-emerald-500/40 shadow-sm';
-                                  badgeText = `🏁 FULL TIME`;
-                                } else if (m.status === '1st_half' || m.status === '2nd_half') {
-                                  badgeBg = 'bg-rose-500/25 text-rose-300 border-rose-500/50 shadow-[0_0_12px_rgba(244,63,94,0.4)] animate-pulse';
-                                  badgeText = `🔴 LIVE ${m.status === '1st_half' ? '1ST HALF' : '2ND HALF'} (${m.minute}')`;
-                                } else if (m.status === 'halftime') {
-                                  badgeBg = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
-                                  badgeText = `⏸️ HALFTIME (${m.minute}')`;
-                                } else if (isNext) {
-                                  badgeBg = 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-slate-950 border-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.5)] font-black animate-pulse';
-                                  badgeText = `🔥 NEXT MATCH (${m.startTime})`;
-                                }
-
-                                // Goal Scorers Summary for Completed Matches
-                                const goalEvents = (m.events || []).filter((e) => e.type === 'goal');
-                                const homeScorers = goalEvents.filter((e) => e.teamId === m.homeTeamId).map((e) => `${e.player} ${e.minute}'`).join(', ');
-                                const awayScorers = goalEvents.filter((e) => e.teamId === m.awayTeamId).map((e) => `${e.player} ${e.minute}'`).join(', ');
-
-                                return (
-                                  <button
-                                    key={`vis-match-${m.id}-${idx}`}
-                                    onClick={() => handleSelectMatchFixture(m)}
-                                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer hover:scale-[1.01] relative overflow-hidden backdrop-blur-md flex flex-col justify-between ${
-                                      isSelected
-                                        ? 'bg-[#091422] border-[#B7CEEC] ring-2 ring-[#4C787E]/60 shadow-[0_0_25px_rgba(76,120,126,0.35)]'
-                                        : isNext
-                                        ? 'bg-gradient-to-br from-[#0e1d2c] via-[#08121c] to-[#040810] border-amber-400/60 shadow-[0_0_20px_rgba(245,158,11,0.2)]'
-                                        : 'bg-[#040810]/90 border-[#B7CEEC]/20 text-gray-300 hover:border-[#4C787E]/60 hover:shadow-[0_0_18px_rgba(76,120,126,0.2)]'
-                                    }`}
+                            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-[#080d15] to-[#080d15] border border-amber-400/40 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                <Star className="w-5 h-5 text-amber-400 fill-amber-400 shrink-0 animate-pulse" />
+                                <div className="flex-1 min-w-0">
+                                  <label className="text-[10px] font-extrabold uppercase text-amber-300 font-mono tracking-wider block">
+                                    COMMISSIONER SPECIAL EVENT SELECTOR
+                                  </label>
+                                  <select
+                                    value={selectedAdminSpecialTourneyId}
+                                    onChange={(e) => setSelectedAdminSpecialTourneyId(e.target.value)}
+                                    className="mt-1 w-full bg-[#05080c] border border-amber-400/50 rounded-xl px-3 py-1.5 text-xs text-amber-200 font-bold focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
                                   >
-                                    {/* Status Badge & Venue */}
-                                    <div className="flex items-center justify-between text-[11px] mb-2.5">
-                                      <span className={`px-2.5 py-1 rounded-full font-black text-[10px] uppercase tracking-wider flex items-center gap-1.5 border ${badgeBg}`}>
-                                        {isLive && (
-                                          <span className="relative flex h-2 w-2">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-                                          </span>
-                                        )}
-                                        {badgeText}
-                                      </span>
+                                    <option value="all">⭐ ALL SPECIAL EVENTS ({combinedAdminTourneys.length} ACTIVE)</option>
+                                    {combinedAdminTourneys.map((st) => (
+                                      <option key={`opt-st-${st.id}`} value={st.id}>
+                                        🏆 {st.name} ({st.teams.length} Teams • {st.matchFormat})
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
 
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-[#B7CEEC] font-bold text-[10px] uppercase tracking-wider">{m.venue}</span>
-                                        {isCommish && (
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleOpenEditFixtureModal(m);
-                                            }}
-                                            className="px-2.5 py-0.5 rounded-lg bg-[#4C787E]/30 hover:bg-[#4C787E]/70 text-teal-200 border border-[#4C787E]/60 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-md"
-                                            title="Edit Fixture Details & Schedule"
-                                          >
-                                            <Edit2 className="w-3 h-3 text-teal-300" />
-                                            <span>Edit</span>
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
+                              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsCreateTournamentModalOpen(true)}
+                                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-all cursor-pointer border border-yellow-300"
+                                >
+                                  <Plus className="w-3.5 h-3.5 text-slate-950" />
+                                  <span>+ New Event</span>
+                                </button>
 
-                                    {/* Scoreboard Row */}
-                                    <div className="flex items-center justify-between my-1">
-                                      <div className="flex items-center gap-2 flex-1">
-                                        <TeamLogo teamId={m.homeTeamId} size={26} />
-                                        <span className={`font-black text-xs sm:text-sm uppercase tracking-wider ${isEnded && m.homeScore > m.awayScore ? 'text-amber-300' : 'text-white'}`}>
-                                          {hTeam?.shortName || hTeam?.name}
-                                        </span>
-                                      </div>
-
-                                      <div className={`px-3.5 py-1 rounded-xl border font-black text-sm shadow-inner font-mono shrink-0 mx-2 ${
-                                        isEnded
-                                          ? 'bg-slate-900/90 border-emerald-500/50 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
-                                          : isLive
-                                          ? 'bg-rose-950/80 border-rose-500/50 text-rose-300 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
-                                          : 'bg-[#020509] border-[#B7CEEC]/30 text-white'
-                                      }`}>
-                                        {m.homeScore} - {m.awayScore}
-                                      </div>
-
-                                      <div className="flex items-center gap-2 flex-1 justify-end">
-                                        <span className={`font-black text-xs sm:text-sm uppercase tracking-wider text-right ${isEnded && m.awayScore > m.homeScore ? 'text-amber-300' : 'text-white'}`}>
-                                          {aTeam?.shortName || aTeam?.name}
-                                        </span>
-                                        <TeamLogo teamId={m.awayTeamId} size={26} />
-                                      </div>
-                                    </div>
-
-                                    {/* Full Time Completed Stats & Scorers Summary */}
-                                    {isEnded && (
-                                      <div className="mt-3 pt-2 border-t border-[#B7CEEC]/15 flex flex-col gap-1 text-[10px] text-gray-300">
-                                        {(homeScorers || awayScorers) ? (
-                                          <div className="flex items-center justify-between gap-2 text-[10px]">
-                                            <span className="text-emerald-300 font-semibold truncate max-w-[48%]">
-                                              {homeScorers ? `⚽ ${homeScorers}` : ''}
-                                            </span>
-                                            <span className="text-emerald-300 font-semibold truncate max-w-[48%] text-right">
-                                              {awayScorers ? `⚽ ${awayScorers}` : ''}
-                                            </span>
-                                          </div>
-                                        ) : (
-                                          <div className="flex items-center justify-between text-[10px] text-gray-400 font-mono">
-                                            <span>Possession: {m.possessionHome || 50}% - {m.possessionAway || 50}%</span>
-                                            <span>Shots: {(m.shotsHome || 0) + (m.shotsAway || 0)}</span>
-                                          </div>
-                                        )}
-                                        <div className="flex items-center justify-between pt-0.5 text-[9px]">
-                                          <span className="text-teal-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                                            <Activity className="w-3 h-3 text-teal-300" />
-                                            <span>Full Match Statistics & Events</span>
-                                          </span>
-                                          <span className="text-gray-400 font-mono">Final Result</span>
-                                        </div>
-                                      </div>
-                                    )}
+                                {onDeleteSpecialTournament && (rawSpecialMatches.length > 0 || specialTournaments.length > 0) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (window.confirm('🧹 PURGE ALL SPECIAL EVENTS & FIXTURES?\n\nAre you sure you want to delete ALL special events and their matches?')) {
+                                        onDeleteSpecialTournament('all');
+                                        setSelectedAdminSpecialTourneyId('all');
+                                      }
+                                    }}
+                                    className="px-2.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/50 text-rose-300 text-xs font-bold uppercase transition-all cursor-pointer flex items-center gap-1"
+                                    title="Purge all special event fixtures and tournaments"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Purge All</span>
                                   </button>
-                                );
-                              })}
+                                )}
+
+                                {selectedAdminSpecialTourneyId !== 'all' && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const tourneyToEdit = combinedAdminTourneys.find((t) => t.id === selectedAdminSpecialTourneyId);
+                                        if (tourneyToEdit) setTournamentToEdit(tourneyToEdit);
+                                      }}
+                                      className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400/50 text-amber-300 text-xs font-bold uppercase transition-all cursor-pointer"
+                                      title="Edit Selected Special Event"
+                                    >
+                                      ✏️ Edit
+                                    </button>
+
+                                    {onDeleteSpecialTournament && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const tourneyToDelete = combinedAdminTourneys.find((t) => t.id === selectedAdminSpecialTourneyId);
+                                          if (tourneyToDelete && window.confirm(`🗑️ Delete "${tourneyToDelete.name}"?\n\nThis will remove the event and all associated matches.`)) {
+                                            onDeleteSpecialTournament(tourneyToDelete.id);
+                                            setSelectedAdminSpecialTourneyId('all');
+                                          }
+                                        }}
+                                        className="px-2.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/50 text-rose-300 text-xs font-bold uppercase transition-all cursor-pointer"
+                                        title="Delete Selected Special Event"
+                                      >
+                                        🗑️ Delete
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
                             </div>
                           );
                         })()}
+
+                        {/* MATCHES LIST IN CHRONOLOGICAL ORDER */}
+                        {activeCategoryMatches.length === 0 ? (
+                          <div className="p-6 rounded-2xl bg-[#040810]/80 border border-[#B7CEEC]/20 text-center text-xs text-gray-400 font-mono">
+                            No fixtures found for the selected "{adminFixtureFilter}" filter.
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            {activeCategoryMatches.map((m, idx) => renderAdminMatchCard(m, idx))}
+                          </div>
+                        )}
                       </div>
 
-                      {/* SELECTED FIXTURE RECORDING CONSOLE POPUP MODAL */}
-                      {editingMatch && (
+                  {/* SELECTED FIXTURE RECORDING CONSOLE POPUP MODAL */}
+                  {editingMatch && (
                         <div
                           style={{ paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 24px))' }}
                           className="fixed inset-0 bg-[#020408]/92 backdrop-blur-2xl z-[70] flex items-center justify-center p-2 sm:p-5 overflow-y-auto animate-fade-in"
@@ -2189,7 +2539,8 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                         </div>
                       )}
                     </div>
-                  )}
+                  );
+                })()}
 
                   {/* TAB 2: EXCLUSIVE SQUAD ROSTER MANAGEMENT */}
                   {activeTab === 'rosters' && (
@@ -2678,6 +3029,24 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
         teamName={teams.find((t) => t.id === selectedTeamId)?.name}
       />
 
+      {/* SPECIAL EVENT TOURNAMENT CREATOR WIZARD MODAL */}
+      <CreateSpecialTournamentModal
+        isOpen={isCreateTournamentModalOpen || !!tournamentToEdit}
+        onClose={() => {
+          setIsCreateTournamentModalOpen(false);
+          setTournamentToEdit(null);
+        }}
+        existingTeams={teams}
+        tournamentToEdit={tournamentToEdit}
+        onCreateTournament={(tournament, generatedMatches) => {
+          if (onCreateSpecialTournament) {
+            onCreateSpecialTournament(tournament, generatedMatches);
+          }
+          setIsCreateTournamentModalOpen(false);
+          setTournamentToEdit(null);
+        }}
+      />
+
       {/* PLAYER OF THE MATCH (MOTM) SELECTION MODAL POPUP */}
       {editingMatch && showMotmModal && (
         <div
@@ -2897,16 +3266,71 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-extrabold uppercase tracking-wider text-[#B7CEEC] mb-1.5">
-                    Schedule Kickoff Time & Date
+                    Kickoff Date & Time
                   </label>
-                  <input
-                    type="text"
-                    value={editFixtureStartTime}
-                    onChange={(e) => setEditFixtureStartTime(e.target.value)}
-                    placeholder="e.g. Sun, Aug 16 • 8:30 AM"
-                    className="w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl px-3.5 py-2.5 text-white text-xs font-mono focus:border-[#4C787E] focus:outline-none"
-                    required
-                  />
+
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    {/* Native Calendar Date Picker */}
+                    <div className="relative flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          try {
+                            dateInputRef.current?.showPicker();
+                          } catch {
+                            dateInputRef.current?.focus();
+                          }
+                        }}
+                        className="absolute left-2.5 z-20 text-teal-400 hover:text-teal-200 cursor-pointer p-0.5"
+                        title="Click to open Calendar"
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                      </button>
+                      <input
+                        ref={dateInputRef}
+                        type="date"
+                        value={editFixtureDate}
+                        onChange={(e) => handleDateChange(e.target.value)}
+                        className="custom-date-picker w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl pl-8 pr-2 py-2 text-white text-xs font-mono focus:border-[#4C787E] focus:outline-none cursor-pointer [color-scheme:dark]"
+                        required
+                      />
+                    </div>
+
+                    {/* Native Clock Time Picker */}
+                    <div className="relative flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          try {
+                            timeInputRef.current?.showPicker();
+                          } catch {
+                            timeInputRef.current?.focus();
+                          }
+                        }}
+                        className="absolute left-2.5 z-20 text-teal-400 hover:text-teal-200 cursor-pointer p-0.5"
+                        title="Click to open Clock Time Picker"
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                      </button>
+                      <input
+                        ref={timeInputRef}
+                        type="time"
+                        value={editFixtureTime}
+                        onChange={(e) => handleTimeChange(e.target.value)}
+                        className="custom-time-picker w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl pl-8 pr-2 py-2 text-white text-xs font-mono focus:border-[#4C787E] focus:outline-none cursor-pointer [color-scheme:dark]"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Formatted Schedule String Preview */}
+                  <div className="flex items-center justify-between text-[11px] font-mono px-2.5 py-1.5 rounded-xl bg-[#080d14] border border-teal-500/30 text-teal-300">
+                    <span className="flex items-center gap-1.5 font-bold truncate">
+                      <Sparkles className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                      <span className="truncate">{editFixtureStartTime || 'Select date & time above'}</span>
+                    </span>
+                    <span className="text-[9px] text-gray-400 uppercase font-sans shrink-0">Official Schedule</span>
+                  </div>
                 </div>
 
                 <div>
@@ -3069,6 +3493,23 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
           </motion.div>
         </div>
       )}
+
+      {/* SEASON SETUP & CONFIGURATION MODAL */}
+      <SeasonSetupModal
+        isOpen={isSeasonSetupModalOpen}
+        onClose={() => setIsSeasonSetupModalOpen(false)}
+        currentSeasonNumber={currentSeasonNumber}
+        existingTeams={teams}
+        existingMatches={matches}
+        onConfirmSetup={(options) => {
+          setIsSeasonSetupModalOpen(false);
+          if (onConfirmSeasonSetup) {
+            onConfirmSeasonSetup(options);
+          } else if (onRolloverSeason) {
+            onRolloverSeason();
+          }
+        }}
+      />
     </AnimatePresence>
   );
 };

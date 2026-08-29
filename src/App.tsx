@@ -1,18 +1,24 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { INITIAL_TEAMS, INITIAL_MATCHES, INITIAL_NOTIFICATIONS } from './data/mockData';
-import { Team, Match, PushNotification, AppScrollState, MatchEvent, Player } from './types';
+import { Team, Match, PushNotification, AppScrollState, MatchEvent, Player, SpecialTournament } from './types';
 import {
   initializeFirestoreData,
   subscribeTeams,
   subscribeMatches,
   sanitizeMatchesData,
   subscribeNotifications,
+  subscribeSpecialTournaments,
+  saveSpecialTournament,
+  deleteSpecialTournament,
+  deleteAllSpecialEventsFromFirestore,
   saveTeamToFirestore,
   saveTeamRosterToFirestore,
   saveMatchToFirestore,
+  deleteMatchFromFirestore,
   overwriteMatchInFirestore,
   saveNotificationToFirestore,
 } from './lib/firestoreService';
+import { triggerMatchBotNotification, registerPushServiceWorker, requestPushNotificationPermission } from './lib/pushNotificationService';
 import { ThreeSoccerCanvas } from './components/ThreeSoccerCanvas';
 import { SlideOutMenu } from './components/SlideOutMenu';
 import { State1Hero } from './components/State1Hero';
@@ -28,30 +34,134 @@ import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { CinematicClubModal } from './components/CinematicClubModal';
 import { PushNotificationToast } from './components/PushNotificationToast';
 import { IPhoneFrame } from './components/IPhoneFrame';
-import { computeStandingsAndFinalsMatch, rolloverToNewSeason } from './utils/leagueEngine';
+import { computeStandingsAndFinalsMatch, rolloverToNewSeason, rolloverToNewSeasonWithOptions, SeasonSetupOptions } from './utils/leagueEngine';
 
 export default function App() {
   // Core Application State (Cloud Firestore Single Source of Truth)
   const [teams, setTeams] = useState<Team[]>(INITIAL_TEAMS);
-  const [matches, setMatches] = useState<Match[]>(() => sanitizeMatchesData(INITIAL_MATCHES));
-  const [notifications, setNotifications] = useState<PushNotification[]>([]);
-  const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1);
+  const [matches, setMatches] = useState<Match[]>(INITIAL_MATCHES);
+  const [notifications, setNotifications] = useState<PushNotification[]>(INITIAL_NOTIFICATIONS);
+  const [specialTournaments, setSpecialTournaments] = useState<SpecialTournament[]>([]);
 
-  const handleRolloverSeason = () => {
-    const { nextSeasonNumber, updatedTeams, newMatches } = rolloverToNewSeason(
-      currentSeasonNumber,
-      teams,
-      matches
-    );
-    setCurrentSeasonNumber(nextSeasonNumber);
+  // Execute Season Rollover Handler (Legacy fallback)
+  const handleRolloverSeason = async () => {
+    const currentSeason = matches.reduce((max, m) => Math.max(max, m.seasonNumber || 1), 1);
+    const { updatedTeams, newMatches } = rolloverToNewSeason(currentSeason, teams, matches);
     setTeams(updatedTeams);
     setMatches(newMatches);
     updatedTeams.forEach((t) => saveTeamToFirestore(t.id, t));
     newMatches.forEach((m) => saveMatchToFirestore(m.id, m));
   };
 
+  // Execute Customized Season Setup & Launch Handler
+  const handleConfirmSeasonSetup = async (options: SeasonSetupOptions) => {
+    const currentSeason = matches.reduce((max, m) => Math.max(max, m.seasonNumber || 1), 1);
+    const { updatedTeams, newMatches } = rolloverToNewSeasonWithOptions(currentSeason, teams, matches, options);
+
+    setTeams(updatedTeams);
+    setMatches(newMatches);
+
+    // Save updated teams and newly generated matches to Firestore
+    for (const t of updatedTeams) {
+      await saveTeamToFirestore(t.id, t);
+    }
+    for (const m of newMatches) {
+      await saveMatchToFirestore(m.id, m);
+    }
+
+    // Trigger Automated Bot Notification for Season Launch
+    const newSeasonMatchesCount = newMatches.filter((m) => m.seasonNumber === options.nextSeasonNumber).length;
+    triggerMatchBotNotification(
+      `🏆 Season ${options.nextSeasonNumber} Officially Launched!`,
+      `Season ${options.nextSeasonNumber} initialized with ${options.participatingTeams.length} clubs and ${newSeasonMatchesCount} total fixtures (${options.matchFormat}, ${options.homeAwayRounds} Round-Robin).`,
+      'system'
+    );
+  };
+
+  const handleCreateSpecialTournament = async (tournament: SpecialTournament, generatedMatches: Match[]) => {
+    // 1. Update special tournaments state & Firestore
+    setSpecialTournaments((prev) => {
+      const idx = prev.findIndex((t) => t.id === tournament.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = tournament;
+        return copy;
+      }
+      return [...prev, tournament];
+    });
+    await saveSpecialTournament(tournament);
+
+    // 2. Register custom tournament teams into global teams state and Firestore
+    setTeams((prev) => {
+      const existingIds = new Set(prev.map((t) => t.id));
+      const updated = [...prev];
+      for (const t of tournament.teams) {
+        const existingIdx = updated.findIndex((x) => x.id === t.id);
+        if (existingIdx >= 0) {
+          updated[existingIdx] = t;
+        } else {
+          updated.push(t);
+        }
+      }
+      return updated;
+    });
+
+    for (const team of tournament.teams) {
+      await saveTeamToFirestore(team.id, team);
+    }
+
+    // 3. Save generated matches to Firestore
+    for (const m of generatedMatches) {
+      await saveMatchToFirestore(m.id, m);
+    }
+
+    // 4. Trigger Automated Match Bot Notification for New Tournament
+    triggerMatchBotNotification(
+      '⭐ Special Event Created',
+      `Tournament "${tournament.name}" (${tournament.matchFormat}) initialized with ${tournament.teams.length} teams!`,
+      'tournament'
+    );
+  };
+
+  const handleDeleteSpecialTournament = async (tournamentId: string) => {
+    if (tournamentId === 'all') {
+      setSpecialTournaments([]);
+      setMatches((prev) =>
+        prev.filter((m) => m.matchType !== 'Special Event' && m.matchType !== 'Exhibition' && !m.tournamentId)
+      );
+      await deleteAllSpecialEventsFromFirestore();
+      return;
+    }
+
+    const targetTourney = specialTournaments.find((t) => t.id === tournamentId);
+    setSpecialTournaments((prev) => prev.filter((t) => t.id !== tournamentId));
+    await deleteSpecialTournament(tournamentId);
+
+    const tourneyName = targetTourney?.name;
+    const tourneyMatches = matches.filter(
+      (m) =>
+        m.tournamentId === tournamentId ||
+        (tourneyName && m.venue && m.venue.includes(tourneyName)) ||
+        m.matchType === 'Special Event'
+    );
+    setMatches((prev) => prev.filter((m) => !tourneyMatches.some((tm) => tm.id === m.id)));
+    for (const m of tourneyMatches) {
+      await deleteMatchFromFirestore(m.id);
+    }
+  };
+
   // Initialize and subscribe to Firestore real-time sync with local-override protection
   useEffect(() => {
+    // Register PWA Background Push Service Worker & Auto-Prompt Phone Alerts
+    registerPushServiceWorker().then(() => {
+      // Auto-prompt permission on app launch if user hasn't chosen yet
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+        setTimeout(() => {
+          requestPushNotificationPermission();
+        }, 1500);
+      }
+    });
+
     // Auto-seed Firestore on initial load if collections are empty
     initializeFirestoreData();
 
@@ -66,11 +176,13 @@ export default function App() {
       setMatches(sanitizedRemote);
     });
     const unsubNotifs = subscribeNotifications((updatedNotifs) => setNotifications(updatedNotifs));
+    const unsubTourneys = subscribeSpecialTournaments((updatedTourneys) => setSpecialTournaments(updatedTourneys));
 
     return () => {
       unsubTeams();
       unsubMatches();
       unsubNotifs();
+      unsubTourneys();
     };
   }, []);
 
@@ -83,6 +195,8 @@ export default function App() {
     const { updatedTeams, updatedMatches } = computeStandingsAndFinalsMatch(teams, matches);
     return { displayTeams: updatedTeams, displayMatches: updatedMatches };
   }, [teams, matches]);
+
+  const currentSeasonNumber = matches.reduce((max, m) => Math.max(max, m.seasonNumber || 1), 1);
 
   // Scroll State & Navigation (1..5)
   const [scrollState, setScrollState] = useState<AppScrollState>(1);
@@ -293,6 +407,9 @@ export default function App() {
     setNotifications((prev) => [newNotif, ...prev]);
     saveNotificationToFirestore(newNotif);
     playWhistleSound();
+
+    // Trigger Automated Match Bot Notification across devices & background PWA
+    triggerMatchBotNotification(title, message, 'goal');
   };
 
   const handleDismissNotification = (id: string) => {
@@ -558,6 +675,7 @@ export default function App() {
           <State3Standings
             teams={displayTeams}
             matches={displayMatches}
+            specialTournaments={specialTournaments}
             onNext={() => handleJumpToState(3)}
             onSelectTeam={(team) => {
               handleSelectClubCinematic(team);
@@ -567,6 +685,8 @@ export default function App() {
             }}
             onSelectPlayer={handleSelectPlayer}
             onOpenMatchModal={(match) => setSelectedMatchForModal(match)}
+            onDeleteSpecialTournament={handleDeleteSpecialTournament}
+            onCreateSpecialTournament={handleCreateSpecialTournament}
           />
         </div>
 
@@ -575,6 +695,7 @@ export default function App() {
           <State5LiveAction
             matches={displayMatches}
             teams={displayTeams}
+            specialTournaments={specialTournaments}
             onOpenMatchModal={(match) => setSelectedMatchForModal(match)}
             onSendPushNotification={handleSendPushNotification}
             onNext={() => handleJumpToState(4)}
@@ -652,6 +773,7 @@ export default function App() {
         teams={displayTeams}
         matches={displayMatches}
         notifications={notifications}
+        specialTournaments={specialTournaments}
         onUpdateRoster={handleUpdateRoster}
         onUpdateTeamDetails={handleUpdateTeamDetails}
         onUpdateMatchScore={handleUpdateMatchScore}
@@ -661,7 +783,10 @@ export default function App() {
         onSelectAdminTeam={(teamId) => setActiveAdminTeamId(teamId)}
         onSelectPlayer={handleSelectPlayer}
         onRolloverSeason={handleRolloverSeason}
+        onConfirmSeasonSetup={handleConfirmSeasonSetup}
         currentSeasonNumber={currentSeasonNumber}
+        onCreateSpecialTournament={handleCreateSpecialTournament}
+        onDeleteSpecialTournament={handleDeleteSpecialTournament}
       />
 
       {/* 3D Player Profile Modal Overlay */}

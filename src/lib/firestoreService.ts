@@ -9,13 +9,14 @@ import {
   query,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { Team, Match, PushNotification, Player } from '../types';
+import { Team, Match, PushNotification, Player, SpecialTournament } from '../types';
 import { INITIAL_TEAMS, INITIAL_MATCHES, INITIAL_NOTIFICATIONS } from '../data/mockData';
 
 // Collection references
 const TEAMS_COL = 'teams';
 const MATCHES_COL = 'matches';
 const NOTIFICATIONS_COL = 'notifications';
+const SPECIAL_TOURNAMENTS_COL = 'special_tournaments';
 
 const OFFICIAL_MATCH_IDS = new Set(INITIAL_MATCHES.map((m) => m.id));
 const OFFICIAL_TEAM_IDS = new Set(INITIAL_TEAMS.map((t) => t.id));
@@ -76,11 +77,62 @@ export async function resetFirestoreToDefaults(): Promise<void> {
 }
 
 /**
+ * Delete all special events, special tournaments, and special matches from Firestore.
+ */
+export async function deleteAllSpecialEventsFromFirestore(): Promise<void> {
+  try {
+    console.log('Cleaning up all special event tournaments and matches from Firestore...');
+    // Delete special_tournaments collection docs
+    const tourneysSnap = await getDocs(collection(db, SPECIAL_TOURNAMENTS_COL));
+    for (const docSnap of tourneysSnap.docs) {
+      await deleteDoc(doc(db, SPECIAL_TOURNAMENTS_COL, docSnap.id));
+    }
+
+    // Delete any special event matches from matches collection
+    const matchesSnap = await getDocs(collection(db, MATCHES_COL));
+    for (const docSnap of matchesSnap.docs) {
+      const data = docSnap.data() as Match;
+      if (
+        data.matchType === 'Special Event' ||
+        data.matchType === 'Exhibition' ||
+        !!data.tournamentId ||
+        data.id.startsWith('FIX-TOURNAMENT') ||
+        data.id.includes('SPECIAL') ||
+        (data.venue && data.venue.includes('Dashain Cup')) ||
+        data.homeTeamId.startsWith('spec-team-') ||
+        data.homeTeamId.startsWith('team-') ||
+        data.awayTeamId.startsWith('spec-team-') ||
+        data.awayTeamId.startsWith('team-')
+      ) {
+        await deleteDoc(doc(db, MATCHES_COL, docSnap.id));
+      }
+    }
+
+    // Delete any custom teams created for special events (spec-team-*, team-a, team-b, etc.)
+    const teamsSnap = await getDocs(collection(db, TEAMS_COL));
+    for (const docSnap of teamsSnap.docs) {
+      if (
+        docSnap.id.startsWith('spec-team-') ||
+        (docSnap.id !== 'momo-strikers' && docSnap.id !== 'jhyap-warriors' && docSnap.id !== 'no-stamina')
+      ) {
+        await deleteDoc(doc(db, TEAMS_COL, docSnap.id));
+      }
+    }
+    console.log('All special events deleted cleanly.');
+  } catch (err) {
+    console.error('Failed to clean up special events from Firestore:', err);
+  }
+}
+
+/**
  * Initialize Firestore data by seeding default records if collections are empty.
  * Avoids destructive wiping loops on every load to prevent rate limit quota errors.
  */
 export async function initializeFirestoreData(): Promise<void> {
   try {
+    // Automatically wipe any temporary test special events per user request
+    await deleteAllSpecialEventsFromFirestore();
+
     const teamsSnap = await getDocs(collection(db, TEAMS_COL));
     if (teamsSnap.empty) {
       for (const team of INITIAL_TEAMS) {
@@ -303,5 +355,52 @@ export async function deleteMatchFromFirestore(matchId: string): Promise<void> {
     await deleteDoc(matchRef);
   } catch (err) {
     console.error(`Failed to delete match ${matchId} from Firestore:`, err);
+  }
+}
+
+/**
+ * Real-time listener for Special Event Tournaments in Firestore
+ */
+export function subscribeSpecialTournaments(
+  onData: (tournaments: SpecialTournament[]) => void
+): () => void {
+  const tournamentsRef = collection(db, SPECIAL_TOURNAMENTS_COL);
+  return onSnapshot(
+    tournamentsRef,
+    (snapshot) => {
+      const list: SpecialTournament[] = [];
+      snapshot.forEach((docSnap) => {
+        list.push({ id: docSnap.id, ...docSnap.data() } as SpecialTournament);
+      });
+      onData(list);
+    },
+    (err) => {
+      console.error('Error listening to special tournaments in Firestore:', err);
+    }
+  );
+}
+
+/**
+ * Save or update a Special Event Tournament in Firestore
+ */
+export async function saveSpecialTournament(tournament: SpecialTournament): Promise<void> {
+  try {
+    const tourneyRef = doc(db, SPECIAL_TOURNAMENTS_COL, tournament.id);
+    const sanitized = sanitizeForFirestore(tournament);
+    await setDoc(tourneyRef, sanitized as any, { merge: true });
+  } catch (err) {
+    console.error(`Failed to save special tournament ${tournament.id} to Firestore:`, err);
+  }
+}
+
+/**
+ * Delete a Special Event Tournament from Firestore
+ */
+export async function deleteSpecialTournament(tournamentId: string): Promise<void> {
+  try {
+    const tourneyRef = doc(db, SPECIAL_TOURNAMENTS_COL, tournamentId);
+    await deleteDoc(tourneyRef);
+  } catch (err) {
+    console.error(`Failed to delete special tournament ${tournamentId} from Firestore:`, err);
   }
 }

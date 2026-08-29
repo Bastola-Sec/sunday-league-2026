@@ -217,7 +217,9 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   };
 
   // Last 5 matches chart data default fallback
-  const matchStats = currentPlayer?.lastMatchesStats || [0, 1, 12, 3, 15, 7];
+  const rawStats = currentPlayer?.lastMatchesStats || [];
+  const padding = Array(Math.max(0, 5 - rawStats.length)).fill({ played: false });
+  const matchStats = [...rawStats, ...padding].slice(0, 5);
 
   return (
     <AnimatePresence>
@@ -537,20 +539,58 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   </div>
 
                   {/* Chart Bars Graphic */}
-                  <div className="h-20 bg-[#ffffff]/30 rounded-2xl p-3 border border-white/40 flex items-end justify-between gap-2">
-                    {matchStats.slice(0, 6).map((val, idx) => {
-                      const heights = ['h-6', 'h-10', 'h-16', 'h-12', 'h-16', 'h-8'];
-                      const isHighlight = idx === 2 || idx === 4;
+                  <div className="h-28 bg-[#152a38]/15 rounded-2xl p-2 border border-[#152a38]/20 backdrop-blur-md flex items-end justify-between gap-2">
+                    {matchStats.slice(0, 5).map((stat, idx) => {
+                      let barHeight = 'h-6'; // fallback/default
+                      let displayLabel: React.ReactNode = String(stat);
+                      let isHighlight = false;
+                      let showStar = false;
+
+                      if (typeof stat === 'object' && stat !== null) {
+                        const s = stat as any;
+                        if (!s.played) {
+                          barHeight = 'h-4';
+                          displayLabel = '-';
+                        } else if (s.goals > 0) {
+                          barHeight = s.goals > 1 ? 'h-14' : 'h-10';
+                          displayLabel = <span className="flex items-center text-[12px] tracking-tighter brightness-75 contrast-150 drop-shadow-sm">{'⚽'.repeat(Math.min(s.goals, 5))}</span>;
+                          isHighlight = true;
+                        } else if (s.assists > 0) {
+                          barHeight = s.assists > 1 ? 'h-12' : 'h-8';
+                          displayLabel = <span className="flex items-center text-[12px] tracking-tighter brightness-50 contrast-150 saturate-200 drop-shadow-sm">{'👟'.repeat(Math.min(s.assists, 5))}</span>;
+                          isHighlight = true;
+                        } else {
+                          barHeight = 'h-6';
+                          displayLabel = '0';
+                        }
+
+                        if (s.isMotm) {
+                          showStar = true;
+                          isHighlight = true;
+                          barHeight = 'h-20';
+                        }
+                      } else {
+                        // Legacy fallback for old data (numbers)
+                        const val = Number(stat);
+                        const heights = ['h-6', 'h-8', 'h-14', 'h-10', 'h-14'];
+                        barHeight = heights[idx % heights.length];
+                        isHighlight = idx === 2 || idx === 4;
+                        displayLabel = String(val);
+                      }
+
                       return (
-                        <div key={idx} className="flex-1 flex flex-col items-center gap-1">
+                        <div key={idx} className="flex-1 flex flex-col items-center gap-1 justify-end h-full">
+                          {showStar && <Star className="w-4 h-4 text-amber-300 fill-amber-400 mb-0.5 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]" />}
                           <div
-                            className={`w-full rounded-t-md transition-all ${
-                              isHighlight
-                                ? 'bg-[#4B7CEC] shadow-md shadow-[#4B7CEC]/40'
-                                : 'bg-[#4C787E] opacity-75'
-                            } ${heights[idx % heights.length]}`}
+                            className={`w-full rounded-t-md transition-all border-x border-t ${
+                              showStar
+                                ? 'bg-gradient-to-t from-amber-600 to-amber-300 border-yellow-200 shadow-[0_0_10px_rgba(251,191,36,0.6)]'
+                                : isHighlight
+                                ? 'bg-[#4B7CEC] border-transparent shadow-md shadow-[#4B7CEC]/40'
+                                : 'bg-[#4C787E] border-transparent opacity-75'
+                            } ${barHeight}`}
                           />
-                          <span className="text-[10px] font-black text-[#152a38]">{val}</span>
+                          <span className="text-[11px] font-black text-[#152a38] leading-none flex items-center justify-center h-4">{displayLabel}</span>
                         </div>
                       );
                     })}

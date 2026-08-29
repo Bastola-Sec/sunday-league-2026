@@ -99,19 +99,35 @@
   }
 }
 
-/* Custom Scrollbar */
+/* Custom scrollbar styling */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: rgba(5, 8, 12, 0.8);
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(183, 206, 236, 0.3);
+  background: rgba(76, 120, 126, 0.5);
   border-radius: 3px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #4C787E;
+  background: rgba(183, 206, 236, 0.8);
+}
+
+/* Custom Date & Time Picker styling (hides default browser right indicator and makes entire field & left icon open picker) */
+.custom-date-picker::-webkit-calendar-picker-indicator,
+.custom-time-picker::-webkit-calendar-picker-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 
 /* Suppress iOS WebKit Native Video Play Button Overlays */
