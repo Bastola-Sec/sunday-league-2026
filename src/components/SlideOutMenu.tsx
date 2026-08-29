@@ -149,8 +149,33 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                   </div>
                 </div>
 
-                {/* Admin Console Section */}
-                <div className="mb-6 space-y-2 p-3 rounded-2xl bg-[#080d14] border border-[#B7CEEC]/30 shadow-inner">
+                {/* Settings & Admin Section */}
+                <div className="mb-6">
+                  <p className="text-[11px] f1-header tracking-[0.2em] text-[#4C787E] mb-3">
+                    SETTINGS & ADMIN
+                  </p>
+                  <div className="space-y-2 p-3 rounded-2xl bg-[#080d14] border border-[#B7CEEC]/30 shadow-inner">
+                    {/* Sound Effects Toggle */}
+                    <button
+                      onClick={onToggleSound}
+                      className="w-full py-3 px-3 rounded-xl border bg-[#0a141d] border-[#B7CEEC]/20 text-[#B7CEEC] hover:bg-[#B7CEEC]/10 font-bold text-xs flex items-center justify-between transition-all cursor-pointer shadow-sm"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Activity className={`w-4 h-4 ${isSoundEnabled ? 'text-emerald-400' : 'text-gray-500'}`} />
+                        <div className="text-left">
+                          <p className="font-extrabold text-[11px] leading-tight text-white">
+                            Sound Effects
+                          </p>
+                          <p className="text-[9px] opacity-70 font-mono">
+                            {isSoundEnabled ? 'Whistle & crowd sounds on' : 'Muted'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isSoundEnabled ? 'bg-emerald-500' : 'bg-gray-600'}`}>
+                        <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${isSoundEnabled ? 'translate-x-4' : 'translate-x-1'}`} />
+                      </div>
+                    </button>
+
                   {/* PWA Phone Web Push Notification Button */}
                   <button
                     onClick={async () => {
@@ -205,6 +230,7 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                     </div>
                     <ChevronRight className="w-4 h-4 text-[#B7CEEC] group-hover:translate-x-1 transition-transform" />
                   </button>
+                  </div>
                 </div>
               </div>
 
