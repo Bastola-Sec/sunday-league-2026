@@ -476,6 +476,13 @@ export default function App() {
     }
   };
 
+  const handleDeleteMatch = async (matchId: string) => {
+    setMatches((prev) => prev.filter((m) => m.id !== matchId));
+    await deleteMatchFromFirestore(matchId);
+    if (selectedMatchForModal && selectedMatchForModal.id === matchId) {
+      setSelectedMatchForModal(null);
+    }
+  };
 
   // Update Roster Admin with automatic multi-component & Firestore lineup sync
   const handleUpdateRoster = (teamId: string, updatedRoster: Player[]) => {
@@ -786,6 +793,7 @@ export default function App() {
         onUpdateTeamDetails={handleUpdateTeamDetails}
         onUpdateMatchScore={handleUpdateMatchScore}
         onUpdateFullMatch={handleUpdateFullMatch}
+        onDeleteMatch={handleDeleteMatch}
         onSendPushNotification={handleSendPushNotification}
         activeAdminTeamId={activeAdminTeamId}
         onSelectAdminTeam={(teamId) => setActiveAdminTeamId(teamId)}

@@ -72,7 +72,8 @@ interface AdminPortalModalProps {
   onUpdateRoster: (teamId: string, updatedRoster: Player[]) => void;
   onUpdateTeamDetails?: (teamId: string, details: Partial<Team>) => void;
   onUpdateMatchScore: (matchId: string, homeScore: number, awayScore: number, newEvent?: MatchEvent) => void;
-  onUpdateFullMatch?: (matchId: string, updatedMatch: Partial<Match>) => void;
+  onUpdateFullMatch: (matchId: string, updatedFields: Partial<Match>) => void;
+  onDeleteMatch?: (matchId: string) => void;
   onSendPushNotification: (title: string, message: string, teamId?: string) => void;
   activeAdminTeamId: string | null;
   onSelectAdminTeam: (teamId: string | null) => void;
@@ -97,6 +98,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   onUpdateTeamDetails,
   onUpdateMatchScore,
   onUpdateFullMatch,
+  onDeleteMatch,
   onSendPushNotification,
   activeAdminTeamId,
   onSelectAdminTeam,
@@ -2079,6 +2081,34 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                             </span>
 
                             <div className="flex items-center gap-1.5 shrink-0">
+                              {isCommish && (
+                                <div className="flex items-center gap-1 mr-2">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenEditFixtureModal(m);
+                                    }}
+                                    className="p-1 rounded-md bg-teal-500/20 hover:bg-teal-500/40 text-teal-300 transition-colors"
+                                    title="Edit Fixture"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (window.confirm('Are you sure you want to delete this fixture?')) {
+                                        onDeleteMatch?.(m.id);
+                                      }
+                                    }}
+                                    className="p-1 rounded-md bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 transition-colors"
+                                    title="Delete Fixture"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
                               <span className={`px-2 py-0.5 rounded-md text-[9px] font-mono font-black uppercase border ${badgeBg}`}>
                                 {badgeText}
                               </span>
