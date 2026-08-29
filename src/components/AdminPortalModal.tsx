@@ -3574,6 +3574,54 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
           }
         }}
       />
+      {/* PLAYER TRANSFER MODAL */}
+      {transferPlayer && transferSourceTeamId && (
+        <div className="fixed inset-0 bg-[#020408]/92 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-[#05080c] border border-amber-500/30 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="text-amber-400 font-black text-sm uppercase tracking-wider mb-2 flex items-center gap-2">
+              <ArrowRightLeft className="w-4 h-4" /> Transfer Player
+            </h3>
+            <p className="text-white text-xs mb-4">
+              Select destination club for <strong className="text-amber-300">#{transferPlayer.number} {transferPlayer.name}</strong>. Stats are fully preserved.
+            </p>
+            <div className="space-y-2 mb-6 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+              {teams.filter(t => t.id !== transferSourceTeamId).map(t => (
+                <button
+                  key={`transfer-to-${t.id}`}
+                  onClick={() => {
+                    if (window.confirm(`Transfer ${transferPlayer.name} to ${t.name}? Historical stats will be preserved.`)) {
+                      const sourceTeam = teams.find(st => st.id === transferSourceTeamId);
+                      const destTeam = t;
+                      if (sourceTeam && destTeam) {
+                        const newSourceRoster = sourceTeam.roster.filter(p => p.id !== transferPlayer.id);
+                        const newDestRoster = [...(destTeam.roster || []), transferPlayer];
+                        onUpdateRoster(sourceTeam.id, newSourceRoster);
+                        onUpdateRoster(destTeam.id, newDestRoster);
+                        alert(`${transferPlayer.name} successfully transferred to ${destTeam.name}!`);
+                        setTransferPlayer(null);
+                        setTransferSourceTeamId(null);
+                      }
+                    }
+                  }}
+                  className="w-full text-left p-3 rounded-xl bg-[#0c1622] hover:bg-[#16273a] border border-[#4C787E]/30 text-xs font-bold text-gray-200 transition-colors cursor-pointer flex items-center gap-3"
+                >
+                  <TeamLogo teamId={t.id} size={24} />
+                  <span>{t.name}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                setTransferPlayer(null);
+                setTransferSourceTeamId(null);
+              }}
+              className="w-full p-2.5 rounded-xl bg-gray-800 text-gray-300 font-bold text-xs uppercase hover:bg-gray-700 transition-colors cursor-pointer"
+            >
+              Cancel Transfer
+            </button>
+          </div>
+        </div>
+      )}
     </AnimatePresence>
   );
 };
