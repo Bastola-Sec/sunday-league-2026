@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ChevronDown, Trophy, Info, Flame, Award, Star, Zap, Swords, ArrowRight, Sparkles, Clock } from 'lucide-react';
+import { ChevronDown, Trophy, Info, Flame, Award, Star, Zap, Swords, ArrowRight, Sparkles, Clock, Lock } from 'lucide-react';
 import { Team, Player, Match, SpecialTournament } from '../types';
 import { TeamLogo } from './TeamLogos';
 import { TiltCard } from './TiltCard';
@@ -1171,8 +1171,17 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                     <span>SUPER CUP TOURNAMENT BRACKET</span>
                   </div>
 
-                  {/* VISUAL BRACKET CONTAINER FOR SUPER CUP */}
-                  <div className="p-2.5 sm:p-3 rounded-2xl bg-[#080d14]/90 border border-cyan-500/30 shadow-xl space-y-2">
+                  {((!superCupQualifier && !superCupFinal) || activeSeasonOption?.seasonNum === 1) ? (
+                    <div className="p-8 rounded-2xl bg-[#080d14]/90 border border-cyan-500/30 shadow-xl flex flex-col items-center justify-center text-center space-y-3">
+                      <Lock className="w-10 h-10 text-cyan-500/60 mb-1" />
+                      <h3 className="text-lg font-black font-mono text-cyan-400 uppercase tracking-widest">Coming Next Season</h3>
+                      <p className="text-xs text-[#B7CEEC]/80 max-w-xs leading-relaxed">
+                        The Super Cup is disabled for the inaugural season. It will commence with an expanded format in Season 2!
+                      </p>
+                    </div>
+                  ) : (
+                    /* VISUAL BRACKET CONTAINER FOR SUPER CUP */
+                    <div className="p-2.5 sm:p-3 rounded-2xl bg-[#080d14]/90 border border-cyan-500/30 shadow-xl space-y-2">
                     {/* Bracket Tree Row (Qualifier -> Connector -> Final) */}
                     <div className="grid grid-cols-1 sm:grid-cols-11 gap-1.5 items-center">
                       
@@ -1382,6 +1391,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                       )}
                     </div>
                   </div>
+                  )}
                 </div>
               )}
             </div>
