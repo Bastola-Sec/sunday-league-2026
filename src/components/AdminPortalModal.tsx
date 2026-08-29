@@ -44,6 +44,7 @@ import {
   EyeOff,
   AlertCircle,
   Calendar,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { Team, Match, Player, PushNotification, AdminUser, BoardMember, MatchEvent, SpecialTournament } from '../types';
 import { TeamLogo } from './TeamLogos';
@@ -305,6 +306,9 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   // Category Filter State for Admin Match Selector (Upcoming | Past)
   const [adminFixtureFilter, setAdminFixtureFilter] = useState<'upcoming' | 'past'>('upcoming');
   const [selectedAdminSpecialTourneyId, setSelectedAdminSpecialTourneyId] = useState<string>('all');
+
+  const [transferPlayer, setTransferPlayer] = useState<Player | null>(null);
+  const [transferSourceTeamId, setTransferSourceTeamId] = useState<string | null>(null);
 
   const getAdminTeam = (id: string): Team => {
     const found = teams.find((t) => t.id === id);
@@ -2687,6 +2691,18 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                       }`}
                                   >
                                     <Star className="w-3.5 h-3.5 fill-current" />
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTransferPlayer(p);
+                                      setTransferSourceTeamId(activeSelectedTeam?.id || '');
+                                    }}
+                                    className="px-2 py-1 rounded-lg bg-[#182a3c] hover:bg-amber-500/20 text-amber-300 hover:text-amber-400 font-bold text-[11px] border border-[#4C787E]/40 transition-colors flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <ArrowRightLeft className="w-3 h-3" />
+                                    <span className="hidden sm:inline">Transfer</span>
                                   </button>
 
                                   <button
