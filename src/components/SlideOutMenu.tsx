@@ -184,20 +184,20 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                           {/* 1. Sounds Toggle */}
                           <button
                             onClick={onToggleSound}
-                            className="w-full py-3 px-3 rounded-xl border bg-[#0a141d] border-[#B7CEEC]/20 text-[#B7CEEC] hover:bg-[#B7CEEC]/10 font-bold text-xs flex items-center justify-between transition-all cursor-pointer shadow-sm"
+                            className="w-full py-3 px-3 rounded-xl border bg-[#0a141d] border-[#B7CEEC]/20 hover:bg-[#B7CEEC]/10 font-bold flex items-center justify-between transition-all cursor-pointer shadow-sm"
                           >
                             <div className="flex items-center gap-2.5">
-                              <Activity className={`w-4 h-4 ${isSoundEnabled ? 'text-emerald-400' : 'text-gray-500'}`} />
+                              <Activity className={`w-5 h-5 ${isSoundEnabled ? 'text-emerald-400' : 'text-rose-400'}`} />
                               <div className="text-left">
-                                <p className="font-extrabold text-[11px] leading-tight text-white">
+                                <p className="font-extrabold text-sm leading-tight text-white">
                                   Sounds
                                 </p>
-                                <p className="text-[9px] opacity-70 font-mono">
+                                <p className="text-[10px] opacity-70 font-mono text-gray-300">
                                   {isSoundEnabled ? 'ON' : 'OFF'}
                                 </p>
                               </div>
                             </div>
-                            <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isSoundEnabled ? 'bg-emerald-500' : 'bg-gray-600'}`}>
+                            <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isSoundEnabled ? 'bg-emerald-500' : 'bg-rose-500'}`}>
                               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${isSoundEnabled ? 'translate-x-4' : 'translate-x-1'}`} />
                             </div>
                           </button>
@@ -213,28 +213,22 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                                 alert(res.error || 'Notification permission was not granted.');
                               }
                             }}
-                            className={`w-full py-3 px-3 rounded-xl border font-bold text-xs flex items-center justify-between transition-all cursor-pointer shadow-md ${
-                              pushPermission === 'granted'
-                                ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300'
-                                : 'bg-[#0a141d] border-amber-400/40 text-amber-300 hover:bg-amber-500/10'
-                            }`}
+                            className="w-full py-3 px-3 rounded-xl border bg-[#0a141d] border-[#B7CEEC]/20 hover:bg-[#B7CEEC]/10 font-bold flex items-center justify-between transition-all cursor-pointer shadow-sm"
                           >
                             <div className="flex items-center gap-2.5">
-                              <Bell className={`w-4 h-4 ${pushPermission === 'granted' ? 'text-emerald-400' : 'text-amber-400 animate-bounce'}`} />
+                              <Bell className={`w-5 h-5 ${pushPermission === 'granted' ? 'text-emerald-400' : 'text-rose-400'}`} />
                               <div className="text-left">
-                                <p className="font-extrabold text-[11px] leading-tight text-white">
+                                <p className="font-extrabold text-sm leading-tight text-white">
                                   Notification
                                 </p>
-                                <p className="text-[9px] opacity-80 font-mono">
+                                <p className="text-[10px] opacity-80 font-mono text-gray-300">
                                   {pushPermission === 'granted' ? 'ON' : 'OFF'}
                                 </p>
                               </div>
                             </div>
-                            <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase ${
-                              pushPermission === 'granted' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-400/20 text-amber-300'
-                            }`}>
-                              {pushPermission === 'granted' ? 'ON' : 'ENABLE'}
-                            </span>
+                            <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${pushPermission === 'granted' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
+                              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${pushPermission === 'granted' ? 'translate-x-4' : 'translate-x-1'}`} />
+                            </div>
                           </button>
 
                           {/* 3. Club Console */}
