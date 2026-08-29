@@ -237,7 +237,27 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                             </span>
                           </button>
 
-                          {/* 3. Admin Console */}
+                          {/* 3. Club Console */}
+                          <button
+                            onClick={() => {
+                              onSelectState(5); // Go to Top Clubs to select a club
+                              onClose();
+                            }}
+                            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#1a2b3c] to-[#2c3e50] hover:from-[#2c3e50] hover:to-[#34495e] border border-[#B7CEEC]/30 text-white font-extrabold text-xs transition-all flex items-center justify-between shadow-lg cursor-pointer group hover:scale-[1.02] active:scale-[0.98]"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-lg bg-[#05080c]/80 text-[#B7CEEC] group-hover:text-white border border-[#B7CEEC]/40 transition-colors">
+                                <Shield className="w-4 h-4 text-[#B7CEEC]" />
+                              </div>
+                              <div className="text-left">
+                                <p className="font-bold text-xs text-white leading-none f1-header tracking-wider">Club Console</p>
+                                <p className="text-[10px] text-[#B7CEEC]/80 mt-1 font-mono">Manage Roster & Profile</p>
+                              </div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-[#B7CEEC] group-hover:translate-x-1 transition-transform" />
+                          </button>
+
+                          {/* 4. Commissioner Console */}
                           <button
                             onClick={() => {
                               onSelectState(5);
@@ -251,7 +271,7 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                                 <ShieldAlert className="w-4 h-4 text-[#4C787E]" />
                               </div>
                               <div className="text-left">
-                                <p className="font-bold text-xs text-white leading-none f1-header tracking-wider">Admin Console</p>
+                                <p className="font-bold text-xs text-white leading-none f1-header tracking-wider">Commissioner</p>
                                 <p className="text-[10px] text-[#B7CEEC]/80 mt-1 font-mono">League Operations</p>
                               </div>
                             </div>
