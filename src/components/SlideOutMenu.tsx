@@ -111,10 +111,8 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                   </p>
                   <div className="space-y-2">
                     {[
-                      { state: 1 as AppScrollState, label: 'Hero & Overview', icon: Home, desc: 'Welcome & Season Intro' },
                       { state: 2 as AppScrollState, label: 'Official Leaderboards', icon: Trophy, desc: 'Standings & Cup Brackets' },
                       { state: 3 as AppScrollState, label: 'Live Action & Fixtures', icon: Activity, desc: 'Real-Time Match Center' },
-                      { state: 4 as AppScrollState, label: '3D Stadium View', icon: Sparkles, desc: 'DeAnza Stadium Specs' },
                       { state: 5 as AppScrollState, label: 'Top League Clubs', icon: Shield, desc: 'Contenders & Rosters' },
                     ].map((item) => {
                       const Icon = item.icon;
