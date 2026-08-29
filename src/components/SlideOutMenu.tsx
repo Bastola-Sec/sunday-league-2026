@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MoreVertical, X, Trophy, Shield, Activity, Eye, ShieldAlert, Bell, Smartphone, Sparkles, ChevronRight, Home } from 'lucide-react';
+import { MoreVertical, X, Trophy, Shield, Activity, Eye, ShieldAlert, Bell, Smartphone, Sparkles, ChevronRight, Home, Settings, ChevronDown } from 'lucide-react';
 import { AppScrollState, Team } from '../types';
 import { TeamLogo } from './TeamLogos';
 import { requestPushNotificationPermission, getNotificationPermissionStatus } from '../lib/pushNotificationService';
@@ -41,6 +41,7 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
   onOpenAdminPortal,
 }) => {
   const [pushPermission, setPushPermission] = useState<'granted' | 'denied' | 'default'>(getNotificationPermissionStatus());
+  const [isSettingsExpanded, setIsSettingsExpanded] = useState(false);
   return (
     <>
       {/* 3-Dot Floating Trigger Button (Top Right Corner - Safe Area Offset) */}
@@ -149,88 +150,137 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                   </div>
                 </div>
 
-                {/* Settings & Admin Section */}
+                {/* Settings & Admin Accordion */}
                 <div className="mb-6">
-                  <p className="text-[11px] f1-header tracking-[0.2em] text-[#4C787E] mb-3">
-                    SETTINGS & ADMIN
-                  </p>
-                  <div className="space-y-2 p-3 rounded-2xl bg-[#080d14] border border-[#B7CEEC]/30 shadow-inner">
-                    {/* Sound Effects Toggle */}
-                    <button
-                      onClick={onToggleSound}
-                      className="w-full py-3 px-3 rounded-xl border bg-[#0a141d] border-[#B7CEEC]/20 text-[#B7CEEC] hover:bg-[#B7CEEC]/10 font-bold text-xs flex items-center justify-between transition-all cursor-pointer shadow-sm"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Activity className={`w-4 h-4 ${isSoundEnabled ? 'text-emerald-400' : 'text-gray-500'}`} />
-                        <div className="text-left">
-                          <p className="font-extrabold text-[11px] leading-tight text-white">
-                            Sound Effects
-                          </p>
-                          <p className="text-[9px] opacity-70 font-mono">
-                            {isSoundEnabled ? 'Whistle & crowd sounds on' : 'Muted'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isSoundEnabled ? 'bg-emerald-500' : 'bg-gray-600'}`}>
-                        <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${isSoundEnabled ? 'translate-x-4' : 'translate-x-1'}`} />
-                      </div>
-                    </button>
-
-                  {/* PWA Phone Web Push Notification Button */}
                   <button
-                    onClick={async () => {
-                      const res = await requestPushNotificationPermission();
-                      if (res.granted) {
-                        alert('🔔 MATCH ALERTS ENABLED!\n\nYou will now receive live background alerts on your phone for Goals, Kickoffs & Tournament events!');
-                        setPushPermission('granted');
-                      } else {
-                        alert(res.error || 'Notification permission was not granted.');
-                      }
-                    }}
-                    className={`w-full py-3 px-3 rounded-xl border font-bold text-xs flex items-center justify-between transition-all cursor-pointer shadow-md ${
-                      pushPermission === 'granted'
-                        ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300'
-                        : 'bg-[#0a141d] border-amber-400/40 text-amber-300 hover:bg-amber-500/10'
+                    onClick={() => setIsSettingsExpanded(!isSettingsExpanded)}
+                    className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between group ${
+                      isSettingsExpanded
+                        ? 'bg-[#080d14] border-[#4C787E] text-white shadow-lg shadow-[#4C787E]/20'
+                        : 'bg-[#05080c] border-[#B7CEEC]/20 text-gray-300 hover:border-[#4C787E] hover:bg-[#080d14]'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Bell className={`w-4 h-4 ${pushPermission === 'granted' ? 'text-emerald-400' : 'text-amber-400 animate-bounce'}`} />
-                      <div className="text-left">
-                        <p className="font-extrabold text-[11px] leading-tight">
-                          {pushPermission === 'granted' ? '✅ Phone Match Alerts Active' : '🔔 Enable Phone Match Alerts'}
-                        </p>
-                        <p className="text-[9px] opacity-80 font-mono">
-                          {pushPermission === 'granted' ? 'Receiving Goal & Kickoff Alerts' : 'Get background alerts even when closed'}
-                        </p>
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${isSettingsExpanded ? 'bg-[#4C787E] text-white' : 'bg-[#080d14] text-[#B7CEEC]'}`}>
+                        <Settings className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold leading-tight font-mono">Settings & Admin</p>
+                        <p className="text-[10px] text-[#B7CEEC]/70">Preferences & Consoles</p>
                       </div>
                     </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase ${
-                      pushPermission === 'granted' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-400/20 text-amber-300'
-                    }`}>
-                      {pushPermission === 'granted' ? 'ON' : 'ENABLE'}
-                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${isSettingsExpanded ? 'text-[#4C787E] rotate-180' : 'text-gray-500'}`} />
                   </button>
 
-                  <button
-                    onClick={() => {
-                      onSelectState(5);
-                      onOpenAdminPortal();
-                      onClose();
-                    }}
-                    className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#112230] via-[#1a3848] to-[#4C787E] hover:from-[#172e3f] hover:to-[#5a8c93] border border-[#4C787E]/60 text-white font-extrabold text-xs transition-all flex items-center justify-between shadow-lg shadow-[#4C787E]/20 cursor-pointer group hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-[#05080c]/80 text-[#B7CEEC] group-hover:text-white border border-[#4C787E]/40 transition-colors">
-                        <ShieldAlert className="w-4 h-4 text-[#4C787E]" />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-bold text-xs text-white leading-none f1-header tracking-wider">ADMIN CONSOLE</p>
-                        <p className="text-[10px] text-[#B7CEEC]/80 mt-1 font-mono">League & Team Management</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-[#B7CEEC] group-hover:translate-x-1 transition-transform" />
-                  </button>
-                  </div>
+                  <AnimatePresence>
+                    {isSettingsExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="space-y-2 p-3 mt-2 rounded-2xl bg-[#080d14] border border-[#B7CEEC]/30 shadow-inner">
+                          {/* 1. Sounds Toggle */}
+                          <button
+                            onClick={onToggleSound}
+                            className="w-full py-3 px-3 rounded-xl border bg-[#0a141d] border-[#B7CEEC]/20 text-[#B7CEEC] hover:bg-[#B7CEEC]/10 font-bold text-xs flex items-center justify-between transition-all cursor-pointer shadow-sm"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <Activity className={`w-4 h-4 ${isSoundEnabled ? 'text-emerald-400' : 'text-gray-500'}`} />
+                              <div className="text-left">
+                                <p className="font-extrabold text-[11px] leading-tight text-white">
+                                  Sounds
+                                </p>
+                                <p className="text-[9px] opacity-70 font-mono">
+                                  {isSoundEnabled ? 'ON' : 'OFF'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isSoundEnabled ? 'bg-emerald-500' : 'bg-gray-600'}`}>
+                              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${isSoundEnabled ? 'translate-x-4' : 'translate-x-1'}`} />
+                            </div>
+                          </button>
+
+                          {/* 2. Notification Toggle */}
+                          <button
+                            onClick={async () => {
+                              const res = await requestPushNotificationPermission();
+                              if (res.granted) {
+                                alert('🔔 MATCH ALERTS ENABLED!\n\nYou will now receive live background alerts on your phone for Goals, Kickoffs & Tournament events!');
+                                setPushPermission('granted');
+                              } else {
+                                alert(res.error || 'Notification permission was not granted.');
+                              }
+                            }}
+                            className={`w-full py-3 px-3 rounded-xl border font-bold text-xs flex items-center justify-between transition-all cursor-pointer shadow-md ${
+                              pushPermission === 'granted'
+                                ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300'
+                                : 'bg-[#0a141d] border-amber-400/40 text-amber-300 hover:bg-amber-500/10'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <Bell className={`w-4 h-4 ${pushPermission === 'granted' ? 'text-emerald-400' : 'text-amber-400 animate-bounce'}`} />
+                              <div className="text-left">
+                                <p className="font-extrabold text-[11px] leading-tight text-white">
+                                  Notification
+                                </p>
+                                <p className="text-[9px] opacity-80 font-mono">
+                                  {pushPermission === 'granted' ? 'ON' : 'OFF'}
+                                </p>
+                              </div>
+                            </div>
+                            <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase ${
+                              pushPermission === 'granted' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-400/20 text-amber-300'
+                            }`}>
+                              {pushPermission === 'granted' ? 'ON' : 'ENABLE'}
+                            </span>
+                          </button>
+
+                          {/* 3. Club Console */}
+                          <button
+                            onClick={() => {
+                              onSelectState(5); // Go to Top Clubs to select a club
+                              onClose();
+                            }}
+                            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#1a2b3c] to-[#2c3e50] hover:from-[#2c3e50] hover:to-[#34495e] border border-[#B7CEEC]/30 text-white font-extrabold text-xs transition-all flex items-center justify-between shadow-lg cursor-pointer group hover:scale-[1.02] active:scale-[0.98]"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-lg bg-[#05080c]/80 text-[#B7CEEC] group-hover:text-white border border-[#B7CEEC]/40 transition-colors">
+                                <Shield className="w-4 h-4 text-[#B7CEEC]" />
+                              </div>
+                              <div className="text-left">
+                                <p className="font-bold text-xs text-white leading-none f1-header tracking-wider">Club Console</p>
+                                <p className="text-[10px] text-[#B7CEEC]/80 mt-1 font-mono">Manage Roster & Profile</p>
+                              </div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-[#B7CEEC] group-hover:translate-x-1 transition-transform" />
+                          </button>
+
+                          {/* 4. Commissioner Console */}
+                          <button
+                            onClick={() => {
+                              onSelectState(5);
+                              onOpenAdminPortal();
+                              onClose();
+                            }}
+                            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#112230] via-[#1a3848] to-[#4C787E] hover:from-[#172e3f] hover:to-[#5a8c93] border border-[#4C787E]/60 text-white font-extrabold text-xs transition-all flex items-center justify-between shadow-lg shadow-[#4C787E]/20 cursor-pointer group hover:scale-[1.02] active:scale-[0.98]"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-lg bg-[#05080c]/80 text-[#B7CEEC] group-hover:text-white border border-[#4C787E]/40 transition-colors">
+                                <ShieldAlert className="w-4 h-4 text-[#4C787E]" />
+                              </div>
+                              <div className="text-left">
+                                <p className="font-bold text-xs text-white leading-none f1-header tracking-wider">Commissioner</p>
+                                <p className="text-[10px] text-[#B7CEEC]/80 mt-1 font-mono">League Operations</p>
+                              </div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-[#B7CEEC] group-hover:translate-x-1 transition-transform" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 
