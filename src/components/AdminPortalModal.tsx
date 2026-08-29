@@ -2657,7 +2657,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                               className="px-3 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
                             >
                               <UserPlus className="w-4 h-4" />
-                              <span>+ Add Player (Popup Form)</span>
+                              <span>Add Player</span>
                             </button>
                           </div>
 
