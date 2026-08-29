@@ -49,10 +49,11 @@ export const PushNotificationPrompt: React.FC = () => {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ opacity: 0, y: 50, scale: 0.95 }}
+          initial={{ opacity: 0, y: -50, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          className="fixed bottom-6 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 z-[100] p-4 rounded-2xl bg-gradient-to-br from-[#08121e] to-[#05080c] border border-[#4C787E]/50 shadow-2xl shadow-[#000000]/80 backdrop-blur-xl flex flex-col gap-3"
+          exit={{ opacity: 0, y: -50, scale: 0.95 }}
+          style={{ top: 'calc(1.5rem + env(safe-area-inset-top, 24px))' }}
+          className="fixed left-4 right-4 sm:left-auto sm:right-6 sm:w-96 z-[100] p-4 rounded-2xl bg-gradient-to-br from-[#08121e] to-[#05080c] border border-[#4C787E]/50 shadow-2xl shadow-[#000000]/80 backdrop-blur-xl flex flex-col gap-3"
         >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
