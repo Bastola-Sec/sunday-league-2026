@@ -20,7 +20,7 @@ interface SlideOutMenuProps {
   onToggleSound: () => void;
   notificationCount: number;
   onOpenNotifications: () => void;
-  onOpenAdminPortal: () => void;
+  onOpenAdminPortal: (mode: 'club' | 'commissioner') => void;
 }
 
 export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
@@ -240,7 +240,7 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                           {/* 3. Club Console */}
                           <button
                             onClick={() => {
-                              onSelectState(5); // Go to Top Clubs to select a club
+                              onOpenAdminPortal('club');
                               onClose();
                             }}
                             className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#1a2b3c] to-[#2c3e50] hover:from-[#2c3e50] hover:to-[#34495e] border border-[#B7CEEC]/30 text-white font-extrabold text-xs transition-all flex items-center justify-between shadow-lg cursor-pointer group hover:scale-[1.02] active:scale-[0.98]"
@@ -260,8 +260,7 @@ export const SlideOutMenu: React.FC<SlideOutMenuProps> = ({
                           {/* 4. Commissioner Console */}
                           <button
                             onClick={() => {
-                              onSelectState(5);
-                              onOpenAdminPortal();
+                              onOpenAdminPortal('commissioner');
                               onClose();
                             }}
                             className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#112230] via-[#1a3848] to-[#4C787E] hover:from-[#172e3f] hover:to-[#5a8c93] border border-[#4C787E]/60 text-white font-extrabold text-xs transition-all flex items-center justify-between shadow-lg shadow-[#4C787E]/20 cursor-pointer group hover:scale-[1.02] active:scale-[0.98]"

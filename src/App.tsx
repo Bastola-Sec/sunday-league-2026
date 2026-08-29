@@ -202,6 +202,7 @@ export default function App() {
   // Scroll State & Navigation (1..5)
   const [scrollState, setScrollState] = useState<AppScrollState>(1);
   const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const [adminPortalMode, setAdminPortalMode] = useState<'club' | 'commissioner'>('club');
 
   // Ref for hero background video optimization & mobile PWA autoplay guarantees
   const heroVideoRef = useRef<HTMLVideoElement>(null);
@@ -655,8 +656,10 @@ export default function App() {
         onToggleSound={() => setIsSoundEnabled((prev) => !prev)}
         notificationCount={notifications.length}
         onOpenNotifications={() => setIsMenuOpen(true)}
-        onOpenAdminPortal={() => setIsAdminPortalOpen(true)}
-      />
+        onOpenAdminPortal={(mode) => {
+          setAdminPortalMode(mode);
+          setIsAdminPortalOpen(true);
+        }}/>
 
 
 
@@ -772,6 +775,7 @@ export default function App() {
       />
 
       <AdminPortalModal
+        mode={adminPortalMode}
         isOpen={isAdminPortalOpen}
         onClose={() => setIsAdminPortalOpen(false)}
         teams={displayTeams}
