@@ -124,7 +124,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     return null;
   });
 
-  const [loginTeamId, setLoginTeamId] = useState<string>(teams[0]?.id || 'momo-strikers');
+  const [loginTeamId, setLoginTeamId] = useState<string>('all');
   const [loginPasscode, setLoginPasscode] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -1698,24 +1698,6 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
                   {/* Passcode Login Form */}
                   <form onSubmit={handlePasscodeLogin} className="space-y-4">
-                    <div>
-                      <label className="text-xs font-black uppercase tracking-wider text-[#B7CEEC] block mb-1.5">Select Your Club</label>
-                      <select
-                        value={loginTeamId}
-                        onChange={(e) => {
-                          setLoginTeamId(e.target.value);
-                          setLoginError(null);
-                        }}
-                        className="w-full p-3 rounded-xl bg-[#03060a] border border-[#B7CEEC]/30 text-white text-xs font-semibold focus:outline-none focus:border-[#4C787E] focus:ring-1 focus:ring-[#4C787E] transition-all shadow-inner"
-                      >
-                        <option value="all">League Commissioner (Full Access)</option>
-                        {teams.map((t, idx) => (
-                          <option key={`commish-team-opt-${t.id}-${idx}`} value={t.id}>
-                            {t.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
 
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
@@ -1764,7 +1746,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                       className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#4C787E] via-[#2dd4bf] to-[#B7CEEC] text-slate-950 font-black text-xs hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(76,120,126,0.35)] cursor-pointer f1-sub-header tracking-widest uppercase border border-teal-200"
                     >
                       <LogIn className="w-4 h-4 text-slate-950" />
-                      <span>AUTHENTICATE CLUB ADMIN</span>
+                      <span>AUTHENTICATE COMMISSIONER</span>
                     </button>
                   </form>
 
