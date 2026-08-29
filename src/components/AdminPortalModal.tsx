@@ -1537,18 +1537,23 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   };
 
   // Visible matches for active admin persona
-  const rawVisibleMatches =
-    currentAdmin && currentAdmin.teamId !== 'all'
-      ? matches.filter(
-          (m) =>
-            m.homeTeamId === currentAdmin.teamId ||
-            m.awayTeamId === currentAdmin.teamId ||
-            m.matchType === 'League Cup' ||
-            m.matchType === 'Super Cup Qualifier' ||
-            m.matchType === 'Super Cup Final' ||
-            m.matchType === 'Finals'
-        )
-      : matches;
+  const rawVisibleMatches = matches.filter((m) => {
+    // Filter out Super Cup for Season 1
+    const isSuperCup = m.matchType === 'Super Cup Qualifier' || m.matchType === 'Super Cup Final' || m.id.includes('FIX-008') || m.id.includes('FIX-009') || m.id.includes('FIX-SC');
+    if (isSuperCup && currentSeasonNumber === 1) return false;
+
+    if (currentAdmin && currentAdmin.teamId !== 'all') {
+      return (
+        m.homeTeamId === currentAdmin.teamId ||
+        m.awayTeamId === currentAdmin.teamId ||
+        m.matchType === 'League Cup' ||
+        m.matchType === 'Super Cup Qualifier' ||
+        m.matchType === 'Super Cup Final' ||
+        m.matchType === 'Finals'
+      );
+    }
+    return true;
+  });
 
   // Helper to extract exact scheduled Kickoff Date for sorting
   const getMatchKickoffDateForSort = (m?: Match): Date | null => {
