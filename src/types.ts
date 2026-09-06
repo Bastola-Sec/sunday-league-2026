@@ -175,9 +175,15 @@ export interface SpecialTournament {
   isSpecialEvent?: boolean;
 }
 
+export interface HeroMediaItem {
+  url: string;
+  type: 'video' | 'image';
+}
+
 export interface AppConfig {
-  heroMediaUrl: string;
-  heroMediaType: 'video' | 'image';
+  heroMediaUrl?: string; // Legacy
+  heroMediaType?: 'video' | 'image'; // Legacy
+  heroMedia?: HeroMediaItem[];
 }
 
 export interface PushNotification {

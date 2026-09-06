@@ -45,6 +45,10 @@ export default function App() {
   const [notifications, setNotifications] = useState<PushNotification[]>(INITIAL_NOTIFICATIONS);
   const [specialTournaments, setSpecialTournaments] = useState<SpecialTournament[]>([]);
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
+  
+  // Hero Auto-Rotation & Swipe State
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
+  const touchStartX = useRef<number | null>(null);
 
   // Execute Season Rollover Handler (Legacy fallback)
   const handleRolloverSeason = async () => {
@@ -190,6 +194,40 @@ export default function App() {
       unsubAppConfig();
     };
   }, []);
+
+  // Hero Media Slideshow Rotation (10s interval)
+  useEffect(() => {
+    if (!appConfig?.heroMedia || appConfig.heroMedia.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentHeroIndex(prev => (prev + 1) % appConfig.heroMedia!.length);
+    }, 10000); // Auto-rotate every 10 seconds
+    
+    return () => clearInterval(interval);
+  }, [appConfig]);
+
+  // Swipe Handlers for Hero Background
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX;
+
+    // Minimum swipe distance of 50px
+    if (Math.abs(diff) > 50 && appConfig?.heroMedia && appConfig.heroMedia.length > 1) {
+      if (diff > 0) {
+        // Swipe Left -> Next Image
+        setCurrentHeroIndex(prev => (prev + 1) % appConfig.heroMedia!.length);
+      } else {
+        // Swipe Right -> Previous Image
+        setCurrentHeroIndex(prev => (prev - 1 + appConfig.heroMedia!.length) % appConfig.heroMedia!.length);
+      }
+    }
+    touchStartX.current = null;
+  };
 
   // Pure memoized recalculation of regular season standings & Week 4 Finals (FIX-007) Top 2 Teams
   // Purely computed on the fly with 0 side-effect state setter loops
@@ -619,39 +657,62 @@ export default function App() {
         }`}
       >
         {/* High-Tech Ambient Stadium Backdrop Fallback (shows when video is paused/blocked by iOS Low Power Mode) */}
-        <div className="absolute inset-0 bg-[#05080c] bg-gradient-to-b from-[#09131d] via-[#05080c] to-[#08111a]">
+        <div 
+          className="absolute inset-0 bg-[#05080c] bg-gradient-to-b from-[#09131d] via-[#05080c] to-[#08111a]"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[35rem] h-[35rem] bg-[#4C787E]/20 rounded-full blur-[140px] pointer-events-none" />
           <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-[35rem] h-[35rem] bg-[#B7CEEC]/10 rounded-full blur-[140px] pointer-events-none" />
         </div>
 
-        {/* Dynamic Hero Media (Video or Image) */}
-        {appConfig?.heroMediaType === 'image' ? (
-          <div 
-            className="absolute inset-0 w-full h-full bg-center bg-cover bg-no-repeat transition-opacity duration-700 opacity-100"
-            style={{ backgroundImage: `url(${appConfig.heroMediaUrl})` }}
-          />
-        ) : (
-          <video
-            ref={heroVideoRef}
-            className={`absolute inset-0 w-full h-full object-cover min-w-full min-h-full will-change-transform transform-gpu pointer-events-none transition-opacity duration-700 ${
-              isVideoPlaying ? 'opacity-100' : 'opacity-0'
-            }`}
-            autoPlay
-            loop
-            muted
-            playsInline
-            controls={false}
-            preload="auto"
-            onPlay={() => setIsVideoPlaying(true)}
-            onPause={() => setIsVideoPlaying(false)}
-            onCanPlay={attemptPlayHeroVideo}
-            onLoadedData={attemptPlayHeroVideo}
-            src={appConfig?.heroMediaUrl || "https://res.cloudinary.com/s87ouqnz/video/upload/v1785915477/Change_the_player_s_jersey_to_jiveo0.mp4"}
-          />
-        )}
+        {/* Dynamic Hero Media (Video or Image Array) */}
+        {(() => {
+          // Backward compatibility check for old config vs new array format
+          let currentMedia;
+          if (appConfig?.heroMedia && appConfig.heroMedia.length > 0) {
+            currentMedia = appConfig.heroMedia[currentHeroIndex] || appConfig.heroMedia[0];
+          } else {
+            currentMedia = {
+              url: appConfig?.heroMediaUrl || "https://res.cloudinary.com/s87ouqnz/video/upload/v1785915477/Change_the_player_s_jersey_to_jiveo0.mp4",
+              type: appConfig?.heroMediaType || 'video'
+            };
+          }
+
+          return currentMedia.type === 'image' ? (
+            <div 
+              key={currentMedia.url} // Force re-render for smooth transition
+              className="absolute inset-0 w-full h-full bg-center bg-cover bg-no-repeat transition-opacity duration-700 opacity-100 animate-in fade-in"
+              style={{ backgroundImage: `url(${currentMedia.url})` }}
+            />
+          ) : (
+            <video
+              key={currentMedia.url} // Force new video element on url change
+              ref={heroVideoRef}
+              className={`absolute inset-0 w-full h-full object-cover min-w-full min-h-full will-change-transform transform-gpu transition-opacity duration-700 ${
+                isVideoPlaying ? 'opacity-100' : 'opacity-0'
+              } animate-in fade-in`}
+              autoPlay
+              loop
+              muted
+              playsInline
+              controls={false}
+              preload="auto"
+              onPlay={() => setIsVideoPlaying(true)}
+              onPause={() => setIsVideoPlaying(false)}
+              onCanPlay={attemptPlayHeroVideo}
+              onLoadedData={attemptPlayHeroVideo}
+              src={currentMedia.url}
+            />
+          );
+        })()}
 
         {/* Dark Contrast Overlay for hero text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#05080c]/65 via-[#05080c]/40 to-[#05080c]/80 backdrop-blur-[0.5px]" />
+        <div 
+          className="absolute inset-0 bg-gradient-to-b from-[#05080c]/65 via-[#05080c]/40 to-[#05080c]/80 backdrop-blur-[0.5px]" 
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        />
       </div>
 
       {/* Top Corner 3-Dot Hidden Navigation Menu & Slide-out Drawer */}

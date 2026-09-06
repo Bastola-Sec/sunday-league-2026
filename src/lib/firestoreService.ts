@@ -168,8 +168,12 @@ export async function initializeFirestoreData(): Promise<void> {
     const configSnap = await getDocs(collection(db, CONFIG_COL));
     if (configSnap.empty) {
       const defaultConfig: AppConfig = {
-        heroMediaUrl: 'https://res.cloudinary.com/s87ouqnz/video/upload/v1785915477/Change_the_player_s_jersey_to_jiveo0.mp4',
-        heroMediaType: 'video',
+        heroMedia: [
+          {
+            url: 'https://res.cloudinary.com/s87ouqnz/video/upload/v1785915477/Change_the_player_s_jersey_to_jiveo0.mp4',
+            type: 'video'
+          }
+        ]
       };
       await setDoc(doc(db, CONFIG_COL, 'global'), sanitizeForFirestore(defaultConfig));
     }

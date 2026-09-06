@@ -150,7 +150,9 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   // Active Navigation Tab
   const [activeTab, setActiveTab] = useState<'matches' | 'rosters' | 'club' | 'broadcast' | 'database'>('matches');
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-  const [configHeroMediaUrl, setConfigHeroMediaUrl] = useState('');
+  const [configHeroMediaUrl1, setConfigHeroMediaUrl1] = useState('');
+  const [configHeroMediaUrl2, setConfigHeroMediaUrl2] = useState('');
+  const [configHeroMediaUrl3, setConfigHeroMediaUrl3] = useState('');
   const [isSavingConfig, setIsSavingConfig] = useState(false);
   const [configSaveSuccess, setConfigSaveSuccess] = useState('');
 
@@ -3022,16 +3024,38 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                           </div>
                         </div>
                         <p className="text-[11px] text-gray-400 leading-relaxed">
-                          Customize the homepage background media. The app will automatically detect if the URL provided is a video (.mp4/.webm) or an image.
+                          Customize the homepage background media. Add up to 3 URLs to create an auto-rotating slideshow. The app automatically detects video (.mp4) vs images. Swipe left/right on mobile to manually change media.
                         </p>
                         
                         <div className="space-y-2">
-                          <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Media URL (Video or Image)</label>
+                          <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Media 1 URL (Primary)</label>
                           <input
                             type="text"
                             placeholder="https://.../video.mp4 or image.png"
-                            value={configHeroMediaUrl}
-                            onChange={(e) => setConfigHeroMediaUrl(e.target.value)}
+                            value={configHeroMediaUrl1}
+                            onChange={(e) => setConfigHeroMediaUrl1(e.target.value)}
+                            className="w-full p-2.5 rounded-xl bg-[#112132] border border-[#4C787E]/40 text-white font-mono text-[10px] focus:outline-none focus:border-amber-400 transition-colors"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Media 2 URL (Optional)</label>
+                          <input
+                            type="text"
+                            placeholder="https://.../video.mp4 or image.png"
+                            value={configHeroMediaUrl2}
+                            onChange={(e) => setConfigHeroMediaUrl2(e.target.value)}
+                            className="w-full p-2.5 rounded-xl bg-[#112132] border border-[#4C787E]/40 text-white font-mono text-[10px] focus:outline-none focus:border-amber-400 transition-colors"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Media 3 URL (Optional)</label>
+                          <input
+                            type="text"
+                            placeholder="https://.../video.mp4 or image.png"
+                            value={configHeroMediaUrl3}
+                            onChange={(e) => setConfigHeroMediaUrl3(e.target.value)}
                             className="w-full p-2.5 rounded-xl bg-[#112132] border border-[#4C787E]/40 text-white font-mono text-[10px] focus:outline-none focus:border-amber-400 transition-colors"
                           />
                         </div>
@@ -3045,17 +3069,24 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
                         <button
                           onClick={async () => {
-                            if (!configHeroMediaUrl.trim()) return;
+                            const urls = [configHeroMediaUrl1, configHeroMediaUrl2, configHeroMediaUrl3]
+                              .map(u => u.trim())
+                              .filter(u => u.length > 0);
+                              
+                            if (urls.length === 0) return;
+                            
                             setIsSavingConfig(true);
                             setConfigSaveSuccess('');
                             try {
-                              const url = configHeroMediaUrl.trim();
-                              const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) || url.includes('video/upload');
-                              
-                              await saveAppConfig({
-                                heroMediaUrl: url,
-                                heroMediaType: isVideo ? 'video' : 'image'
+                              const heroMedia = urls.map(url => {
+                                const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) || url.includes('video/upload');
+                                return {
+                                  url,
+                                  type: isVideo ? 'video' : 'image' as 'video' | 'image'
+                                };
                               });
+                              
+                              await saveAppConfig({ heroMedia });
                               setConfigSaveSuccess('Global media updated instantly across all live sessions.');
                               setTimeout(() => setConfigSaveSuccess(''), 4000);
                             } catch (err) {
@@ -3064,10 +3095,10 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                               setIsSavingConfig(false);
                             }
                           }}
-                          disabled={isSavingConfig || !configHeroMediaUrl.trim()}
+                          disabled={isSavingConfig || (!configHeroMediaUrl1.trim() && !configHeroMediaUrl2.trim() && !configHeroMediaUrl3.trim())}
                           className="w-full py-2 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-400 hover:bg-amber-500 hover:text-[#05080c] font-bold text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {isSavingConfig ? 'Saving Global Config...' : 'Save & Publish Hero Media'}
+                          {isSavingConfig ? 'Saving Global Config...' : 'Save & Publish Hero Media Slideshow'}
                         </button>
                       </div>
 
