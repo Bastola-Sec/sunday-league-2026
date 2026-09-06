@@ -159,7 +159,12 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   // Live Controls Unlock window (5 minutes before scheduled kickoff)
   const [forceUnlockLiveControls, setForceUnlockLiveControls] = useState<boolean>(false);
   const [showLineupInLiveMode, setShowLineupInLiveMode] = useState<boolean>(false);
-  const [nowTime] = useState<number>(Date.now());
+  const [nowTime, setNowTime] = useState<number>(Date.now());
+  
+  useEffect(() => {
+    const timer = setInterval(() => setNowTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleSelectMatchFixture = (matchItem: Match) => {
     setEditingMatchId(matchItem.id);
