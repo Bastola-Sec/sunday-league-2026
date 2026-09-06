@@ -24,6 +24,17 @@ service cloud.firestore {
       allow write: if isValidId(notifId);
     }
 
+    // Special Tournaments collection
+    match /special_tournaments/{tournamentId} {
+      allow read: if true;
+      allow write: if isValidId(tournamentId);
+    }
+
+    // Config collection
+    match /config/{configId} {
+      allow read, write: if isValidId(configId);
+    }
+
     // Default deny catch-all
     match /{document=**} {
       allow read, write: if false;
