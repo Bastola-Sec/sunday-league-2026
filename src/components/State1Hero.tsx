@@ -10,7 +10,7 @@ interface State1HeroProps {
 
 export const State1Hero: React.FC<State1HeroProps> = ({ onNext, onJumpToState }) => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 sm:px-8 md:px-12 py-4 sm:py-6 relative z-10 select-none max-w-7xl mx-auto">
+    <div className="min-h-[100dvh] w-full flex flex-col justify-between px-4 sm:px-8 md:px-12 py-8 relative z-10 select-none max-w-7xl mx-auto">
       {/* Top Header Navigation Bar */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -37,7 +37,7 @@ export const State1Hero: React.FC<State1HeroProps> = ({ onNext, onJumpToState })
       </motion.div>
 
       {/* Hero Main Body Content */}
-      <div className="w-full my-1 flex flex-col items-start text-left space-y-4 pt-2 pb-2">
+      <div className="w-full flex-1 flex flex-col justify-center items-start text-left space-y-4 py-8">
         {/* Season & Matchday Badge */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -87,7 +87,7 @@ export const State1Hero: React.FC<State1HeroProps> = ({ onNext, onJumpToState })
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.6 }}
-        className="cursor-pointer group flex flex-col items-center gap-2 mb-2"
+        className="w-full cursor-pointer group flex flex-col items-center gap-2 mt-auto"
         onClick={onNext}
       >
         <p className="text-[10px] f1-header text-[#B7CEEC] group-hover:text-white transition-colors tracking-[0.22em]">
