@@ -752,8 +752,12 @@ export default function App() {
         className="h-full overflow-y-auto scroll-smooth snap-y snap-mandatory relative z-10 custom-scrollbar"
       >
         {/* State 1: Opening Hero Screen */}
-        <div className="snap-start min-h-full">
-          <State1Hero onNext={() => handleJumpToState(2)} onJumpToState={handleJumpToState} />
+        <div className="section-container relative snap-start snap-always w-full min-h-[100dvh]">
+          <State1Hero 
+            onNext={() => handleJumpToState(2)} 
+            onJumpToState={handleJumpToState} 
+            championData={appConfig?.seasonChampion}
+          />
         </div>
 
         {/* State 2: Official Leaderboards (Standings & Cup Brackets) */}

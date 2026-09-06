@@ -180,10 +180,18 @@ export interface HeroMediaItem {
   type: 'video' | 'image';
 }
 
+export interface ChampionData {
+  teamId: string;
+  teamName: string;
+  seasonTitle: string;
+  timestamp: number;
+}
+
 export interface AppConfig {
   heroMediaUrl?: string; // Legacy
   heroMediaType?: 'video' | 'image'; // Legacy
   heroMedia?: HeroMediaItem[];
+  seasonChampion?: ChampionData | null;
 }
 
 export interface PushNotification {

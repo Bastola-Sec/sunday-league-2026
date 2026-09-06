@@ -1354,11 +1354,49 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
     setIsLiveClockRunning(false);
     setShowMotmModal(true);
+    
+    // Default Notification
     onSendPushNotification(
       '🏁 FULL TIME FINAL RESULT',
       `Final Score: ${teams.find((t) => t.id === editingMatch.homeTeamId)?.name} ${homeScoreInput} - ${awayScoreInput} ${teams.find((t) => t.id === editingMatch.awayTeamId)?.name}`,
       undefined
     );
+
+    // Finals Champion Logic
+    if (
+      editingMatch.matchType === 'Finals' || 
+      editingMatch.matchType === 'League Cup' || 
+      editingMatch.matchType === 'Super Cup Final' || 
+      editingMatch.id === 'FIX-007'
+    ) {
+      let winnerName = null;
+      let winnerId = null;
+      
+      if (homeScoreInput > awayScoreInput) {
+        winnerId = editingMatch.homeTeamId;
+        winnerName = teams.find(t => t.id === winnerId)?.name;
+      } else if (awayScoreInput > homeScoreInput) {
+        winnerId = editingMatch.awayTeamId;
+        winnerName = teams.find(t => t.id === winnerId)?.name;
+      }
+
+      if (winnerName && winnerId) {
+        onSendPushNotification(
+          '🏆 WE HAVE A CHAMPION! 🏆',
+          `Congratulations to ${winnerName} for winning the ${editingMatch.matchType}!! 🍾🎊`,
+          undefined
+        );
+
+        saveAppConfig({
+          seasonChampion: {
+            teamId: winnerId,
+            teamName: winnerName,
+            seasonTitle: editingMatch.matchType,
+            timestamp: Date.now()
+          }
+        });
+      }
+    }
 
     setTimeout(() => {
       setSyncStatus('synced');
@@ -3094,9 +3132,31 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                             }
                           }}
                           disabled={isSavingConfig}
-                          className="w-full py-2 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-400 hover:bg-amber-500 hover:text-[#05080c] font-bold text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full py-2 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-400 hover:bg-amber-500 hover:text-[#05080c] font-bold text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-3"
                         >
                           {isSavingConfig ? 'Saving Global Config...' : 'Save & Publish Hero Media Slideshow'}
+                        </button>
+                        
+                        <div className="w-full border-t border-[#4C787E]/20 my-3"></div>
+                        
+                        <button
+                          onClick={async () => {
+                            setIsSavingConfig(true);
+                            setConfigSaveSuccess('');
+                            try {
+                              await saveAppConfig({ seasonChampion: null });
+                              setConfigSaveSuccess('Champion banner cleared from Hero page.');
+                              setTimeout(() => setConfigSaveSuccess(''), 4000);
+                            } catch (err) {
+                              console.error(err);
+                            } finally {
+                              setIsSavingConfig(false);
+                            }
+                          }}
+                          disabled={isSavingConfig}
+                          className="w-full py-2 rounded-lg bg-red-500/10 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white font-bold text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Clear Active Champion Banner
                         </button>
                       </div>
 

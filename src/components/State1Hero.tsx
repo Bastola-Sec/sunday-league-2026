@@ -6,9 +6,10 @@ import { AppScrollState } from '../types';
 interface State1HeroProps {
   onNext: () => void;
   onJumpToState?: (state: AppScrollState) => void;
+  championData?: { teamName: string; seasonTitle: string } | null;
 }
 
-export const State1Hero: React.FC<State1HeroProps> = ({ onNext, onJumpToState }) => {
+export const State1Hero: React.FC<State1HeroProps> = ({ onNext, onJumpToState, championData }) => {
   return (
     <div className="min-h-[100dvh] w-full flex flex-col justify-between px-4 sm:px-8 md:px-12 pt-14 pb-8 sm:pt-8 relative z-10 select-none max-w-7xl mx-auto">
       {/* Top Header Navigation Bar */}
@@ -37,7 +38,33 @@ export const State1Hero: React.FC<State1HeroProps> = ({ onNext, onJumpToState })
       </motion.div>
 
       {/* Hero Main Body Content */}
-      <div className="w-full flex-1 flex flex-col justify-center items-start text-left space-y-4 py-8">
+      <div className="w-full flex-1 flex flex-col justify-center items-start text-left space-y-4 py-8 relative">
+        
+        {/* Flashing Champion Banner Overlay */}
+        {championData && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: 'spring', bounce: 0.5, duration: 0.8 }}
+            className="absolute top-0 left-0 w-full z-50 mb-6"
+          >
+            <motion.div 
+              animate={{ boxShadow: ['0 0 15px rgba(251,191,36,0.2)', '0 0 35px rgba(251,191,36,0.6)', '0 0 15px rgba(251,191,36,0.2)'] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="px-4 py-3 sm:px-6 sm:py-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-400/30 to-amber-500/20 border border-amber-400/50 backdrop-blur-md shadow-2xl flex flex-col items-start gap-1"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xl sm:text-2xl animate-bounce">🏆</span>
+                <span className="text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase text-amber-300 drop-shadow-md">
+                  {championData.seasonTitle} CHAMPIONS
+                </span>
+              </div>
+              <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]">
+                {championData.teamName}
+              </h2>
+            </motion.div>
+          </motion.div>
+        )}
         {/* Season & Matchday Badge */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
