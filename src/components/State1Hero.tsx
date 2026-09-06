@@ -10,7 +10,7 @@ interface State1HeroProps {
 
 export const State1Hero: React.FC<State1HeroProps> = ({ onNext, onJumpToState }) => {
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col justify-between px-4 sm:px-8 md:px-12 py-8 relative z-10 select-none max-w-7xl mx-auto">
+    <div className="min-h-[100dvh] w-full flex flex-col justify-between px-4 sm:px-8 md:px-12 pt-14 pb-8 sm:pt-8 relative z-10 select-none max-w-7xl mx-auto">
       {/* Top Header Navigation Bar */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
