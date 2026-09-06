@@ -3073,8 +3073,6 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                               .map(u => u.trim())
                               .filter(u => u.length > 0);
                               
-                            if (urls.length === 0) return;
-                            
                             setIsSavingConfig(true);
                             setConfigSaveSuccess('');
                             try {
@@ -3087,7 +3085,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                               });
                               
                               await saveAppConfig({ heroMedia });
-                              setConfigSaveSuccess('Global media updated instantly across all live sessions.');
+                              setConfigSaveSuccess(urls.length === 0 ? 'Restored default hero background.' : 'Global media updated instantly.');
                               setTimeout(() => setConfigSaveSuccess(''), 4000);
                             } catch (err) {
                               console.error(err);
@@ -3095,7 +3093,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                               setIsSavingConfig(false);
                             }
                           }}
-                          disabled={isSavingConfig || (!configHeroMediaUrl1.trim() && !configHeroMediaUrl2.trim() && !configHeroMediaUrl3.trim())}
+                          disabled={isSavingConfig}
                           className="w-full py-2 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-400 hover:bg-amber-500 hover:text-[#05080c] font-bold text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isSavingConfig ? 'Saving Global Config...' : 'Save & Publish Hero Media Slideshow'}
