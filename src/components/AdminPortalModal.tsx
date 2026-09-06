@@ -60,7 +60,7 @@ import { SeasonSetupModal } from './SeasonSetupModal';
 import { SeasonSetupOptions } from '../utils/leagueEngine';
 import { auth } from '../lib/firebase';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { resetFirestoreToDefaults, saveMatchToFirestore } from '../lib/firestoreService';
+import { resetFirestoreToDefaults, saveMatchToFirestore, saveAppConfig } from '../lib/firestoreService';
 import { formatClockTime } from '../utils/formatClock';
 
 interface AdminPortalModalProps {
@@ -150,6 +150,9 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   // Active Navigation Tab
   const [activeTab, setActiveTab] = useState<'matches' | 'rosters' | 'club' | 'broadcast' | 'database'>('matches');
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [configHeroMediaUrl, setConfigHeroMediaUrl] = useState('');
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+  const [configSaveSuccess, setConfigSaveSuccess] = useState('');
 
   // Selected Fixture for Live Recording Popup Modal
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
@@ -3008,6 +3011,64 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                           <span className="text-gray-400">Security Rules:</span>
                           <span className="text-emerald-400 font-bold">Deployed & Enforced</span>
                         </div>
+                      </div>
+
+                      {/* GLOBAL CONFIGURATION / HERO MEDIA */}
+                      <div className="p-4 rounded-xl bg-[#05080c] border border-amber-500/40 mt-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Star className="w-4 h-4 text-amber-400" />
+                            <h5 className="font-bold text-amber-400">Global Hero Background</h5>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-gray-400 leading-relaxed">
+                          Customize the homepage background media. The app will automatically detect if the URL provided is a video (.mp4/.webm) or an image.
+                        </p>
+                        
+                        <div className="space-y-2">
+                          <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Media URL (Video or Image)</label>
+                          <input
+                            type="text"
+                            placeholder="https://.../video.mp4 or image.png"
+                            value={configHeroMediaUrl}
+                            onChange={(e) => setConfigHeroMediaUrl(e.target.value)}
+                            className="w-full p-2.5 rounded-xl bg-[#112132] border border-[#4C787E]/40 text-white font-mono text-[10px] focus:outline-none focus:border-amber-400 transition-colors"
+                          />
+                        </div>
+
+                        {configSaveSuccess && (
+                          <div className="p-2 rounded-lg bg-emerald-900/40 border border-emerald-500/30 text-emerald-400 text-[10px] flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>{configSaveSuccess}</span>
+                          </div>
+                        )}
+
+                        <button
+                          onClick={async () => {
+                            if (!configHeroMediaUrl.trim()) return;
+                            setIsSavingConfig(true);
+                            setConfigSaveSuccess('');
+                            try {
+                              const url = configHeroMediaUrl.trim();
+                              const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) || url.includes('video/upload');
+                              
+                              await saveAppConfig({
+                                heroMediaUrl: url,
+                                heroMediaType: isVideo ? 'video' : 'image'
+                              });
+                              setConfigSaveSuccess('Global media updated instantly across all live sessions.');
+                              setTimeout(() => setConfigSaveSuccess(''), 4000);
+                            } catch (err) {
+                              console.error(err);
+                            } finally {
+                              setIsSavingConfig(false);
+                            }
+                          }}
+                          disabled={isSavingConfig || !configHeroMediaUrl.trim()}
+                          className="w-full py-2 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-400 hover:bg-amber-500 hover:text-[#05080c] font-bold text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isSavingConfig ? 'Saving Global Config...' : 'Save & Publish Hero Media'}
+                        </button>
                       </div>
 
                       {resyncSuccessMsg && (

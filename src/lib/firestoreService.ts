@@ -9,7 +9,7 @@ import {
   query,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { Team, Match, PushNotification, Player, SpecialTournament } from '../types';
+import { Team, Match, PushNotification, Player, SpecialTournament, AppConfig } from '../types';
 import { INITIAL_TEAMS, INITIAL_MATCHES, INITIAL_NOTIFICATIONS } from '../data/mockData';
 
 // Collection references
@@ -17,6 +17,7 @@ const TEAMS_COL = 'teams';
 const MATCHES_COL = 'matches';
 const NOTIFICATIONS_COL = 'notifications';
 const SPECIAL_TOURNAMENTS_COL = 'special_tournaments';
+const CONFIG_COL = 'config';
 
 const OFFICIAL_MATCH_IDS = new Set(INITIAL_MATCHES.map((m) => m.id));
 const OFFICIAL_TEAM_IDS = new Set(INITIAL_TEAMS.map((t) => t.id));
@@ -163,8 +164,49 @@ export async function initializeFirestoreData(): Promise<void> {
         await setDoc(doc(db, NOTIFICATIONS_COL, notif.id), sanitizeForFirestore(notif));
       }
     }
+
+    const configSnap = await getDocs(collection(db, CONFIG_COL));
+    if (configSnap.empty) {
+      const defaultConfig: AppConfig = {
+        heroMediaUrl: 'https://res.cloudinary.com/s87ouqnz/video/upload/v1785915477/Change_the_player_s_jersey_to_jiveo0.mp4',
+        heroMediaType: 'video',
+      };
+      await setDoc(doc(db, CONFIG_COL, 'global'), sanitizeForFirestore(defaultConfig));
+    }
   } catch (err) {
     console.error('Error initializing Firestore data:', err);
+  }
+}
+
+/**
+ * Subscribe to real-time updates for App Config.
+ */
+export function subscribeAppConfig(onUpdate: (config: AppConfig | null) => void) {
+  return onSnapshot(
+    doc(db, CONFIG_COL, 'global'),
+    (snapshot) => {
+      if (snapshot.exists()) {
+        onUpdate(snapshot.data() as AppConfig);
+      } else {
+        onUpdate(null);
+      }
+    },
+    (error) => {
+      console.error('AppConfig snapshot listener error:', error);
+    }
+  );
+}
+
+/**
+ * Save or update App Config in Firestore.
+ */
+export async function saveAppConfig(configData: Partial<AppConfig>): Promise<void> {
+  try {
+    const configRef = doc(db, CONFIG_COL, 'global');
+    const sanitized = sanitizeForFirestore(configData);
+    await setDoc(configRef, sanitized as any, { merge: true });
+  } catch (err) {
+    console.error('Failed to update app config in Firestore:', err);
   }
 }
 

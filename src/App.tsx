@@ -17,6 +17,7 @@ import {
   deleteMatchFromFirestore,
   overwriteMatchInFirestore,
   saveNotificationToFirestore,
+  subscribeAppConfig,
 } from './lib/firestoreService';
 import { triggerMatchBotNotification, registerPushServiceWorker, requestPushNotificationPermission } from './lib/pushNotificationService';
 import { ThreeSoccerCanvas } from './components/ThreeSoccerCanvas';
@@ -43,6 +44,7 @@ export default function App() {
   const [matches, setMatches] = useState<Match[]>(INITIAL_MATCHES);
   const [notifications, setNotifications] = useState<PushNotification[]>(INITIAL_NOTIFICATIONS);
   const [specialTournaments, setSpecialTournaments] = useState<SpecialTournament[]>([]);
+  const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
 
   // Execute Season Rollover Handler (Legacy fallback)
   const handleRolloverSeason = async () => {
@@ -178,12 +180,14 @@ export default function App() {
     });
     const unsubNotifs = subscribeNotifications((updatedNotifs) => setNotifications(updatedNotifs));
     const unsubTourneys = subscribeSpecialTournaments((updatedTourneys) => setSpecialTournaments(updatedTourneys));
+    const unsubAppConfig = subscribeAppConfig((config) => setAppConfig(config));
 
     return () => {
       unsubTeams();
       unsubMatches();
       unsubNotifs();
       unsubTourneys();
+      unsubAppConfig();
     };
   }, []);
 
@@ -620,24 +624,31 @@ export default function App() {
           <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-[35rem] h-[35rem] bg-[#B7CEEC]/10 rounded-full blur-[140px] pointer-events-none" />
         </div>
 
-        {/* Hero Loop Video (Only visible when actively playing, prevents iOS native play button overlay) */}
-        <video
-          ref={heroVideoRef}
-          className={`absolute inset-0 w-full h-full object-cover min-w-full min-h-full will-change-transform transform-gpu pointer-events-none transition-opacity duration-700 ${
-            isVideoPlaying ? 'opacity-100' : 'opacity-0'
-          }`}
-          autoPlay
-          loop
-          muted
-          playsInline
-          controls={false}
-          preload="auto"
-          onPlay={() => setIsVideoPlaying(true)}
-          onPause={() => setIsVideoPlaying(false)}
-          onCanPlay={attemptPlayHeroVideo}
-          onLoadedData={attemptPlayHeroVideo}
-          src="https://res.cloudinary.com/s87ouqnz/video/upload/v1785915477/Change_the_player_s_jersey_to_jiveo0.mp4"
-        />
+        {/* Dynamic Hero Media (Video or Image) */}
+        {appConfig?.heroMediaType === 'image' ? (
+          <div 
+            className="absolute inset-0 w-full h-full bg-center bg-cover bg-no-repeat transition-opacity duration-700 opacity-100"
+            style={{ backgroundImage: `url(${appConfig.heroMediaUrl})` }}
+          />
+        ) : (
+          <video
+            ref={heroVideoRef}
+            className={`absolute inset-0 w-full h-full object-cover min-w-full min-h-full will-change-transform transform-gpu pointer-events-none transition-opacity duration-700 ${
+              isVideoPlaying ? 'opacity-100' : 'opacity-0'
+            }`}
+            autoPlay
+            loop
+            muted
+            playsInline
+            controls={false}
+            preload="auto"
+            onPlay={() => setIsVideoPlaying(true)}
+            onPause={() => setIsVideoPlaying(false)}
+            onCanPlay={attemptPlayHeroVideo}
+            onLoadedData={attemptPlayHeroVideo}
+            src={appConfig?.heroMediaUrl || "https://res.cloudinary.com/s87ouqnz/video/upload/v1785915477/Change_the_player_s_jersey_to_jiveo0.mp4"}
+          />
+        )}
 
         {/* Dark Contrast Overlay for hero text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#05080c]/65 via-[#05080c]/40 to-[#05080c]/80 backdrop-blur-[0.5px]" />

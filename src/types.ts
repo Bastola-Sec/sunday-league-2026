@@ -171,8 +171,13 @@ export interface SpecialTournament {
   tournamentType: 'league_only' | 'league_and_playoffs';
   leagueRounds: number; // 1, 2, 3
   playoffFormat?: 'top_2_final' | 'top_4_knockout' | 'super_cup';
-  createdAt: string;
-  isCompleted?: boolean;
+  tournamentName?: string;
+  isSpecialEvent?: boolean;
+}
+
+export interface AppConfig {
+  heroMediaUrl: string;
+  heroMediaType: 'video' | 'image';
 }
 
 export interface PushNotification {
