@@ -195,13 +195,13 @@ export default function App() {
     };
   }, []);
 
-  // Hero Media Slideshow Rotation (10s interval)
+  // Hero Media Slideshow Rotation (5s interval)
   useEffect(() => {
     if (!appConfig?.heroMedia || appConfig.heroMedia.length <= 1) return;
     
     const interval = setInterval(() => {
       setCurrentHeroIndex(prev => (prev + 1) % appConfig.heroMedia!.length);
-    }, 10000); // Auto-rotate every 10 seconds
+    }, 5000); // Auto-rotate every 5 seconds
     
     return () => clearInterval(interval);
   }, [appConfig]);
