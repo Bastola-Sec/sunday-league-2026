@@ -208,20 +208,9 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
     return seasonOptions.find((opt) => !opt.isSpecial)?.id || seasonOptions[0]?.id || 'season-1';
   }, [combinedSpecialTournaments, matches, seasonOptions]);
 
-  const [selectedSeasonId, setSelectedSeasonId] = useState<string>(activeSeasonId || defaultSeasonId);
-
-  // Sync selectedSeasonId if defaultSeasonId or activeSeasonId updates dynamically
-  React.useEffect(() => {
-    if (activeSeasonId) {
-      setSelectedSeasonId(activeSeasonId);
-    } else {
-      setSelectedSeasonId(defaultSeasonId);
-      if (onSelectSeasonId) onSelectSeasonId(defaultSeasonId);
-    }
-  }, [activeSeasonId, defaultSeasonId]);
+  const selectedSeasonId = activeSeasonId || defaultSeasonId;
 
   const handleSeasonChange = (newSeasonId: string) => {
-    setSelectedSeasonId(newSeasonId);
     if (onSelectSeasonId) onSelectSeasonId(newSeasonId);
   };
 

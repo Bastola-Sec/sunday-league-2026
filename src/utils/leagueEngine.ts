@@ -1,4 +1,4 @@
-import { Team, Match } from '../types';
+import { Team, Match, SpecialTournament } from '../types';
 
 /**
  * Computes official Sunday League regular season standings, recalculates player stats
@@ -741,4 +741,73 @@ export function getTeamJerseyStyle(teamId?: string, isHomeFallback?: boolean) {
       collar: 'bg-white/80',
     };
   }
+}
+
+/**
+ * Calculates default season or special tournament ID based on active/upcoming fixtures.
+ * Rule:
+ * 1. Default view is always the one with upcoming fixtures.
+ * 2. If both a regular season and a special event have upcoming fixtures, the Special Event is default.
+ * 3. If no upcoming fixtures exist anywhere, pick the latest season or active special event.
+ */
+export function getDefaultSeasonId(
+  matches: Match[],
+  specialTournaments: SpecialTournament[]
+): string {
+  const safeMatches = matches || [];
+  const safeTournaments = specialTournaments || [];
+
+  // 1. Look for explicit ongoing special tournaments
+  const activeSpecialTourney = safeTournaments.find((st) => {
+    if (st.isCompleted) return false;
+    const tourneyMatches = safeMatches.filter(
+      (m) =>
+        m.tournamentId === st.id ||
+        (m.matchType === 'Special Event' &&
+          ((m.venue || '').toLowerCase().includes(st.name.toLowerCase()) ||
+            st.name.toLowerCase().includes((m.venue || '').toLowerCase())))
+    );
+    if (tourneyMatches.length === 0) return true; // Newly created event with 0 played matches yet
+    return tourneyMatches.some((m) => !m.isFinished && m.status !== 'ended');
+  });
+
+  if (activeSpecialTourney) {
+    return activeSpecialTourney.id;
+  }
+
+  // 2. Look for implied special event matches in matches array
+  const impliedSpecialMatch = safeMatches.find(
+    (m) =>
+      (m.matchType === 'Special Event' || m.matchType === 'Exhibition' || !!m.tournamentId) &&
+      !m.isFinished &&
+      m.status !== 'ended'
+  );
+  if (impliedSpecialMatch) {
+    if (impliedSpecialMatch.tournamentId) return impliedSpecialMatch.tournamentId;
+    const venueMatch = impliedSpecialMatch.venue?.match(/\(([^)]+)\)/);
+    const nameFromVenue = venueMatch ? venueMatch[1] : 'Special Event Tournament';
+    return `implied-${nameFromVenue.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+  }
+
+  // 3. Look for regular season matches with upcoming (unfinished) fixtures
+  const regularMatchesWithUpcoming = safeMatches.filter(
+    (m) => !m.tournamentId && m.matchType !== 'Special Event' && !m.isFinished && m.status !== 'ended'
+  );
+  if (regularMatchesWithUpcoming.length > 0) {
+    const latestSeasonWithUpcoming = regularMatchesWithUpcoming.reduce(
+      (max, m) => Math.max(max, m.seasonNumber || 1),
+      1
+    );
+    return `season-${latestSeasonWithUpcoming}`;
+  }
+
+  // 4. All matches are finished or no matches exist.
+  // Check if any special tournament exists (completed or not)
+  if (safeTournaments.length > 0) {
+    return safeTournaments[safeTournaments.length - 1].id;
+  }
+
+  // Fallback: Highest regular season number found or season-1
+  const maxSeasonNumber = safeMatches.reduce((max, m) => Math.max(max, m.seasonNumber || 1), 1);
+  return `season-${maxSeasonNumber}`;
 }

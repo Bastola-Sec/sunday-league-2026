@@ -183,19 +183,9 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
     return seasonOptions.find((opt) => !opt.isSpecial)?.id || seasonOptions[0]?.id || 'season-1';
   }, [combinedSpecialTournaments, matches, seasonOptions]);
 
-  const [selectedSeasonId, setSelectedSeasonId] = useState<string>(activeSeasonId || defaultSeasonId);
-
-  useEffect(() => {
-    if (activeSeasonId) {
-      setSelectedSeasonId(activeSeasonId);
-    } else {
-      setSelectedSeasonId(defaultSeasonId);
-      if (onSelectSeasonId) onSelectSeasonId(defaultSeasonId);
-    }
-  }, [activeSeasonId, defaultSeasonId]);
+  const selectedSeasonId = activeSeasonId || defaultSeasonId;
 
   const handleSeasonChange = (newSeasonId: string) => {
-    setSelectedSeasonId(newSeasonId);
     if (onSelectSeasonId) onSelectSeasonId(newSeasonId);
   };
 

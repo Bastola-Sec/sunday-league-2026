@@ -36,7 +36,7 @@ import { CinematicClubModal } from './components/CinematicClubModal';
 import { PushNotificationToast } from './components/PushNotificationToast';
 import { PushNotificationPrompt } from './components/PushNotificationPrompt';
 import { IPhoneFrame } from './components/IPhoneFrame';
-import { computeStandingsAndFinalsMatch, rolloverToNewSeason, rolloverToNewSeasonWithOptions, SeasonSetupOptions } from './utils/leagueEngine';
+import { computeStandingsAndFinalsMatch, rolloverToNewSeason, rolloverToNewSeasonWithOptions, SeasonSetupOptions, getDefaultSeasonId } from './utils/leagueEngine';
 
 export default function App() {
   // Core Application State (Cloud Firestore Single Source of Truth)
@@ -140,6 +140,7 @@ export default function App() {
   };
 
   const handleDeleteSpecialTournament = async (tournamentId: string) => {
+    setUserSelectedSeasonId(null);
     if (tournamentId === 'all') {
       setSpecialTournaments([]);
       setMatches((prev) =>
@@ -250,7 +251,17 @@ export default function App() {
 
   const currentSeasonNumber = matches.reduce((max, m) => Math.max(max, m.seasonNumber || 1), 1);
 
-  const [activeSeasonId, setActiveSeasonId] = useState<string>('');
+  const [userSelectedSeasonId, setUserSelectedSeasonId] = useState<string | null>(null);
+
+  const defaultSeasonId = useMemo(() => {
+    return getDefaultSeasonId(displayMatches, specialTournaments);
+  }, [displayMatches, specialTournaments]);
+
+  const activeSeasonId = userSelectedSeasonId || defaultSeasonId;
+
+  const handleSelectSeasonId = (seasonId: string) => {
+    setUserSelectedSeasonId(seasonId);
+  };
   const [scrollState, setScrollState] = useState<AppScrollState>(1);
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [adminPortalMode, setAdminPortalMode] = useState<'club' | 'commissioner'>('club');
@@ -776,7 +787,7 @@ export default function App() {
             matches={displayMatches}
             specialTournaments={specialTournaments}
             activeSeasonId={activeSeasonId}
-            onSelectSeasonId={setActiveSeasonId}
+            onSelectSeasonId={handleSelectSeasonId}
             onNext={() => handleJumpToState(3)}
             onSelectTeam={(team) => {
               handleSelectClubCinematic(team);
@@ -798,7 +809,7 @@ export default function App() {
             teams={displayTeams}
             specialTournaments={specialTournaments}
             activeSeasonId={activeSeasonId}
-            onSelectSeasonId={setActiveSeasonId}
+            onSelectSeasonId={handleSelectSeasonId}
             onOpenMatchModal={(match) => setSelectedMatchForModal(match)}
             onSendPushNotification={handleSendPushNotification}
             onNext={() => handleJumpToState(4)}
@@ -822,7 +833,7 @@ export default function App() {
             matches={displayMatches}
             specialTournaments={specialTournaments}
             activeSeasonId={activeSeasonId}
-            onSelectSeasonId={setActiveSeasonId}
+            onSelectSeasonId={handleSelectSeasonId}
             onNext={() => handleJumpToState(1)}
             onOpenAdmin={(team) => {
               if (activeAdminTeamId !== team.id && activeAdminTeamId !== 'all' && activeAdminTeamId !== 'league_commish') {
