@@ -146,38 +146,42 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
     });
   });
 
-  // Auto-detect default season/tournament selection
+  // Auto-detect default selected season/tournament:
+  // Rule: Default view is always the one with upcoming fixtures; if both regular season and special event have upcoming fixtures, Special Event is default.
   const defaultSeasonId = React.useMemo(() => {
-    const hasUpcomingFixtures = (opt: (typeof seasonOptions)[0]): boolean => {
-      if (opt.isSpecial && opt.tournament) {
-        const tourneyMatches = (matches || []).filter(
-          (m) => m.tournamentId === opt.tournament?.id || (m.matchType === 'Special Event' && m.venue?.includes(opt.tournament?.name || ''))
-        );
-        if (tourneyMatches.length === 0) return true;
-        return tourneyMatches.some((m) => !m.isFinished && m.status !== 'ended') && !opt.tournament.isCompleted;
-      }
-
-      const sNum = opt.seasonNum || 1;
-      const sMatches = (matches || []).filter(
-        (m) => (m.seasonNumber ?? 1) === sNum && !m.tournamentId && m.matchType !== 'Special Event'
+    const ongoingSpecialTourney = combinedSpecialTournaments.find((st) => {
+      if (st.isCompleted) return false;
+      const tourneyMatches = (matches || []).filter(
+        (m) => m.tournamentId === st.id || (m.matchType === 'Special Event' && (m.venue?.toLowerCase().includes(st.name.toLowerCase()) || st.name.toLowerCase().includes(m.venue?.toLowerCase() || '')))
       );
-      if (sMatches.length === 0) return false;
-      return sMatches.some((m) => !m.isFinished && m.status !== 'ended');
-    };
+      if (tourneyMatches.length === 0) return true; // Newly created event with no matches played yet
+      return tourneyMatches.some((m) => !m.isFinished && m.status !== 'ended');
+    });
 
-    const specialWithUpcoming = seasonOptions.filter((opt) => opt.isSpecial && hasUpcomingFixtures(opt));
-    const regularWithUpcoming = seasonOptions.filter((opt) => !opt.isSpecial && hasUpcomingFixtures(opt));
-
-    if (specialWithUpcoming.length > 0) {
-      return specialWithUpcoming[0].id;
+    if (ongoingSpecialTourney) {
+      return ongoingSpecialTourney.id;
     }
 
-    if (regularWithUpcoming.length > 0) {
-      return regularWithUpcoming[0].id;
+    const impliedSpecialMatch = (matches || []).find(
+      (m) => (m.matchType === 'Special Event' || m.matchType === 'Exhibition' || !!m.tournamentId) && !m.isFinished && m.status !== 'ended'
+    );
+    if (impliedSpecialMatch) {
+      if (impliedSpecialMatch.tournamentId) return impliedSpecialMatch.tournamentId;
+      const venueMatch = impliedSpecialMatch.venue?.match(/\(([^)]+)\)/);
+      const nameFromVenue = venueMatch ? venueMatch[1] : 'Special Event Tournament';
+      return `implied-${nameFromVenue.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+    }
+
+    const regularMatchesWithUpcoming = (matches || []).filter(
+      (m) => !m.tournamentId && m.matchType !== 'Special Event' && !m.isFinished && m.status !== 'ended'
+    );
+    if (regularMatchesWithUpcoming.length > 0) {
+      const sNum = regularMatchesWithUpcoming[0].seasonNumber || 1;
+      return `season-${sNum}`;
     }
 
     return seasonOptions.find((opt) => !opt.isSpecial)?.id || seasonOptions[0]?.id || 'season-1';
-  }, [matches, seasonOptions]);
+  }, [combinedSpecialTournaments, matches, seasonOptions]);
 
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>(activeSeasonId || defaultSeasonId);
 
