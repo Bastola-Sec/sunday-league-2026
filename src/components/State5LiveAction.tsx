@@ -265,6 +265,27 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
   const getTeam = (id: string) => teams.find((t) => t.id === id);
 
+  // Helper to render Venue string with parenthesized Tournament Name in Golden text
+  const renderVenueWithGoldTournament = (venueStr?: string) => {
+    if (!venueStr) return <span>DE ANZA STADIUM</span>;
+
+    const parenMatch = venueStr.match(/^(.*?)\s*(\([^)]+\))$/);
+    if (parenMatch) {
+      const stadium = parenMatch[1];
+      const tournamentTag = parenMatch[2];
+      return (
+        <span className="inline-flex items-center gap-1 truncate">
+          <span>{stadium}</span>
+          <span className="text-amber-400 font-extrabold tracking-wider drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">
+            {tournamentTag}
+          </span>
+        </span>
+      );
+    }
+
+    return <span className="truncate">{venueStr}</span>;
+  };
+
   // Dynamically calculate remaining time to nextMatch scheduled kickoff
   const calculateTimeLeft = () => {
     if (!nextMatch) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
@@ -400,7 +421,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                   <div className="flex items-center justify-between text-[11px] text-[#B7CEEC]/90 pb-3 border-b border-[#B7CEEC]/20 mb-4 gap-2 flex-wrap">
                     <span className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
                       <MapPin className="w-3.5 h-3.5 text-[#4C787E]" />
-                      {match.venue}
+                      {renderVenueWithGoldTournament(match.venue)}
                     </span>
                     <div className="flex items-center gap-2">
                       <WeatherWidget compact />
@@ -666,7 +687,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                 <div className="flex items-center justify-between text-[11px] text-[#B7CEEC]/80 pb-3 border-b border-[#B7CEEC]/20 mb-4">
                   <span className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
                     <MapPin className="w-3.5 h-3.5 text-[#4C787E]" />
-                    {nextMatch.venue}
+                    {renderVenueWithGoldTournament(nextMatch.venue)}
                   </span>
                   <span className={`px-2.5 py-0.5 rounded-md font-bold border ${isDelayed ? 'bg-red-500/20 text-red-300 border-red-500/40' : 'bg-[#4C787E]/20 text-[#B7CEEC] border-[#4C787E]/40'}`}>
                     📅 {nextMatch.startTime}
@@ -849,7 +870,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                 <div className="flex items-center justify-between text-[10px] text-[#B7CEEC]/80 border-b border-white/10 pb-2 gap-2">
                   <span className="flex items-center gap-1.5 font-mono font-bold uppercase tracking-wider truncate max-w-[60%] text-[10px] text-gray-300">
                     <MapPin className="w-3 h-3 text-[#4C787E] shrink-0" />
-                    <span className="truncate">{match.venue || 'DE ANZA STADIUM'}</span>
+                    {renderVenueWithGoldTournament(match.venue)}
                   </span>
                   <span className="px-2.5 py-0.5 rounded-lg bg-[#080d14] border border-[#B7CEEC]/30 text-[#B7CEEC] font-mono font-bold flex items-center gap-1 text-[10px] shrink-0">
                     <span>🗓️</span>
@@ -969,8 +990,8 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                             <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono font-black text-[10px] border border-emerald-500/40">
                               FT RESULT
                             </span>
-                            <span className="text-[11px] text-gray-400 font-mono">
-                              Week {match.weekNumber || 1} • {match.venue}
+                            <span className="text-[11px] text-gray-400 font-mono flex items-center gap-1">
+                              Week {match.weekNumber || 1} • {renderVenueWithGoldTournament(match.venue)}
                             </span>
                           </div>
                           <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
