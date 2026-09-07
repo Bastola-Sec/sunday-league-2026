@@ -1030,15 +1030,15 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
 
         {/* PHASE 2: CUP PHASE CONTENT */}
         {currentPhase === 'cup' && (() => {
-          // Find cup matches
-          const leagueCupMatch = matches.find(
-            (m) => m.matchType === 'League Cup' || m.matchType === 'Finals' || m.id === 'FIX-007'
+          // Find cup matches strictly for selected season / tournament
+          const leagueCupMatch = seasonMatches.find(
+            (m) => m.matchType === 'League Cup' || m.matchType === 'Finals' || m.id.endsWith('-FINAL') || (activeSeasonOption?.isSpecial && m.id.includes('-FINAL')) || m.id === `FIX-S${activeSeasonNum}-007` || m.id === 'FIX-007'
           );
-          const superCupQualifier = matches.find(
-            (m) => m.matchType === 'Super Cup Qualifier' || m.id === 'FIX-008' || m.id === 'FIX-SC-QUAL'
+          const superCupQualifier = seasonMatches.find(
+            (m) => m.matchType === 'Super Cup Qualifier' || m.id === `FIX-S${activeSeasonNum}-008` || m.id === 'FIX-SC-QUAL' || m.id === 'FIX-008'
           );
-          const superCupFinal = matches.find(
-            (m) => m.matchType === 'Super Cup Final' || m.id === 'FIX-009' || m.id === 'FIX-SC-FINAL'
+          const superCupFinal = seasonMatches.find(
+            (m) => m.matchType === 'Super Cup Final' || m.id === `FIX-S${activeSeasonNum}-009` || m.id === 'FIX-SC-FINAL' || m.id === 'FIX-009'
           );
 
           // Telemetry helper
@@ -1238,7 +1238,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                           <p className="text-[10px] font-black font-mono text-amber-300 uppercase tracking-wider leading-tight">
                             LEAGUE CUP CHAMPION
                           </p>
-                          <p className="text-[8px] text-[#B7CEEC]/60 font-mono">Season 1</p>
+                          <p className="text-[8px] text-[#B7CEEC]/60 font-mono">{activeSeasonOption?.label || 'Season 1'}</p>
                         </>
                       )}
                     </div>

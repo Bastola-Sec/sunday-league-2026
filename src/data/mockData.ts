@@ -83,7 +83,17 @@ export const INITIAL_TEAMS: Team[] = [
     headCoach: 'Rounak Thapa',
     bio: 'MoMo Strikers bring high octane energy, crisp passing, and clinical attack to every fixture.',
     clubCulture: 'High-energy pressing, post-game dumplings, and unwavering team camaraderie.',
-    achievements: [],
+    achievements: ['Season 1 League Cup Champion 🏆'],
+    trophies: [
+      {
+        id: 'tr-s1-league-cup-momo',
+        title: 'Season 1 League Cup Champion',
+        seasonOrEvent: 'Season 1',
+        year: 2026,
+        type: 'league_cup',
+        icon: '🏆',
+      },
+    ],
     boardMembers: [
       { id: 'bm-m1', name: 'Santosh Karki', designation: 'Managing Director' },
       { id: 'bm-m2', name: 'Udhab KC', designation: 'Board Member' },
