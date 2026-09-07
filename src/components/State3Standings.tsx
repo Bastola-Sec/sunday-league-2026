@@ -210,12 +210,19 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
   const activeSeasonOption = seasonOptions.find((opt) => opt.id === selectedSeasonId) || seasonOptions[0];
   const isSpecialEventActive = activeSeasonOption?.isSpecial || false;
   const activeSpecialTournament = activeSeasonOption?.tournament;
+  const showSuperCup = !isSpecialEventActive || Boolean(activeSpecialTournament?.hasSuperCup);
 
   // Sub-tabs for League Phase (6 categories + Honours)
   const [activeTab, setActiveTab] = useState<'standings' | 'scorers' | 'assists' | 'motm' | 'yellows' | 'reds' | 'honours'>('standings');
 
   // Sub-tabs for Cup Phase
   const [cupTab, setCupTab] = useState<'league_cup' | 'super_cup'>('league_cup');
+
+  React.useEffect(() => {
+    if (!showSuperCup && cupTab === 'super_cup') {
+      setCupTab('league_cup');
+    }
+  }, [showSuperCup, cupTab]);
 
   // Filter matches strictly by selected season or special tournament
   const seasonMatches = matches.filter((m) => {
@@ -855,68 +862,96 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {/* 1. LEAGUE CHAMPION */}
-                  <div className="p-3 rounded-2xl bg-[#080d14] border border-amber-500/30 flex items-center justify-between shadow-md">
-                    <div className="flex items-center gap-3">
-                      {leagueWinner ? (
-                        <TeamLogo teamId={leagueWinner.id} size={32} />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-300 text-sm">🏆</div>
-                      )}
-                      <div>
-                        <span className="text-[10px] font-mono text-amber-400 font-extrabold uppercase tracking-wider block">League Winner</span>
-                        <p className="text-xs font-black text-white">{leagueWinner ? leagueWinner.name : 'In Progress (TBD)'}</p>
-                        <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
-                          {leagueWinner ? `${leagueWinner.points} PTS • GD: ${leagueWinner.goalDifference > 0 ? '+' : ''}${leagueWinner.goalDifference}` : 'Regular season matches active'}
-                        </p>
+                  {/* FOR SPECIAL EVENTS: Display single LEAGUE CHAMPION card representing the League Cup / Knockout Champion */}
+                  {isSpecialEventActive ? (
+                    <div className="p-3 rounded-2xl bg-[#080d14] border border-amber-500/30 flex items-center justify-between shadow-md sm:col-span-2">
+                      <div className="flex items-center gap-3">
+                        {leagueCupWinner ? (
+                          <TeamLogo teamId={leagueCupWinner.id} size={32} />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-300 text-sm">🏆</div>
+                        )}
+                        <div>
+                          <span className="text-[10px] font-mono text-amber-400 font-extrabold uppercase tracking-wider block">League Champion</span>
+                          <p className="text-xs font-black text-white">{leagueCupWinner ? leagueCupWinner.name : 'Playoff Knockout Pending'}</p>
+                          <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
+                            {leagueCupMatch && (leagueCupMatch.isFinished || leagueCupMatch.status === 'ended') ? `Grand Final Winner: ${leagueCupMatch.homeScore} - ${leagueCupMatch.awayScore}` : `${activeSpecialTournament?.name || 'Special Event'} Official Champions`}
+                          </p>
+                        </div>
                       </div>
+                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase ${leagueCupWinner ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm' : 'bg-white/5 text-gray-400'}`}>
+                        {leagueCupWinner ? 'LEAGUE CHAMPION 🏆' : 'TBD'}
+                      </span>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase ${leagueWinner ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-white/5 text-gray-400'}`}>
-                      {leagueWinner ? 'CHAMPION 🏆' : 'IN PROGRESS'}
-                    </span>
-                  </div>
+                  ) : (
+                    /* FOR REGULAR LEAGUE SEASON: Display both League Winner (points table) and League Cup Winner */
+                    <>
+                      {/* 1. LEAGUE WINNER (Points Leader) */}
+                      <div className="p-3 rounded-2xl bg-[#080d14] border border-amber-500/30 flex items-center justify-between shadow-md">
+                        <div className="flex items-center gap-3">
+                          {leagueWinner ? (
+                            <TeamLogo teamId={leagueWinner.id} size={32} />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-300 text-sm">🏆</div>
+                          )}
+                          <div>
+                            <span className="text-[10px] font-mono text-amber-400 font-extrabold uppercase tracking-wider block">League Winner</span>
+                            <p className="text-xs font-black text-white">{leagueWinner ? leagueWinner.name : 'In Progress (TBD)'}</p>
+                            <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
+                              {leagueWinner ? `${leagueWinner.points} PTS • GD: ${leagueWinner.goalDifference > 0 ? '+' : ''}${leagueWinner.goalDifference}` : 'Regular season matches active'}
+                            </p>
+                          </div>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase ${leagueWinner ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-white/5 text-gray-400'}`}>
+                          {leagueWinner ? 'CHAMPION 🏆' : 'IN PROGRESS'}
+                        </span>
+                      </div>
 
-                  {/* 2. LEAGUE CUP WINNER */}
-                  <div className="p-3 rounded-2xl bg-[#080d14] border border-emerald-500/30 flex items-center justify-between shadow-md">
-                    <div className="flex items-center gap-3">
-                      {leagueCupWinner ? (
-                        <TeamLogo teamId={leagueCupWinner.id} size={32} />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-300 text-sm">🥇</div>
-                      )}
-                      <div>
-                        <span className="text-[10px] font-mono text-emerald-400 font-extrabold uppercase tracking-wider block">League Cup Winner</span>
-                        <p className="text-xs font-black text-white">{leagueCupWinner ? leagueCupWinner.name : 'Cup Knockout Pending'}</p>
-                        <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
-                          {leagueCupMatch && (leagueCupMatch.isFinished || leagueCupMatch.status === 'ended') ? `Final Result: ${leagueCupMatch.homeScore} - ${leagueCupMatch.awayScore}` : 'Week 4 Finals Fixture'}
-                        </p>
+                      {/* 2. LEAGUE CUP WINNER */}
+                      <div className="p-3 rounded-2xl bg-[#080d14] border border-emerald-500/30 flex items-center justify-between shadow-md">
+                        <div className="flex items-center gap-3">
+                          {leagueCupWinner ? (
+                            <TeamLogo teamId={leagueCupWinner.id} size={32} />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-300 text-sm">🥇</div>
+                          )}
+                          <div>
+                            <span className="text-[10px] font-mono text-emerald-400 font-extrabold uppercase tracking-wider block">League Cup Winner</span>
+                            <p className="text-xs font-black text-white">{leagueCupWinner ? leagueCupWinner.name : 'Cup Knockout Pending'}</p>
+                            <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
+                              {leagueCupMatch && (leagueCupMatch.isFinished || leagueCupMatch.status === 'ended') ? `Final Result: ${leagueCupMatch.homeScore} - ${leagueCupMatch.awayScore}` : 'Week 4 Finals Fixture'}
+                            </p>
+                          </div>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase ${leagueCupWinner ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-white/5 text-gray-400'}`}>
+                          {leagueCupWinner ? 'WINNER 🏆' : 'TBD'}
+                        </span>
                       </div>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase ${leagueCupWinner ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-white/5 text-gray-400'}`}>
-                      {leagueCupWinner ? 'WINNER 🏆' : 'TBD'}
-                    </span>
-                  </div>
+                    </>
+                  )}
 
-                  {/* 3. SUPER CUP WINNER */}
-                  <div className="p-3 rounded-2xl bg-[#080d14] border border-cyan-500/30 flex items-center justify-between shadow-md">
-                    <div className="flex items-center gap-3">
-                      {superCupWinner ? (
-                        <TeamLogo teamId={superCupWinner.id} size={32} />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-300 text-sm">👑</div>
-                      )}
-                      <div>
-                        <span className="text-[10px] font-mono text-cyan-400 font-extrabold uppercase tracking-wider block">Super Cup Winner</span>
-                        <p className="text-xs font-black text-white">{superCupWinner ? superCupWinner.name : 'Super Cup Final Pending'}</p>
-                        <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
-                          {superCupFinal && (superCupFinal.isFinished || superCupFinal.status === 'ended') ? `Final Result: ${superCupFinal.homeScore} - ${superCupFinal.awayScore}` : 'Super Cup Showdown'}
-                        </p>
+                  {/* 3. SUPER CUP WINNER (Only rendered if showSuperCup is true) */}
+                  {showSuperCup && (
+                    <div className="p-3 rounded-2xl bg-[#080d14] border border-cyan-500/30 flex items-center justify-between shadow-md">
+                      <div className="flex items-center gap-3">
+                        {superCupWinner ? (
+                          <TeamLogo teamId={superCupWinner.id} size={32} />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-300 text-sm">👑</div>
+                        )}
+                        <div>
+                          <span className="text-[10px] font-mono text-cyan-400 font-extrabold uppercase tracking-wider block">Super Cup Winner</span>
+                          <p className="text-xs font-black text-white">{superCupWinner ? superCupWinner.name : 'Super Cup Final Pending'}</p>
+                          <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
+                            {superCupFinal && (superCupFinal.isFinished || superCupFinal.status === 'ended') ? `Final Result: ${superCupFinal.homeScore} - ${superCupFinal.awayScore}` : 'Super Cup Showdown'}
+                          </p>
+                        </div>
                       </div>
+                      <span className={`px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase ${superCupWinner ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-white/5 text-gray-400'}`}>
+                        {superCupWinner ? 'WINNER 👑' : 'TBD'}
+                      </span>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase ${superCupWinner ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-white/5 text-gray-400'}`}>
-                      {superCupWinner ? 'WINNER 👑' : 'TBD'}
-                    </span>
-                  </div>
+                  )}
 
                   {/* 4. TOP GOALSCORER (GOLDEN BOOT) */}
                   <div className="p-3 rounded-2xl bg-[#080d14] border border-amber-500/30 flex items-center justify-between shadow-md">
@@ -1049,33 +1084,42 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
           return (
             <div className="space-y-4">
               {/* Cup Sub-Tabs */}
-              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[#080d15] border border-white/10 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setCupTab('league_cup')}
-                  className={`py-2 rounded-xl font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    cupTab === 'league_cup'
-                      ? 'bg-[#4C787E] text-white shadow-lg border border-[#4C787E]/50'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                  <span>League Cup</span>
-                </button>
+              {showSuperCup ? (
+                <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[#080d15] border border-white/10 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setCupTab('league_cup')}
+                    className={`py-2 rounded-xl font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      cupTab === 'league_cup'
+                        ? 'bg-[#4C787E] text-white shadow-lg border border-[#4C787E]/50'
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                    <span>League Cup</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setCupTab('super_cup')}
-                  className={`py-2 rounded-xl font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    cupTab === 'super_cup'
-                      ? 'bg-[#4C787E] text-white shadow-lg border border-[#4C787E]/50'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Super Cup</span>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setCupTab('super_cup')}
+                    className={`py-2 rounded-xl font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      cupTab === 'super_cup'
+                        ? 'bg-[#4C787E] text-white shadow-lg border border-[#4C787E]/50'
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Super Cup</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="p-2.5 rounded-2xl bg-[#080d15] border border-amber-400/30 text-xs text-center">
+                  <span className="font-mono font-black text-amber-300 uppercase tracking-widest flex items-center justify-center gap-2">
+                    <Trophy className="w-4 h-4 text-amber-400" />
+                    <span>OFFICIAL PLAYOFF CUP KNOCKOUT BRACKET</span>
+                  </span>
+                </div>
+              )}
 
               {/* LEAGUE CUP VISUAL BRACKET */}
               {cupTab === 'league_cup' && (

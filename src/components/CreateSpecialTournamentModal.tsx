@@ -77,6 +77,7 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
   const [tournamentType, setTournamentType] = useState<'league_only' | 'league_and_playoffs'>('league_and_playoffs');
   const [leagueRounds, setLeagueRounds] = useState<number>(1);
   const [playoffFormat, setPlayoffFormat] = useState<'top_2_final' | 'top_4_knockout' | 'super_cup'>('top_2_final');
+  const [hasSuperCup, setHasSuperCup] = useState<boolean>(false);
 
   // Form State - Fixture Scheduling Options
   const [scheduleMode, setScheduleMode] = useState<'weekly' | 'single_day'>('single_day');
@@ -227,6 +228,7 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
       setTournamentType(tournamentToEdit.tournamentType);
       setLeagueRounds(tournamentToEdit.leagueRounds);
       if (tournamentToEdit.playoffFormat) setPlayoffFormat(tournamentToEdit.playoffFormat);
+      if (tournamentToEdit.hasSuperCup !== undefined) setHasSuperCup(tournamentToEdit.hasSuperCup);
       if (tournamentToEdit.teams && tournamentToEdit.teams.length > 0) {
         setTeamCount(tournamentToEdit.teams.length);
         setCustomTeams(tournamentToEdit.teams);
@@ -599,6 +601,7 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
       tournamentType,
       leagueRounds,
       playoffFormat,
+      hasSuperCup,
       createdAt: tournamentToEdit ? tournamentToEdit.createdAt : new Date().toISOString(),
       isCompleted: false,
     };
@@ -841,6 +844,23 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
                     </select>
                   </div>
                 )}
+              </div>
+
+              {/* Super Cup Enable Toggle for Special Event */}
+              <div className="p-3.5 rounded-2xl bg-[#03060a] border border-cyan-500/30 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-extrabold text-cyan-300 uppercase tracking-wider">⚡ Include Super Cup?</p>
+                  <p className="text-[10px] text-gray-400">If enabled, a Super Cup bracket & winner card will be created for this event.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hasSuperCup}
+                    onChange={(e) => setHasSuperCup(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500" />
+                </label>
               </div>
             </div>
           )}

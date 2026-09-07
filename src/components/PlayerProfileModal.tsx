@@ -682,6 +682,94 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               </div>
             )}
 
+            {/* TROPHY CABINET SECTION */}
+            {(() => {
+              // Combine explicit player trophies, team trophies, and computed awards
+              const playerTrophies = currentPlayer.trophies || [];
+              const teamTrophies = team?.trophies || [];
+              
+              const combinedTrophies = [...playerTrophies, ...teamTrophies];
+
+              // Add derived trophies based on player stats & captain status if none explicitly logged
+              if (combinedTrophies.length === 0) {
+                if (currentPlayer.isCaptain) {
+                  combinedTrophies.push({
+                    id: `tr-captain-${currentPlayer.id}`,
+                    title: 'Club Captain',
+                    seasonOrEvent: team?.name || 'Sunday League',
+                    year: 2026,
+                    type: 'captain',
+                    icon: '⭐',
+                  });
+                }
+                if ((currentPlayer.goals || 0) >= 3) {
+                  combinedTrophies.push({
+                    id: `tr-boot-${currentPlayer.id}`,
+                    title: 'Golden Boot Contender',
+                    seasonOrEvent: 'Season 1',
+                    year: 2026,
+                    type: 'golden_boot',
+                    icon: '👟',
+                  });
+                }
+                if ((currentPlayer.motmAwards || 0) >= 1) {
+                  combinedTrophies.push({
+                    id: `tr-motm-${currentPlayer.id}`,
+                    title: 'MOTM Medalist',
+                    seasonOrEvent: 'Season 1',
+                    year: 2026,
+                    type: 'fair_play',
+                    icon: '🎖️',
+                  });
+                }
+                if (combinedTrophies.length === 0) {
+                  combinedTrophies.push({
+                    id: `tr-star-${currentPlayer.id}`,
+                    title: 'League Squad Medal',
+                    seasonOrEvent: 'Season 1',
+                    year: 2026,
+                    type: 'league_champion',
+                    icon: '🏆',
+                  });
+                }
+              }
+
+              return (
+                <div className="p-3.5 rounded-[1.75rem] bg-[#152a38] border border-amber-400/40 text-white shadow-xl space-y-2.5">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-amber-400 fill-amber-400 animate-pulse" />
+                      <span>Trophy Cabinet ({combinedTrophies.length})</span>
+                    </h4>
+                    <span className="text-[10px] font-mono text-amber-300 font-bold px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40">
+                      Honours
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {combinedTrophies.map((tr, tIdx) => (
+                      <div
+                        key={`tr-${tr.id}-${tIdx}`}
+                        className="p-2.5 rounded-2xl bg-[#080d14] border border-amber-400/30 flex items-center gap-2 shadow-md hover:border-amber-400 transition-all"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500/30 to-amber-600/10 border border-amber-400/50 flex items-center justify-center text-base shrink-0">
+                          {tr.icon || (tr.type === 'captain' ? '⭐' : tr.type === 'golden_boot' ? '👟' : tr.type === 'playmaker' ? '🪄' : '🏆')}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-black text-amber-300 truncate leading-tight">
+                            {tr.title}
+                          </p>
+                          <p className="text-[9px] text-[#B7CEEC]/80 font-mono truncate">
+                            {tr.seasonOrEvent} • {tr.year}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Bottom Actions: Cheer & Share */}
             <div className="flex items-center justify-between gap-2 pt-1">
               <button

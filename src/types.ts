@@ -38,6 +38,7 @@ export interface Player {
   careerYellowCards?: number;
   careerRedCards?: number;
   careerMotmAwards?: number;
+  trophies?: Trophy[];
 }
 
 export interface BoardMember {
@@ -98,6 +99,17 @@ export interface Team {
   achievements?: string[];
   boardMembers?: BoardMember[];
   isSpecialEventTeam?: boolean;
+  trophies?: Trophy[];
+}
+
+export interface Trophy {
+  id: string;
+  title: string;
+  seasonOrEvent: string;
+  year: string | number;
+  type: 'league_champion' | 'league_cup' | 'super_cup' | 'golden_boot' | 'playmaker' | 'fair_play' | 'captain';
+  icon?: string;
+  dateAwarded?: string;
 }
 
 export interface MatchEvent {
@@ -174,6 +186,7 @@ export interface SpecialTournament {
   playoffFormat?: 'top_2_final' | 'top_4_knockout' | 'super_cup';
   tournamentName?: string;
   isSpecialEvent?: boolean;
+  hasSuperCup?: boolean;
   createdAt?: string | number;
   isCompleted?: boolean;
 }
