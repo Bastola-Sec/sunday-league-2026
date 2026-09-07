@@ -819,6 +819,10 @@ export default function App() {
         <div className="snap-start min-h-full">
           <State4TopClubs
             teams={displayTeams}
+            matches={displayMatches}
+            specialTournaments={specialTournaments}
+            activeSeasonId={activeSeasonId}
+            onSelectSeasonId={setActiveSeasonId}
             onNext={() => handleJumpToState(1)}
             onOpenAdmin={(team) => {
               if (activeAdminTeamId !== team.id && activeAdminTeamId !== 'all' && activeAdminTeamId !== 'league_commish') {
