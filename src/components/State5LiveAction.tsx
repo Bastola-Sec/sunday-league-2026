@@ -12,6 +12,8 @@ interface State5LiveActionProps {
   matches: Match[];
   teams: Team[];
   specialTournaments?: SpecialTournament[];
+  activeSeasonId?: string;
+  onSelectSeasonId?: (seasonId: string) => void;
   onOpenMatchModal: (match: Match) => void;
   onSendPushNotification: (title: string, message: string, teamId?: string) => void;
   onNext?: () => void;
@@ -42,19 +44,154 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
   matches,
   teams,
   specialTournaments = [],
+  activeSeasonId,
+  onSelectSeasonId,
   onOpenMatchModal,
   onSendPushNotification,
   onNext,
   onSelectTeam,
 }) => {
   const [simulatedNoLive, setSimulatedNoLive] = useState(false);
-  const [fixtureFilter, setFixtureFilter] = useState<'upcoming' | 'past'>('past');
+  const [fixtureFilter, setFixtureFilter] = useState<'upcoming' | 'past'>('upcoming');
+
+  // Season & Special Tournament Options
+  const availableSeasons = Array.from(
+    new Set(matches.map((m) => m.seasonNumber || 1))
+  ).sort((a: number, b: number) => b - a);
+  if (availableSeasons.length === 0) availableSeasons.push(1);
+
+  // Combine explicit Firestore specialTournaments with any implied Special Tournaments extracted from matches
+  const impliedTourneysFromMatches: SpecialTournament[] = [];
+  const specialMatches = matches.filter(
+    (m) => m.matchType === 'Special Event' || m.matchType === 'Exhibition' || !!m.tournamentId
+  );
+
+  if (specialMatches.length > 0) {
+    const groupedByTourney = new Map<string, Match[]>();
+    specialMatches.forEach((m) => {
+      let tId = m.tournamentId;
+      if (!tId) {
+        const venueMatch = m.venue?.match(/\(([^)]+)\)/);
+        const nameFromVenue = venueMatch ? venueMatch[1] : 'Special Event Tournament';
+        tId = `implied-${nameFromVenue.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+      }
+      if (!groupedByTourney.has(tId)) {
+        groupedByTourney.set(tId, []);
+      }
+      groupedByTourney.get(tId)!.push(m);
+    });
+
+    groupedByTourney.forEach((mList, tId) => {
+      if (!specialTournaments.some((st) => st.id === tId)) {
+        const sampleMatch = mList[0];
+        const venueMatch = sampleMatch.venue?.match(/\(([^)]+)\)/);
+        const tName = venueMatch ? venueMatch[1] : 'Special Event Tournament';
+
+        const teamIds = Array.from(new Set(mList.flatMap((m) => [m.homeTeamId, m.awayTeamId])));
+        const tourneyTeams: Team[] = teamIds.map((id, idx) => {
+          const found = teams.find((t) => t.id === id);
+          if (found) return found;
+          return {
+            id,
+            name: id,
+            shortName: id.substring(0, 4).toUpperCase(),
+            colorPrimary: '#4C787E',
+            colorSecondary: '#3498DB',
+            textColor: '#FFFFFF',
+            rank: idx + 1,
+            played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, points: 0, form: [], topScorer: 'N/A', squadCount: 10, adminName: 'Tournament Admin', roster: [],
+          };
+        });
+
+        impliedTourneysFromMatches.push({
+          id: tId,
+          name: tName,
+          teams: tourneyTeams,
+          matchFormat: sampleMatch.matchFormat || '8v8',
+          halfDurationMinutes: sampleMatch.halfDurationMinutes || 20,
+          tournamentType: 'league_and_playoffs',
+          leagueRounds: 1,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    });
+  }
+
+  const combinedSpecialTournaments = [...specialTournaments, ...impliedTourneysFromMatches];
+
+  interface SeasonOption {
+    id: string;
+    label: string;
+    isSpecial: boolean;
+    seasonNum?: number;
+    tournament?: SpecialTournament;
+  }
+
+  const seasonOptions: SeasonOption[] = [];
+  availableSeasons.forEach((sNum: number) => {
+    seasonOptions.push({
+      id: `season-${sNum}`,
+      label: `SEASON ${sNum}`,
+      isSpecial: false,
+      seasonNum: sNum,
+    });
+  });
+
+  combinedSpecialTournaments.forEach((st) => {
+    seasonOptions.push({
+      id: st.id,
+      label: `⭐ ${st.name}`,
+      isSpecial: true,
+      tournament: st,
+    });
+  });
+
+  // Auto-detect default season/tournament selection
+  const defaultSeasonId = React.useMemo(() => {
+    const ongoingTourney = combinedSpecialTournaments.find((st) => {
+      const tourneyMatches = matches.filter(
+        (m) => m.tournamentId === st.id || (m.matchType === 'Special Event' && m.venue?.includes(st.name))
+      );
+      if (tourneyMatches.length === 0) return true;
+      const hasUnfinishedMatches = tourneyMatches.some((m) => !m.isFinished && m.status !== 'ended');
+      return hasUnfinishedMatches && !st.isCompleted;
+    });
+
+    if (ongoingTourney) return ongoingTourney.id;
+    return seasonOptions.find((opt) => !opt.isSpecial)?.id || 'season-1';
+  }, [combinedSpecialTournaments, matches, seasonOptions]);
+
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>(activeSeasonId || defaultSeasonId);
+
+  useEffect(() => {
+    if (activeSeasonId) {
+      setSelectedSeasonId(activeSeasonId);
+    } else {
+      setSelectedSeasonId(defaultSeasonId);
+      if (onSelectSeasonId) onSelectSeasonId(defaultSeasonId);
+    }
+  }, [activeSeasonId, defaultSeasonId]);
+
+  const handleSeasonChange = (newSeasonId: string) => {
+    setSelectedSeasonId(newSeasonId);
+    if (onSelectSeasonId) onSelectSeasonId(newSeasonId);
+  };
+
+  const activeSeasonOption = seasonOptions.find((opt) => opt.id === selectedSeasonId) || seasonOptions[0];
+
+  // Filter matches strictly by selected season or special tournament
+  const seasonMatches = matches.filter((m) => {
+    if (activeSeasonOption?.isSpecial && activeSeasonOption.tournament) {
+      return m.tournamentId === activeSeasonOption.tournament.id || (m.matchType === 'Special Event' && m.venue?.includes(activeSeasonOption.tournament.name));
+    }
+    const targetSeasonNum = activeSeasonOption?.seasonNum || 1;
+    return (m.seasonNumber ?? 1) === targetSeasonNum && !m.tournamentId && m.matchType !== 'Special Event';
+  });
 
   // Helper to extract exact scheduled Kickoff Date
   const getKickoffDate = (m?: Match): Date | null => {
     if (!m) return null;
 
-    // 1. Check if m.kickoffTime (ISO timestamp) exists
     if (m.kickoffTime) {
       const d = new Date(m.kickoffTime);
       if (!isNaN(d.getTime())) return d;
@@ -62,11 +199,9 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
     if (!m.startTime) return null;
 
-    // 2. Try direct Date parsing
     const directDate = new Date(m.startTime);
     if (!isNaN(directDate.getTime())) return directDate;
 
-    // 3. Parse formatted date string e.g. "Sun, Aug 16 • 8:30 AM" or "Aug 16 8:30 AM"
     const monthMatch = m.startTime.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})/i);
     const timeMatch = m.startTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
 
@@ -87,7 +222,6 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
       }
       targetDate.setHours(hours, minutes, 0, 0);
 
-      // If targetDate is in the past by > 30 days, assume next year
       if (targetDate.getTime() < Date.now() - 30 * 24 * 3600 * 1000) {
         targetDate.setFullYear(targetDate.getFullYear() + 1);
       }
@@ -99,7 +233,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
   };
 
   // Filter out Super Cup fixtures for Season 1 since it's disabled
-  const validMatches = matches.filter(m => {
+  const validMatches = seasonMatches.filter(m => {
     const isSuperCup = m.matchType === 'Super Cup Qualifier' || m.matchType === 'Super Cup Final' || m.id.includes('FIX-008') || m.id.includes('FIX-009') || m.id.includes('FIX-SC');
     const isSeason1 = m.seasonNumber === 1 || m.id.includes('-S1-') || (!m.seasonNumber && m.id.startsWith('FIX-00'));
     if (isSuperCup && isSeason1) return false;
@@ -177,36 +311,14 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
   const isNextMatchFinished = nextMatch ? (nextMatch.isFinished || nextMatch.status === 'ended') : false;
   const isDelayed = !isNextMatchFinished && isTimeUp && (!!nextMatch && (!nextMatch.isLive && nextMatch.status !== '1st_half' && nextMatch.status !== '2nd_half'));
 
-  // Smart Auto-Default Tab Selection: Automatically focus tab with active upcoming fixtures
+  // Smart Auto-Default Fixture Filter: Focus upcoming fixtures if available, else past results
   useEffect(() => {
-    const leagueFixtures = upcomingMatches.filter(
-      (m) => m.matchType === 'Regular' || !m.matchType || m.matchType === 'Regular Season'
-    );
-    const cupFixtures = upcomingMatches.filter(
-      (m) =>
-        m.matchType === 'League Cup' ||
-        m.matchType === 'Super Cup Qualifier' ||
-        m.matchType === 'Super Cup Final' ||
-        m.matchType === 'Finals' ||
-        m.id.includes('FIX-007') ||
-        m.id.includes('FIX-008') ||
-        m.id.includes('FIX-009') ||
-        m.id.includes('FIX-SC')
-    );
-    const specialFixtures = upcomingMatches.filter(
-      (m) => m.matchType === 'Special Event' || m.matchType === 'Exhibition' || m.matchType === 'Friendly'
-    );
-
-    if (leagueFixtures.length > 0) {
-      setFixtureFilter('league');
-    } else if (cupFixtures.length > 0) {
-      setFixtureFilter('cups');
-    } else if (specialFixtures.length > 0) {
-      setFixtureFilter('special');
+    if (upcomingMatches.length > 0) {
+      setFixtureFilter('upcoming');
     } else if (finishedMatches.length > 0) {
       setFixtureFilter('past');
     }
-  }, [matches.length, upcomingMatches.length, finishedMatches.length]);
+  }, [selectedSeasonId, upcomingMatches.length, finishedMatches.length]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 sm:px-6 py-6 sm:py-8 relative z-10 select-none">
@@ -225,6 +337,34 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
       {/* Main Action Content Container */}
       <div className="w-full max-w-lg my-1 space-y-5">
+        {/* Season & Special Tournament Selector Header Bar */}
+        <div className="flex items-center justify-between gap-2 px-1 pb-2 border-b border-[#4C787E]/30">
+          <div>
+            <h3 className="text-xs font-black f1-header tracking-[0.15em] uppercase text-white">
+              {activeSeasonOption?.isSpecial ? `⭐ ${activeSeasonOption.tournament?.name}` : activeSeasonOption?.label} FIXTURES
+            </h3>
+            <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
+              {sortedMatches.length} Matches • Season/Tournament Isolated
+            </p>
+          </div>
+
+          {seasonOptions.length >= 1 && (
+            <div className="relative">
+              <select
+                value={selectedSeasonId}
+                onChange={(e) => handleSeasonChange(e.target.value)}
+                className="px-3 py-1.5 rounded-xl bg-[#080d14] border border-amber-400/50 text-amber-300 text-[10px] font-mono font-black uppercase tracking-wider appearance-none cursor-pointer pr-7 shadow-md hover:border-amber-400 transition-all max-w-[180px] truncate"
+              >
+                {seasonOptions.map((opt) => (
+                  <option key={`live-season-opt-${opt.id}`} value={opt.id} className="bg-[#05080c] text-white font-mono">
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-amber-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          )}
+        </div>
         {/* LIVE MATCH CARD OR NEXT MATCH COUNTDOWN CARD */}
         {liveMatches.length > 0 ? (
           <div>

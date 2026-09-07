@@ -33,6 +33,8 @@ interface State3StandingsProps {
   teams: Team[];
   matches?: Match[];
   specialTournaments?: SpecialTournament[];
+  activeSeasonId?: string;
+  onSelectSeasonId?: (seasonId: string) => void;
   onNext: () => void;
   onSelectTeam: (team: Team) => void;
   onSelectPlayer?: (player: Player, team: Team) => void;
@@ -45,6 +47,8 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
   teams,
   matches = [],
   specialTournaments = [],
+  activeSeasonId,
+  onSelectSeasonId,
   onNext,
   onSelectTeam,
   onSelectPlayer,
@@ -186,12 +190,22 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
     return seasonOptions.find((opt) => !opt.isSpecial)?.id || 'season-1';
   }, [combinedSpecialTournaments, matches, seasonOptions]);
 
-  const [selectedSeasonId, setSelectedSeasonId] = useState<string>(defaultSeasonId);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>(activeSeasonId || defaultSeasonId);
 
-  // Sync selectedSeasonId if defaultSeasonId updates dynamically
+  // Sync selectedSeasonId if defaultSeasonId or activeSeasonId updates dynamically
   React.useEffect(() => {
-    setSelectedSeasonId(defaultSeasonId);
-  }, [defaultSeasonId]);
+    if (activeSeasonId) {
+      setSelectedSeasonId(activeSeasonId);
+    } else {
+      setSelectedSeasonId(defaultSeasonId);
+      if (onSelectSeasonId) onSelectSeasonId(defaultSeasonId);
+    }
+  }, [activeSeasonId, defaultSeasonId]);
+
+  const handleSeasonChange = (newSeasonId: string) => {
+    setSelectedSeasonId(newSeasonId);
+    if (onSelectSeasonId) onSelectSeasonId(newSeasonId);
+  };
 
   const activeSeasonOption = seasonOptions.find((opt) => opt.id === selectedSeasonId) || seasonOptions[0];
   const isSpecialEventActive = activeSeasonOption?.isSpecial || false;
@@ -411,7 +425,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
               <div className="relative">
                 <select
                   value={selectedSeasonId}
-                  onChange={(e) => setSelectedSeasonId(e.target.value)}
+                  onChange={(e) => handleSeasonChange(e.target.value)}
                   className="px-3 py-1.5 rounded-xl bg-[#080d14] border border-amber-400/50 text-amber-300 text-[10px] font-mono font-black uppercase tracking-wider appearance-none cursor-pointer pr-7 shadow-md hover:border-amber-400 transition-all max-w-[180px] truncate"
                 >
                   {seasonOptions.map((opt) => (

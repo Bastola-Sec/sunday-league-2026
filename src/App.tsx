@@ -250,7 +250,7 @@ export default function App() {
 
   const currentSeasonNumber = matches.reduce((max, m) => Math.max(max, m.seasonNumber || 1), 1);
 
-  // Scroll State & Navigation (1..5)
+  const [activeSeasonId, setActiveSeasonId] = useState<string>('');
   const [scrollState, setScrollState] = useState<AppScrollState>(1);
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [adminPortalMode, setAdminPortalMode] = useState<'club' | 'commissioner'>('club');
@@ -775,6 +775,8 @@ export default function App() {
             teams={displayTeams}
             matches={displayMatches}
             specialTournaments={specialTournaments}
+            activeSeasonId={activeSeasonId}
+            onSelectSeasonId={setActiveSeasonId}
             onNext={() => handleJumpToState(3)}
             onSelectTeam={(team) => {
               handleSelectClubCinematic(team);
@@ -795,6 +797,8 @@ export default function App() {
             matches={displayMatches}
             teams={displayTeams}
             specialTournaments={specialTournaments}
+            activeSeasonId={activeSeasonId}
+            onSelectSeasonId={setActiveSeasonId}
             onOpenMatchModal={(match) => setSelectedMatchForModal(match)}
             onSendPushNotification={handleSendPushNotification}
             onNext={() => handleJumpToState(4)}
