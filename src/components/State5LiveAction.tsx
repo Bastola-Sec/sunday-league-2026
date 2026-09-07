@@ -174,7 +174,8 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
   const nextKickoffDate = nextMatch ? getKickoffDate(nextMatch) : null;
   const isPastKickoffTime = nextKickoffDate ? Date.now() > nextKickoffDate.getTime() : false;
   const isTimeUp = isPastKickoffTime || (timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0);
-  const isDelayed = isTimeUp && (!nextMatch || (!nextMatch.isLive && nextMatch.status !== '1st_half' && nextMatch.status !== '2nd_half'));
+  const isNextMatchFinished = nextMatch ? (nextMatch.isFinished || nextMatch.status === 'ended') : false;
+  const isDelayed = !isNextMatchFinished && isTimeUp && (!!nextMatch && (!nextMatch.isLive && nextMatch.status !== '1st_half' && nextMatch.status !== '2nd_half'));
 
   // Smart Auto-Default Tab Selection: Automatically focus tab with active upcoming fixtures
   useEffect(() => {
@@ -494,6 +495,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                     <AlertTriangle className="w-4 h-4 text-red-500 animate-bounce" />
                     KICKOFF TIME PASSED
                   </>
+                ) : isNextMatchFinished ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    Latest Match Result
+                  </>
                 ) : (
                   <>
                     <Clock className="w-4 h-4 text-[#4C787E]" />
@@ -728,7 +734,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
                 <div className="text-right">
                   <span className="px-3 py-1.5 rounded-xl bg-[#080d14] text-[10px] f1-sub-header text-[#B7CEEC] hover:text-white border border-[#B7CEEC]/30 shadow-md flex items-center gap-1.5 cursor-pointer hover:border-[#4C787E] transition-all">
-                    <span>Match Center & Lineups</span>
+                    <span>View Lineups</span>
                     <ArrowRight className="w-3 h-3 text-[#4C787E]" />
                   </span>
                 </div>

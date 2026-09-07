@@ -25,7 +25,7 @@ export interface Player {
   hypeVotes?: number;
   overallRating?: number;
   preferredFoot?: string;
-  lastMatchesStats?: PlayerMatchStat[];
+  lastMatchesStats?: (PlayerMatchStat | number)[];
   pace?: number;
   shooting?: number;
   passing?: number;
@@ -97,6 +97,7 @@ export interface Team {
   clubCulture?: string;
   achievements?: string[];
   boardMembers?: BoardMember[];
+  isSpecialEventTeam?: boolean;
 }
 
 export interface MatchEvent {
@@ -173,6 +174,8 @@ export interface SpecialTournament {
   playoffFormat?: 'top_2_final' | 'top_4_knockout' | 'super_cup';
   tournamentName?: string;
   isSpecialEvent?: boolean;
+  createdAt?: string | number;
+  isCompleted?: boolean;
 }
 
 export interface HeroMediaItem {

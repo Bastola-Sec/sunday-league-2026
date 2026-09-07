@@ -6,6 +6,7 @@ import { TeamLogo } from './TeamLogos';
 import { TiltCard } from './TiltCard';
 import { CreateSpecialTournamentModal } from './CreateSpecialTournamentModal';
 import { computeStandingsAndFinalsMatch } from '../utils/leagueEngine';
+import { INITIAL_TEAMS } from '../data/mockData';
 
 export const BootIcon: React.FC<{ className?: string }> = ({ className = "w-3.5 h-3.5" }) => (
   <svg
@@ -166,7 +167,32 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
     });
   });
 
-  const [selectedSeasonId, setSelectedSeasonId] = useState<string>(() => seasonOptions[0]?.id || 'season-1');
+  // Auto-detect default selected season/tournament:
+  // If a Special Event is ongoing (has remaining unfinished fixtures), default to that Special Event.
+  // Otherwise, default to running regular season.
+  const defaultSeasonId = React.useMemo(() => {
+    const ongoingTourney = combinedSpecialTournaments.find((st) => {
+      const tourneyMatches = matches.filter(
+        (m) => m.tournamentId === st.id || (m.matchType === 'Special Event' && m.venue?.includes(st.name))
+      );
+      if (tourneyMatches.length === 0) return true; // Newly created event with no matches played yet
+      const hasUnfinishedMatches = tourneyMatches.some((m) => !m.isFinished && m.status !== 'ended');
+      return hasUnfinishedMatches && !st.isCompleted;
+    });
+
+    if (ongoingTourney) {
+      return ongoingTourney.id;
+    }
+    return seasonOptions.find((opt) => !opt.isSpecial)?.id || 'season-1';
+  }, [combinedSpecialTournaments, matches, seasonOptions]);
+
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>(defaultSeasonId);
+
+  // Sync selectedSeasonId if defaultSeasonId updates dynamically
+  React.useEffect(() => {
+    setSelectedSeasonId(defaultSeasonId);
+  }, [defaultSeasonId]);
+
   const activeSeasonOption = seasonOptions.find((opt) => opt.id === selectedSeasonId) || seasonOptions[0];
   const isSpecialEventActive = activeSeasonOption?.isSpecial || false;
   const activeSpecialTournament = activeSeasonOption?.tournament;
@@ -187,9 +213,31 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
   });
 
   // Base teams array for standings calculation
+  const regularLeagueTeams = teams.filter((t) => {
+    // Core initial teams are ALWAYS main league teams
+    if (t.id === 'jhyap-warriors' || t.id === 'momo-strikers' || t.id === 'no-stamina-hustlers' || t.id === 'no-stamina') {
+      return true;
+    }
+
+    // Teams with regular matches are main league teams
+    const hasRegularMatches = matches.some(
+      (m) => (m.homeTeamId === t.id || m.awayTeamId === t.id) && !m.tournamentId && m.matchType !== 'Special Event'
+    );
+    if (hasRegularMatches) return true;
+
+    // Filter out teams explicitly marked as special event teams or temporary team-a/b/c
+    if (t.isSpecialEventTeam || t.id.startsWith('spec-team-') || t.id.startsWith('team-a') || t.id.startsWith('team-b') || t.id.startsWith('team-c') || t.id.startsWith('team-d')) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const baseTeams = regularLeagueTeams.length > 0 ? regularLeagueTeams : INITIAL_TEAMS;
+
   const targetTeams = isSpecialEventActive && activeSpecialTournament?.teams && activeSpecialTournament.teams.length > 0
     ? activeSpecialTournament.teams
-    : teams;
+    : baseTeams;
 
   // Compute season-isolated standings and player telemetry for selected season/tournament
   const { updatedTeams: seasonTeams } = computeStandingsAndFinalsMatch(
@@ -353,7 +401,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
               Est: 2026
             </div>
             <p className="text-xs text-[#B7CEEC]/80 font-medium mt-1">
-              {currentPhase === 'league' ? '3 Teams • Season Leaderboards' : '3 Teams • Live Season Knockout Path & Finals'}
+              {currentPhase === 'league' ? `${displayTeams.length} Teams • Season Leaderboards` : `${displayTeams.length} Teams • Live Season Knockout Path & Finals`}
             </p>
           </div>
 
@@ -417,30 +465,6 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                   {displayTeams.length} Teams • {activeSpecialTournament.matchFormat} • {activeSpecialTournament.halfDurationMinutes}' Halves
                 </p>
               </div>
-            </div>
-
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => setEditingSpecialTournament(activeSpecialTournament)}
-                className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400/50 text-amber-300 font-mono font-bold text-[10px] uppercase transition-all cursor-pointer"
-              >
-                ✏️ Edit
-              </button>
-
-              {onDeleteSpecialTournament && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm(`🗑️ DELETE TOURNAMENT?\n\nAre you sure you want to delete "${activeSpecialTournament.name}"?\n\nThis will remove the event and all associated matches.`)) {
-                      onDeleteSpecialTournament(activeSpecialTournament.id);
-                    }
-                  }}
-                  className="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 text-red-300 font-mono font-bold text-[10px] uppercase transition-all cursor-pointer"
-                >
-                  🗑️ Delete
-                </button>
-              )}
             </div>
           </div>
         )}

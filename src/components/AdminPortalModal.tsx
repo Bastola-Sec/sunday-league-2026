@@ -2289,87 +2289,101 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                           if (combinedAdminTourneys.length === 0) return null;
 
                           return (
-                            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-[#080d15] to-[#080d15] border border-amber-400/40 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
-                              <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                                <Star className="w-5 h-5 text-amber-400 fill-amber-400 shrink-0 animate-pulse" />
-                                <div className="flex-1 min-w-0">
-                                  <label className="text-[10px] font-extrabold uppercase text-amber-300 font-mono tracking-wider block">
-                                    COMMISSIONER SPECIAL EVENT SELECTOR
-                                  </label>
-                                  <select
-                                    value={selectedAdminSpecialTourneyId}
-                                    onChange={(e) => setSelectedAdminSpecialTourneyId(e.target.value)}
-                                    className="mt-1 w-full bg-[#05080c] border border-amber-400/50 rounded-xl px-3 py-1.5 text-xs text-amber-200 font-bold focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
-                                  >
-                                    <option value="all">⭐ ALL SPECIAL EVENTS ({combinedAdminTourneys.length} ACTIVE)</option>
-                                    {combinedAdminTourneys.map((st) => (
-                                      <option key={`opt-st-${st.id}`} value={st.id}>
-                                        🏆 {st.name} ({st.teams.length} Teams • {st.matchFormat})
-                                      </option>
-                                    ))}
-                                  </select>
+                            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-[#080d15] to-[#080d15] border border-amber-400/40 mb-4 space-y-3 shadow-lg">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                  <Star className="w-5 h-5 text-amber-400 fill-amber-400 shrink-0 animate-pulse" />
+                                  <div className="flex-1 min-w-0">
+                                    <label className="text-[10px] font-extrabold uppercase text-amber-300 font-mono tracking-wider block">
+                                      COMMISSIONER SPECIAL EVENT MANAGEMENT
+                                    </label>
+                                    <select
+                                      value={selectedAdminSpecialTourneyId}
+                                      onChange={(e) => setSelectedAdminSpecialTourneyId(e.target.value)}
+                                      className="mt-1 w-full bg-[#05080c] border border-amber-400/50 rounded-xl px-3 py-1.5 text-xs text-amber-200 font-bold focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
+                                    >
+                                      <option value="all">⭐ ALL SPECIAL EVENTS ({combinedAdminTourneys.length} ACTIVE)</option>
+                                      {combinedAdminTourneys.map((st) => (
+                                        <option key={`opt-st-${st.id}`} value={st.id}>
+                                          🏆 {st.name} ({st.teams.length} Teams • {st.matchFormat})
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
                                 </div>
-                              </div>
 
-                              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                                <button
-                                  type="button"
-                                  onClick={() => setIsCreateTournamentModalOpen(true)}
-                                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-all cursor-pointer border border-yellow-300"
-                                >
-                                  <Plus className="w-3.5 h-3.5 text-slate-950" />
-                                  <span>+ New Event</span>
-                                </button>
-
-                                {onDeleteSpecialTournament && (rawSpecialMatches.length > 0 || specialTournaments.length > 0) && (
+                                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                                   <button
                                     type="button"
-                                    onClick={() => {
-                                      if (window.confirm('🧹 PURGE ALL SPECIAL EVENTS & FIXTURES?\n\nAre you sure you want to delete ALL special events and their matches?')) {
-                                        onDeleteSpecialTournament('all');
-                                        setSelectedAdminSpecialTourneyId('all');
-                                      }
-                                    }}
-                                    className="px-2.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/50 text-rose-300 text-xs font-bold uppercase transition-all cursor-pointer flex items-center gap-1"
-                                    title="Purge all special event fixtures and tournaments"
+                                    onClick={() => setIsCreateTournamentModalOpen(true)}
+                                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-all cursor-pointer border border-yellow-300"
                                   >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    <span>Purge All</span>
+                                    <Plus className="w-3.5 h-3.5 text-slate-950" />
+                                    <span>+ New Event</span>
                                   </button>
-                                )}
 
-                                {selectedAdminSpecialTourneyId !== 'all' && (
-                                  <>
+                                  {onDeleteSpecialTournament && (rawSpecialMatches.length > 0 || specialTournaments.length > 0) && (
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        const tourneyToEdit = combinedAdminTourneys.find((t) => t.id === selectedAdminSpecialTourneyId);
-                                        if (tourneyToEdit) setTournamentToEdit(tourneyToEdit);
+                                        if (window.confirm('🧹 PURGE ALL SPECIAL EVENTS & FIXTURES?\n\nAre you sure you want to delete ALL special events and their matches?')) {
+                                          onDeleteSpecialTournament('all');
+                                          setSelectedAdminSpecialTourneyId('all');
+                                        }
                                       }}
-                                      className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400/50 text-amber-300 text-xs font-bold uppercase transition-all cursor-pointer"
-                                      title="Edit Selected Special Event"
+                                      className="px-2.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/50 text-rose-300 text-xs font-bold uppercase transition-all cursor-pointer flex items-center gap-1"
+                                      title="Purge all special event fixtures and tournaments"
                                     >
-                                      ✏️ Edit
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span>Purge All</span>
                                     </button>
+                                  )}
+                                </div>
+                              </div>
 
-                                    {onDeleteSpecialTournament && (
+                              {/* LIST OF ACTIVE SPECIAL EVENTS WITH EDIT & DELETE BUTTONS */}
+                              <div className="space-y-1.5 pt-2 border-t border-amber-400/20">
+                                {combinedAdminTourneys.map((st) => (
+                                  <div
+                                    key={`admin-tourney-row-${st.id}`}
+                                    className="flex items-center justify-between p-2 rounded-xl bg-[#05080c]/80 border border-amber-400/20 text-xs"
+                                  >
+                                    <div className="flex items-center gap-2 truncate">
+                                      <Star className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                      <span className="font-extrabold text-amber-200 truncate">{st.name}</span>
+                                      <span className="text-[10px] text-gray-400 font-mono shrink-0">
+                                        ({st.teams?.length || 0} Teams • {st.matchFormat || '8v8'})
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5 shrink-0">
                                       <button
                                         type="button"
-                                        onClick={() => {
-                                          const tourneyToDelete = combinedAdminTourneys.find((t) => t.id === selectedAdminSpecialTourneyId);
-                                          if (tourneyToDelete && window.confirm(`🗑️ Delete "${tourneyToDelete.name}"?\n\nThis will remove the event and all associated matches.`)) {
-                                            onDeleteSpecialTournament(tourneyToDelete.id);
-                                            setSelectedAdminSpecialTourneyId('all');
-                                          }
-                                        }}
-                                        className="px-2.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/50 text-rose-300 text-xs font-bold uppercase transition-all cursor-pointer"
-                                        title="Delete Selected Special Event"
+                                        onClick={() => setTournamentToEdit(st)}
+                                        className="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400/50 text-amber-300 text-[10px] font-bold uppercase transition-all cursor-pointer"
                                       >
-                                        🗑️ Delete
+                                        ✏️ Edit
                                       </button>
-                                    )}
-                                  </>
-                                )}
+
+                                      {onDeleteSpecialTournament && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (window.confirm(`🗑️ DELETE SPECIAL EVENT?\n\nAre you sure you want to delete "${st.name}"?\n\nThis will remove the event and all associated matches.`)) {
+                                              onDeleteSpecialTournament(st.id);
+                                              if (selectedAdminSpecialTourneyId === st.id) {
+                                                setSelectedAdminSpecialTourneyId('all');
+                                              }
+                                            }
+                                          }}
+                                          className="px-2 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 text-red-300 text-[10px] font-bold uppercase transition-all cursor-pointer"
+                                        >
+                                          🗑️ Delete
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           );

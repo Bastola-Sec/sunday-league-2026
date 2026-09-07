@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { INITIAL_TEAMS, INITIAL_MATCHES, INITIAL_NOTIFICATIONS } from './data/mockData';
-import { Team, Match, PushNotification, AppScrollState, MatchEvent, Player, SpecialTournament } from './types';
+import { Team, Match, PushNotification, AppScrollState, MatchEvent, Player, SpecialTournament, AppConfig } from './types';
 import {
   initializeFirestoreData,
   subscribeTeams,
@@ -98,23 +98,32 @@ export default function App() {
     });
     await saveSpecialTournament(tournament);
 
-    // 2. Register custom tournament teams into global teams state and Firestore
+    // 2. Register custom tournament teams into global teams state and Firestore without overwriting regular season stats
     setTeams((prev) => {
-      const existingIds = new Set(prev.map((t) => t.id));
       const updated = [...prev];
       for (const t of tournament.teams) {
         const existingIdx = updated.findIndex((x) => x.id === t.id);
         if (existingIdx >= 0) {
-          updated[existingIdx] = t;
+          // Keep existing team stats intact, only update visual props like logo if provided
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            logoUrl: t.logoUrl || updated[existingIdx].logoUrl,
+          };
         } else {
-          updated.push(t);
+          updated.push({
+            ...t,
+            isSpecialEventTeam: true,
+          });
         }
       }
       return updated;
     });
 
     for (const team of tournament.teams) {
-      await saveTeamToFirestore(team.id, team);
+      const isCoreTeam = team.id === 'jhyap-warriors' || team.id === 'momo-strikers' || team.id === 'no-stamina' || team.id === 'no-stamina-hustlers';
+      if (!isCoreTeam) {
+        await saveTeamToFirestore(team.id, team);
+      }
     }
 
     // 3. Save generated matches to Firestore

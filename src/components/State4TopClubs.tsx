@@ -20,8 +20,12 @@ export const State4TopClubs: React.FC<State4TopClubsProps> = ({
   onSelectTeam,
   onSelectPlayer,
 }) => {
+  // Filter out teams created solely for special events so main league clubs are shown
+  const mainLeagueTeams = teams.filter((t) => !t.isSpecialEventTeam && !t.id.startsWith('team-a') && !t.id.startsWith('team-b') && !t.id.startsWith('team-c') && !t.id.startsWith('team-d'));
+  const teamsToDisplay = mainLeagueTeams.length > 0 ? mainLeagueTeams : teams;
+
   // Dynamically sort teams by standings (points > goalDifference > goalsFor > won > rank)
-  const sortedTeams = [...teams].sort((a, b) => {
+  const sortedTeams = [...teamsToDisplay].sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
     if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
     if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
@@ -29,13 +33,13 @@ export const State4TopClubs: React.FC<State4TopClubsProps> = ({
     return (a.rank || 99) - (b.rank || 99);
   });
 
-  const rank1Team = sortedTeams[0] || teams[0];
-  const rank2Team = sortedTeams[1] || teams[1] || teams[0];
-  const rank3Team = sortedTeams[2] || teams[2] || teams[0];
+  const rank1Team = sortedTeams[0] || teamsToDisplay[0];
+  const rank2Team = sortedTeams[1] || teamsToDisplay[1] || teamsToDisplay[0];
+  const rank3Team = sortedTeams[2] || teamsToDisplay[2] || teamsToDisplay[0];
 
-  const [selectedTeamId, setSelectedTeamId] = useState<string>(rank1Team?.id || teams[0]?.id);
+  const [selectedTeamId, setSelectedTeamId] = useState<string>(rank1Team?.id || teamsToDisplay[0]?.id);
 
-  const selectedTeam = teams.find((t) => t.id === selectedTeamId) || teams[0];
+  const selectedTeam = teamsToDisplay.find((t) => t.id === selectedTeamId) || teamsToDisplay[0];
 
   const handleTeamClick = (team: Team) => {
     setSelectedTeamId(team.id);

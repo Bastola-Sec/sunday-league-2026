@@ -114,7 +114,7 @@ export async function deleteAllSpecialEventsFromFirestore(): Promise<void> {
     for (const docSnap of teamsSnap.docs) {
       if (
         docSnap.id.startsWith('spec-team-') ||
-        (docSnap.id !== 'momo-strikers' && docSnap.id !== 'jhyap-warriors' && docSnap.id !== 'no-stamina')
+        (docSnap.id !== 'momo-strikers' && docSnap.id !== 'jhyap-warriors' && docSnap.id !== 'no-stamina' && docSnap.id !== 'no-stamina-hustlers')
       ) {
         await deleteDoc(doc(db, TEAMS_COL, docSnap.id));
       }
@@ -131,9 +131,6 @@ export async function deleteAllSpecialEventsFromFirestore(): Promise<void> {
  */
 export async function initializeFirestoreData(): Promise<void> {
   try {
-    // Automatically wipe any temporary test special events per user request
-    await deleteAllSpecialEventsFromFirestore();
-
     const teamsSnap = await getDocs(collection(db, TEAMS_COL));
     if (teamsSnap.empty) {
       for (const team of INITIAL_TEAMS) {

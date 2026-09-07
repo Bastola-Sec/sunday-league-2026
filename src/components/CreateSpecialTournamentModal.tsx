@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Trophy, Star, Sparkles, Calendar, Clock, Zap, Shield, Users, Plus, Trash2, Upload, ChevronDown, ChevronUp, Image as ImageIcon } from 'lucide-react';
+import { X, Trophy, Star, Sparkles, Calendar, Clock, Zap, Shield, Users, Plus, Trash2, Upload, ChevronDown, ChevronUp, Image as ImageIcon, UserCheck, UserPlus, Download } from 'lucide-react';
 import { Team, Match, SpecialTournament, Player } from '../types';
 
 interface CreateSpecialTournamentModalProps {
@@ -82,6 +82,10 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
   const [scheduleMode, setScheduleMode] = useState<'weekly' | 'single_day'>('single_day');
   const [gamesPerWeek, setGamesPerWeek] = useState<number>(2);
   const [matchDayName, setMatchDayName] = useState<string>('Sunday');
+  const [commenceDate, setCommenceDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [singleDayDate, setSingleDayDate] = useState<string>(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -97,6 +101,7 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
   const [newPlayerName, setNewPlayerName] = useState<string>('');
   const [newPlayerNumber, setNewPlayerNumber] = useState<number>(10);
   const [newPlayerPos, setNewPlayerPos] = useState<'GK' | 'DEF' | 'MID' | 'FWD'>('FWD');
+  const [selectedDbPlayerId, setSelectedDbPlayerId] = useState<string>('');
 
   // Custom Teams state (with explicit Name, ShortCode, LogoUrl, and Roster)
   const [customTeams, setCustomTeams] = useState<Partial<Team>[]>(() => [
@@ -105,6 +110,113 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
     { id: 'team-c', name: 'Team C', shortName: 'TMC', motto: 'Dashain Cup Challengers', colorPrimary: PRESET_COLORS[2].primary, colorSecondary: PRESET_COLORS[2].secondary, textColor: '#FFF', roster: [] },
     { id: 'team-d', name: 'Team D', shortName: 'TMD', motto: 'Dashain Cup Dark Horses', colorPrimary: PRESET_COLORS[3].primary, colorSecondary: PRESET_COLORS[3].secondary, textColor: '#FFF', roster: [] },
   ]);
+
+  // 1. All database players flattened with origin team info
+  const allDatabasePlayers = useMemo(() => {
+    const list: { player: Player; originTeamName: string; originTeamId: string }[] = [];
+    (existingTeams || []).forEach((team) => {
+      (team.roster || []).forEach((player) => {
+        list.push({
+          player,
+          originTeamName: team.name,
+          originTeamId: team.id,
+        });
+      });
+    });
+    return list;
+  }, [existingTeams]);
+
+  // 2. Set of player IDs / names already selected in ANY custom team in this wizard
+  const selectedPlayerIds = useMemo(() => {
+    const set = new Set<string>();
+    customTeams.forEach((t) => {
+      (t.roster || []).forEach((p) => {
+        if (p.id) set.add(p.id);
+        if (p.name) set.add(p.name.toLowerCase().trim());
+      });
+    });
+    return set;
+  }, [customTeams]);
+
+  // 3. Filtered database players excluding any already selected in any team
+  const availableDatabasePlayers = useMemo(() => {
+    return allDatabasePlayers.filter(
+      (item) => !selectedPlayerIds.has(item.player.id) && !selectedPlayerIds.has(item.player.name.toLowerCase().trim())
+    );
+  }, [allDatabasePlayers, selectedPlayerIds]);
+
+  // Add Selected Database Player Handler
+  const handleAddSelectedDbPlayer = (teamIdx: number) => {
+    if (!selectedDbPlayerId) return;
+    const target = availableDatabasePlayers.find((item) => item.player.id === selectedDbPlayerId);
+    if (!target) return;
+
+    setCustomTeams((prev) =>
+      prev.map((t, idx) => {
+        if (idx === teamIdx) {
+          const currentRoster = t.roster || [];
+          if (currentRoster.some((p) => p.id === target.player.id)) return t;
+          return {
+            ...t,
+            roster: [...currentRoster, { ...target.player }],
+          };
+        }
+        return t;
+      })
+    );
+
+    setSelectedDbPlayerId('');
+  };
+
+  // Quick Import Entire Club Roster Handler
+  const handleImportClubRoster = (teamIdx: number, sourceTeamId: string) => {
+    if (!sourceTeamId) return;
+    const sourceTeam = existingTeams.find((st) => st.id === sourceTeamId);
+    if (!sourceTeam || !sourceTeam.roster || sourceTeam.roster.length === 0) return;
+
+    const unassignedPlayers = sourceTeam.roster.filter(
+      (p) => !selectedPlayerIds.has(p.id) && !selectedPlayerIds.has(p.name.toLowerCase().trim())
+    );
+
+    if (unassignedPlayers.length === 0) {
+      alert(`All players from ${sourceTeam.name} are already registered in a squad!`);
+      return;
+    }
+
+    setCustomTeams((prev) =>
+      prev.map((t, idx) => {
+        if (idx === teamIdx) {
+          const currentRoster = t.roster || [];
+          return {
+            ...t,
+            roster: [...currentRoster, ...unassignedPlayers.map((p) => ({ ...p }))],
+          };
+        }
+        return t;
+      })
+    );
+  };
+
+  // Auto-Update Team Name, Short Code, Kit Color, Logo & Roster from selected club preset
+  const applyExistingTeamPreset = (teamIdx: number, selectedTeam: Team) => {
+    setCustomTeams((prev) =>
+      prev.map((item, i) => {
+        if (i === teamIdx) {
+          return {
+            ...item,
+            id: selectedTeam.id || item.id,
+            name: selectedTeam.name,
+            shortName: selectedTeam.shortName || selectedTeam.name.substring(0, 4).toUpperCase(),
+            colorPrimary: selectedTeam.colorPrimary || item.colorPrimary,
+            colorSecondary: selectedTeam.colorSecondary || item.colorSecondary,
+            logoUrl: selectedTeam.logoUrl || item.logoUrl,
+            roster: (item.roster && item.roster.length > 0) ? item.roster : (selectedTeam.roster || []).map(p => ({ ...p })),
+          };
+        }
+        return item;
+      })
+    );
+  };
 
   // Pre-fill form if editing an existing tournament
   useEffect(() => {
@@ -218,11 +330,19 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
     // Construct final Teams array with clean IDs derived from user's typed names
     const finalTeams: Team[] = customTeams.map((t, idx) => {
       const rawName = t.name?.trim() || `Team ${String.fromCharCode(65 + idx)}`;
-      const cleanId = t.id && !t.id.startsWith('spec-team-')
+      let cleanId = t.id && !t.id.startsWith('spec-team-')
         ? t.id
         : rawName.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
+      if (rawName.toLowerCase().includes('jhyap')) cleanId = 'jhyap-warriors';
+      if (rawName.toLowerCase().includes('momo')) cleanId = 'momo-strikers';
+      if (rawName.toLowerCase().includes('no stamina') || rawName.toLowerCase().includes('hustler')) cleanId = 'no-stamina';
+
       const shortName = (t.shortName || rawName.substring(0, 4)).substring(0, 5).toUpperCase();
+
+      const isExistingLeagueTeam = (existingTeams || []).some(
+        (et) => et.id === cleanId || et.name.toLowerCase() === rawName.toLowerCase()
+      );
 
       return {
         id: cleanId,
@@ -247,6 +367,7 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
         squadCount: t.roster?.length || 10,
         adminName: 'Tournament Admin',
         roster: t.roster || [],
+        isSpecialEventTeam: !isExistingLeagueTeam,
       };
     });
 
@@ -273,10 +394,17 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
             const formattedDate = formatReadableDate(singleDayDate);
             startTimeLabel = `${formattedDate} • ${formattedTime}`;
           } else {
-            // Weekly Schedule
+            // Weekly Schedule with Commence Date Calculation
             const matchIndexInWeek = matchCounter % gamesPerWeek;
             const weekNumberForMatch = Math.floor(matchCounter / gamesPerWeek) + 1;
             currentWeekNumber = weekNumberForMatch;
+
+            // Calculate date for this match week from commenceDate
+            const startD = new Date(commenceDate || Date.now());
+            const daysOffset = (weekNumberForMatch - 1) * 7;
+            const matchD = new Date(startD.getTime() + daysOffset * 24 * 60 * 60 * 1000);
+            const isoStr = matchD.toISOString().split('T')[0];
+            const formattedDate = formatReadableDate(isoStr);
 
             const timeStr = formatCalculatedKickoff(
               firstGameKickoff,
@@ -284,7 +412,7 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
               halfDuration,
               restGapMinutes
             );
-            startTimeLabel = `${matchDayName}, Week ${weekNumberForMatch} • ${timeStr}`;
+            startTimeLabel = `${formattedDate} (${matchDayName} W${weekNumberForMatch}) • ${timeStr}`;
           }
 
           generatedMatches.push({
@@ -768,30 +896,21 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
                 <div className="p-4 rounded-2xl bg-[#03060a] border border-white/15 space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-extrabold uppercase tracking-wider text-amber-300 mb-1.5">
-                        Matches Per Week
+                      <label className="block text-xs font-extrabold uppercase tracking-wider text-amber-300 mb-1.5 flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Tournament Commence Date</span>
                       </label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {[1, 2, 3].map((g) => (
-                          <button
-                            key={`games-wk-${g}`}
-                            type="button"
-                            onClick={() => setGamesPerWeek(g)}
-                            className={`py-2 rounded-xl text-xs font-black transition-all border ${
-                              gamesPerWeek === g
-                                ? 'bg-amber-500 text-slate-950 border-amber-300 shadow-md'
-                                : 'bg-white/5 text-gray-300 border-white/10 hover:border-amber-400/40'
-                            }`}
-                          >
-                            {g} Game{g > 1 ? 's' : ''}/Wk
-                          </button>
-                        ))}
-                      </div>
+                      <input
+                        type="date"
+                        value={commenceDate}
+                        onChange={(e) => setCommenceDate(e.target.value)}
+                        className="w-full bg-[#080d14] border border-white/15 rounded-xl px-3 py-2 text-white text-xs font-bold focus:border-amber-400 focus:outline-none"
+                      />
                     </div>
 
                     <div>
                       <label className="block text-xs font-extrabold uppercase tracking-wider text-amber-300 mb-1.5">
-                        Match Day
+                        Match Day / Category
                       </label>
                       <select
                         value={matchDayName}
@@ -806,7 +925,29 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-extrabold uppercase tracking-wider text-amber-300 mb-1.5">
+                        Matches Per Week
+                      </label>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[1, 2, 3].map((g) => (
+                          <button
+                            key={`games-wk-${g}`}
+                            type="button"
+                            onClick={() => setGamesPerWeek(g)}
+                            className={`py-2 rounded-xl text-xs font-black transition-all border ${
+                              gamesPerWeek === g
+                                ? 'bg-amber-500 text-slate-950 border-amber-300 shadow-md'
+                                : 'bg-white/5 text-gray-300 border-white/10 hover:border-amber-400/40'
+                            }`}
+                          >
+                            {g} Game{g > 1 ? 's' : ''}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <div>
                       <label className="block text-xs font-extrabold uppercase tracking-wider text-amber-300 mb-1.5">
                         First Kickoff Time
@@ -821,21 +962,32 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
 
                     <div>
                       <label className="block text-xs font-extrabold uppercase tracking-wider text-amber-300 mb-1.5">
-                        Rest / Gap Duration Between Games
+                        Rest / Gap Duration
                       </label>
                       <select
                         value={restGapMinutes}
                         onChange={(e) => setRestGapMinutes(Number(e.target.value))}
                         className="w-full bg-[#080d14] border border-white/15 rounded-xl px-3 py-2.5 text-white text-xs font-bold focus:border-amber-400 focus:outline-none"
                       >
-                        <option value={15}>15 Minutes Rest</option>
-                        <option value={20}>20 Minutes Rest</option>
-                        <option value={25}>25 Minutes Rest</option>
-                        <option value={30}>30 Minutes Rest</option>
-                        <option value={45}>45 Minutes Rest</option>
-                        <option value={60}>60 Minutes Rest</option>
+                        <option value={15}>15 Mins Rest</option>
+                        <option value={20}>20 Mins Rest</option>
+                        <option value={25}>25 Mins Rest</option>
+                        <option value={30}>30 Mins Rest</option>
+                        <option value={45}>45 Mins Rest</option>
+                        <option value={60}>60 Mins Rest</option>
                       </select>
                     </div>
+                  </div>
+
+                  {/* Schedule Calculation Preview */}
+                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-400/30 text-xs space-y-1">
+                    <p className="font-extrabold text-amber-300 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Multi-Week Schedule Timeline Preview</span>
+                    </p>
+                    <p className="text-[11px] text-gray-300 font-mono">
+                      Week 1 Kickoff: {formatReadableDate(commenceDate)} • Week 2: {formatReadableDate(new Date(new Date(commenceDate).getTime() + 7 * 86400000).toISOString().split('T')[0])} • {firstGameKickoff} AM
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -961,6 +1113,34 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
                       </div>
                     </div>
 
+                    {/* QUICK LOAD EXISTING CLUB PRESET DROPDOWN */}
+                    {existingTeams && existingTeams.length > 0 && (
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 p-2 rounded-xl bg-[#080d14] border border-amber-500/30">
+                        <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                          <Shield className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Load Existing Club Preset:</span>
+                        </span>
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            const found = existingTeams.find((item) => item.id === e.target.value);
+                            if (found) {
+                              applyExistingTeamPreset(idx, found);
+                            }
+                            e.target.value = '';
+                          }}
+                          className="bg-[#03060a] border border-amber-400/40 rounded-lg px-2.5 py-1 text-white text-xs font-bold focus:border-amber-400 focus:outline-none cursor-pointer"
+                        >
+                          <option value="" disabled>-- Select Club to Auto-Fill Team &amp; Roster --</option>
+                          {existingTeams.map((team) => (
+                            <option key={`preset-team-${team.id}`} value={team.id}>
+                              {team.name} ({team.shortName})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     {/* Name, Short Name, Logo Upload */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="sm:col-span-2">
@@ -1025,25 +1205,46 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
                         </label>
 
                         {/* Preset logos */}
-                        {PRESET_LOGOS.map((p) => (
-                          <button
-                            key={`preset-${p.label}-${idx}`}
-                            type="button"
-                            onClick={() => {
-                              setCustomTeams((prev) =>
-                                prev.map((item, i) => (i === idx ? { ...item, logoUrl: p.url } : item))
-                              );
-                            }}
-                            className={`px-2 py-1 rounded-lg border text-[10px] font-bold transition-all flex items-center gap-1 ${
-                              t.logoUrl === p.url
-                                ? 'bg-amber-500 text-slate-950 border-amber-300'
-                                : 'bg-white/5 text-gray-300 border-white/10 hover:text-white'
-                            }`}
-                          >
-                            <img src={p.url} alt={p.label} className="w-3.5 h-3.5 object-contain" />
-                            <span>{p.label}</span>
-                          </button>
-                        ))}
+                        {PRESET_LOGOS.map((p) => {
+                          const matchingExisting = existingTeams.find(
+                            (item) =>
+                              item.name.toLowerCase().includes(p.label.toLowerCase()) ||
+                              p.label.toLowerCase().includes(item.name.toLowerCase())
+                          );
+
+                          return (
+                            <button
+                              key={`preset-${p.label}-${idx}`}
+                              type="button"
+                              onClick={() => {
+                                if (matchingExisting) {
+                                  applyExistingTeamPreset(idx, matchingExisting);
+                                } else {
+                                  setCustomTeams((prev) =>
+                                    prev.map((item, i) =>
+                                      i === idx
+                                        ? {
+                                            ...item,
+                                            name: p.label,
+                                            shortName: p.label.substring(0, 4).toUpperCase(),
+                                            logoUrl: p.url,
+                                          }
+                                        : item
+                                    )
+                                  );
+                                }
+                              }}
+                              className={`px-2.5 py-1 rounded-lg border text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                                t.logoUrl === p.url || t.name === p.label
+                                  ? 'bg-amber-500 text-slate-950 border-amber-300'
+                                  : 'bg-white/5 text-gray-300 border-white/10 hover:text-white'
+                              }`}
+                            >
+                              <img src={p.url} alt={p.label} className="w-3.5 h-3.5 object-contain" />
+                              <span>{p.label}</span>
+                            </button>
+                          );
+                        })}
                       </div>
 
                       {t.logoUrl && (
@@ -1085,45 +1286,118 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
 
                       {expandedRosterTeamIdx === idx && (
                         <div className="mt-3 space-y-3 p-3 rounded-xl bg-[#080d14] border border-white/10">
-                          {/* Add Player Input Row */}
-                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                            <input
-                              type="text"
-                              placeholder="Player Name"
-                              value={newPlayerName}
-                              onChange={(e) => setNewPlayerName(e.target.value)}
-                              className="sm:col-span-2 bg-[#03060a] border border-white/15 rounded-lg px-2.5 py-1.5 text-white text-xs font-bold focus:border-amber-400 focus:outline-none"
-                            />
-                            <div className="flex gap-2">
-                              <input
-                                type="number"
-                                placeholder="#"
-                                value={newPlayerNumber}
-                                onChange={(e) => setNewPlayerNumber(Number(e.target.value))}
-                                className="w-16 bg-[#03060a] border border-white/15 rounded-lg px-2.5 py-1.5 text-white text-xs font-mono font-bold focus:border-amber-400 focus:outline-none"
-                              />
-                              <select
-                                value={newPlayerPos}
-                                onChange={(e) => setNewPlayerPos(e.target.value as any)}
-                                className="flex-1 bg-[#03060a] border border-white/15 rounded-lg px-2 py-1.5 text-white text-xs font-bold focus:border-amber-400 focus:outline-none"
-                              >
-                                <option value="FWD">FWD</option>
-                                <option value="MID">MID</option>
-                                <option value="DEF">DEF</option>
-                                <option value="GK">GK</option>
-                              </select>
+                          {/* OPTION 1: SELECT FROM DATABASE PLAYERS (EXCLUSIVE FILTER) */}
+                          <div className="p-3 rounded-xl bg-[#03060a] border border-amber-500/30 space-y-2.5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[10px] font-black uppercase text-amber-300 tracking-wider flex items-center gap-1.5 font-mono">
+                                <Users className="w-3.5 h-3.5 text-amber-400" />
+                                <span>Select Database Player ({availableDatabasePlayers.length} Available)</span>
+                              </label>
+                              {allDatabasePlayers.length > availableDatabasePlayers.length && (
+                                <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
+                                  {allDatabasePlayers.length - availableDatabasePlayers.length} Assigned
+                                </span>
+                              )}
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => handleAddPlayerToTeam(idx)}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              <span>Add Player</span>
-                            </button>
+
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <select
+                                value={selectedDbPlayerId}
+                                onChange={(e) => setSelectedDbPlayerId(e.target.value)}
+                                className="flex-1 bg-[#080d14] border border-amber-400/40 rounded-xl px-3 py-2 text-white text-xs font-bold focus:border-amber-400 focus:outline-none"
+                              >
+                                <option value="">-- Choose Player from Database --</option>
+                                {availableDatabasePlayers.map((item) => (
+                                  <option key={`db-p-${item.player.id}`} value={item.player.id}>
+                                    {item.player.name} (#{item.player.number} • {item.player.position} — {item.originTeamName})
+                                  </option>
+                                ))}
+                              </select>
+
+                              <button
+                                type="button"
+                                disabled={!selectedDbPlayerId}
+                                onClick={() => handleAddSelectedDbPlayer(idx)}
+                                className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 shrink-0 ${
+                                  selectedDbPlayerId
+                                    ? 'bg-gradient-to-r from-amber-400 to-yellow-500 hover:brightness-110 text-slate-950 shadow-md cursor-pointer'
+                                    : 'bg-white/5 text-gray-500 border border-white/10 cursor-not-allowed'
+                                }`}
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Add Selected</span>
+                              </button>
+                            </div>
+
+                            {/* QUICK IMPORT CLUB ROSTER DROPDOWN */}
+                            {existingTeams && existingTeams.length > 0 && (
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 pt-2 border-t border-white/10 text-[10px]">
+                                <span className="text-gray-400 font-bold">Or quick import full club squad:</span>
+                                <select
+                                  defaultValue=""
+                                  onChange={(e) => {
+                                    if (e.target.value) {
+                                      handleImportClubRoster(idx, e.target.value);
+                                      e.target.value = '';
+                                    }
+                                  }}
+                                  className="bg-[#080d14] border border-white/20 rounded-lg px-2.5 py-1 text-amber-300 font-bold focus:outline-none cursor-pointer"
+                                >
+                                  <option value="" disabled>📥 Import Club Roster...</option>
+                                  {existingTeams.map((team) => (
+                                    <option key={`import-${team.id}`} value={team.id}>
+                                      {team.name} ({team.roster?.length || 0} players)
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
                           </div>
 
-                          {/* Roster List */}
+                          {/* OPTION 2: REGISTER NEW CUSTOM PLAYER */}
+                          <div className="p-3 rounded-xl bg-[#03060a] border border-white/10 space-y-2">
+                            <label className="text-[10px] font-bold uppercase text-gray-400 block font-mono">
+                              Or Register New Custom Player
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                              <input
+                                type="text"
+                                placeholder="Player Name"
+                                value={newPlayerName}
+                                onChange={(e) => setNewPlayerName(e.target.value)}
+                                className="sm:col-span-2 bg-[#080d14] border border-white/15 rounded-lg px-2.5 py-1.5 text-white text-xs font-bold focus:border-amber-400 focus:outline-none"
+                              />
+                              <div className="flex gap-2">
+                                <input
+                                  type="number"
+                                  placeholder="#"
+                                  value={newPlayerNumber}
+                                  onChange={(e) => setNewPlayerNumber(Number(e.target.value))}
+                                  className="w-16 bg-[#080d14] border border-white/15 rounded-lg px-2.5 py-1.5 text-white text-xs font-mono font-bold focus:border-amber-400 focus:outline-none"
+                                />
+                                <select
+                                  value={newPlayerPos}
+                                  onChange={(e) => setNewPlayerPos(e.target.value as any)}
+                                  className="flex-1 bg-[#080d14] border border-white/15 rounded-lg px-2 py-1.5 text-white text-xs font-bold focus:border-amber-400 focus:outline-none"
+                                >
+                                  <option value="FWD">FWD</option>
+                                  <option value="MID">MID</option>
+                                  <option value="DEF">DEF</option>
+                                  <option value="GK">GK</option>
+                                </select>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleAddPlayerToTeam(idx)}
+                                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Add Custom</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* ROSTER LIST DISPLAY */}
                           {t.roster && t.roster.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
                               {t.roster.map((player) => (
@@ -1144,6 +1418,7 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
                                     type="button"
                                     onClick={() => handleRemovePlayerFromTeam(idx, player.id)}
                                     className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                                    title="Remove player from squad"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -1151,7 +1426,9 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
                               ))}
                             </div>
                           ) : (
-                            <p className="text-[10px] text-gray-400 italic">No players registered yet for this team. Type player details above to add!</p>
+                            <p className="text-[10px] text-gray-400 italic text-center py-2">
+                              No players registered yet for this team. Select from database or type custom details above to add!
+                            </p>
                           )}
                         </div>
                       )}
