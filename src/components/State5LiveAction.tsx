@@ -277,25 +277,53 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
   const getTeam = (id: string) => teams.find((t) => t.id === id);
 
-  // Helper to render Venue string with parenthesized Tournament Name in Golden text
+  // Helper to render Clean Venue string without parenthesized tournament tag
   const renderVenueWithGoldTournament = (venueStr?: string) => {
     if (!venueStr) return <span>DE ANZA STADIUM</span>;
 
-    const parenMatch = venueStr.match(/^(.*?)\s*(\([^)]+\))$/);
-    if (parenMatch) {
-      const stadium = parenMatch[1];
-      const tournamentTag = parenMatch[2];
-      return (
-        <span className="inline-flex items-center gap-1 truncate">
-          <span>{stadium}</span>
-          <span className="text-amber-400 font-extrabold tracking-wider drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">
-            {tournamentTag}
-          </span>
-        </span>
-      );
+    const cleanVenue = venueStr.replace(/\s*\([^)]+\)/g, '').trim();
+    return <span className="truncate">{cleanVenue || 'DE ANZA STADIUM'}</span>;
+  };
+
+  // Helper to get gold header tag (Special Event Name or Grand Final) for match cards
+  const getMatchHeaderTag = (m?: Match | null) => {
+    if (!m) return null;
+
+    // 1. Check if final match
+    const isFinal =
+      m.id === 'FIX-007' ||
+      m.id.includes('FIX-007') ||
+      m.id.endsWith('-FINAL') ||
+      m.id.includes('-FINAL') ||
+      m.matchType === 'Finals' ||
+      m.matchType === 'Grand Final' ||
+      (m.venue && m.venue.toLowerCase().includes('final'));
+
+    if (isFinal) {
+      return 'Grand Final';
     }
 
-    return <span className="truncate">{venueStr}</span>;
+    // 2. Special Event Name from tournamentId or venue
+    if (m.tournamentId) {
+      const st = combinedSpecialTournaments.find((t) => t.id === m.tournamentId);
+      if (st) return st.name;
+    }
+
+    if (m.matchType === 'Special Event' || m.matchType === 'Exhibition') {
+      const venueMatch = m.venue?.match(/\(([^)]+)\)/);
+      if (venueMatch && venueMatch[1]) {
+        return venueMatch[1];
+      }
+      return 'Special Event';
+    }
+
+    // If active season option is a special tournament and match belongs to it
+    const activeOpt = seasonOptions.find((opt) => opt.id === selectedSeasonId);
+    if (activeOpt?.isSpecial && activeOpt.tournament) {
+      return activeOpt.tournament.name;
+    }
+
+    return null;
   };
 
   // Dynamically calculate remaining time to nextMatch scheduled kickoff
@@ -463,6 +491,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
                     {/* Big Scoreline & Live Minutes Subtitle (FlashScore Style) */}
                     <div className="col-span-3 flex flex-col items-center justify-center space-y-1">
+                      {getMatchHeaderTag(match) && (
+                        <span className="text-[11px] font-black uppercase tracking-widest text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]">
+                          {getMatchHeaderTag(match)}
+                        </span>
+                      )}
                       <span className="text-3xl sm:text-4xl font-black font-mono tracking-widest text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]">
                         {match.homeScore} - {match.awayScore}
                       </span>
@@ -719,6 +752,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                   </div>
 
                   <div className="col-span-3 flex flex-col items-center justify-center space-y-1">
+                    {getMatchHeaderTag(nextMatch) && (
+                      <span className="text-[11px] font-black uppercase tracking-widest text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]">
+                        {getMatchHeaderTag(nextMatch)}
+                      </span>
+                    )}
                     {nextMatch.status === 'scheduled' && !nextMatch.isLive ? (
                       <>
                         <span className={`text-2xl font-black font-mono tracking-widest ${isDelayed ? 'text-red-400 animate-pulse' : 'text-[#4C787E]'}`}>
@@ -905,6 +943,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
                   {/* Center VS & Status */}
                   <div className="col-span-3 flex flex-col items-center justify-center space-y-0.5">
+                    {getMatchHeaderTag(match) && (
+                      <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)] truncate max-w-full px-1">
+                        {getMatchHeaderTag(match)}
+                      </span>
+                    )}
                     <span className="text-xl font-black font-mono tracking-widest text-[#4C787E]">
                       VS
                     </span>
@@ -1019,6 +1062,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                           </div>
 
                           <div className="col-span-3 flex flex-col items-center justify-center space-y-0.5">
+                            {getMatchHeaderTag(match) && (
+                              <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)] truncate max-w-full px-1">
+                                {getMatchHeaderTag(match)}
+                              </span>
+                            )}
                             <span className="text-2xl font-black font-mono tracking-widest text-emerald-400">
                               {match.homeScore} - {match.awayScore}
                             </span>
