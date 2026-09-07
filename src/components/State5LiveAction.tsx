@@ -148,18 +148,36 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
   // Auto-detect default season/tournament selection
   const defaultSeasonId = React.useMemo(() => {
-    const ongoingTourney = combinedSpecialTournaments.find((st) => {
-      const tourneyMatches = matches.filter(
-        (m) => m.tournamentId === st.id || (m.matchType === 'Special Event' && m.venue?.includes(st.name))
-      );
-      if (tourneyMatches.length === 0) return true;
-      const hasUnfinishedMatches = tourneyMatches.some((m) => !m.isFinished && m.status !== 'ended');
-      return hasUnfinishedMatches && !st.isCompleted;
-    });
+    const hasUpcomingFixtures = (opt: (typeof seasonOptions)[0]): boolean => {
+      if (opt.isSpecial && opt.tournament) {
+        const tourneyMatches = (matches || []).filter(
+          (m) => m.tournamentId === opt.tournament?.id || (m.matchType === 'Special Event' && m.venue?.includes(opt.tournament?.name || ''))
+        );
+        if (tourneyMatches.length === 0) return true;
+        return tourneyMatches.some((m) => !m.isFinished && m.status !== 'ended') && !opt.tournament.isCompleted;
+      }
 
-    if (ongoingTourney) return ongoingTourney.id;
-    return seasonOptions.find((opt) => !opt.isSpecial)?.id || 'season-1';
-  }, [combinedSpecialTournaments, matches, seasonOptions]);
+      const sNum = opt.seasonNum || 1;
+      const sMatches = (matches || []).filter(
+        (m) => (m.seasonNumber ?? 1) === sNum && !m.tournamentId && m.matchType !== 'Special Event'
+      );
+      if (sMatches.length === 0) return false;
+      return sMatches.some((m) => !m.isFinished && m.status !== 'ended');
+    };
+
+    const specialWithUpcoming = seasonOptions.filter((opt) => opt.isSpecial && hasUpcomingFixtures(opt));
+    const regularWithUpcoming = seasonOptions.filter((opt) => !opt.isSpecial && hasUpcomingFixtures(opt));
+
+    if (specialWithUpcoming.length > 0) {
+      return specialWithUpcoming[0].id;
+    }
+
+    if (regularWithUpcoming.length > 0) {
+      return regularWithUpcoming[0].id;
+    }
+
+    return seasonOptions.find((opt) => !opt.isSpecial)?.id || seasonOptions[0]?.id || 'season-1';
+  }, [matches, seasonOptions]);
 
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>(activeSeasonId || defaultSeasonId);
 
