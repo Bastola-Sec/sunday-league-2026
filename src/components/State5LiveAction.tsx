@@ -835,7 +835,6 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
           const renderMatchCard = (match: Match, idx: number) => {
             const home = getTeam(match.homeTeamId);
             const away = getTeam(match.awayTeamId);
-            const compBadge = getCompetitionBadge(match);
 
             return (
               <TiltCard
@@ -844,39 +843,53 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                 maxTilt={6}
                 scale={1.02}
                 glowColor="rgba(183, 206, 236, 0.25)"
-                className="p-4 rounded-2xl border border-[#B7CEEC]/25 bg-[#05080c]/80 backdrop-blur-xl text-white shadow-lg cursor-pointer flex items-center justify-between hover:border-[#4C787E] transition-all"
+                className="p-3.5 rounded-2xl border border-[#B7CEEC]/25 bg-[#05080c]/80 backdrop-blur-xl text-white shadow-lg cursor-pointer hover:border-[#4C787E] transition-all space-y-2"
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center -space-x-2">
-                    <TeamLogo teamId={match.homeTeamId} size={36} />
-                    <TeamLogo teamId={match.awayTeamId} size={36} />
-                  </div>
-                  <div>
-                    {/* Top Competition Badge */}
-                    <div className="flex items-center mb-1">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black uppercase border ${compBadge.style}`}>
-                        {compBadge.label}
-                      </span>
-                    </div>
-
-                    {/* Team Names */}
-                    <p className="font-extrabold text-xs sm:text-sm text-white font-mono">
-                      {home?.name || match.homeTeamId} vs {away?.name || match.awayTeamId}
-                    </p>
-
-                    {/* Time & Venue */}
-                    <p className="text-[10px] text-[#B7CEEC]/70 flex items-center gap-1 mt-0.5">
-                      <Clock className="w-3 h-3 text-[#4C787E]" />
-                      {match.startTime} • {match.venue}
-                    </p>
-                  </div>
+                {/* Top Header Bar: Location on Left, Date/Time Pill on Right */}
+                <div className="flex items-center justify-between text-[10px] text-[#B7CEEC]/80 border-b border-white/10 pb-2 gap-2">
+                  <span className="flex items-center gap-1.5 font-mono font-bold uppercase tracking-wider truncate max-w-[60%] text-[10px] text-gray-300">
+                    <MapPin className="w-3 h-3 text-[#4C787E] shrink-0" />
+                    <span className="truncate">{match.venue || 'DE ANZA STADIUM'}</span>
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-lg bg-[#080d14] border border-[#B7CEEC]/30 text-[#B7CEEC] font-mono font-bold flex items-center gap-1 text-[10px] shrink-0">
+                    <span>🗓️</span>
+                    <span>{match.startTime}</span>
+                  </span>
                 </div>
 
-                <div className="text-right">
-                  <span className="px-3 py-1.5 rounded-xl bg-[#080d14] text-[10px] f1-sub-header text-[#B7CEEC] hover:text-white border border-[#B7CEEC]/30 shadow-md flex items-center gap-1.5 cursor-pointer hover:border-[#4C787E] transition-all">
-                    <span>View Lineups</span>
-                    <ArrowRight className="w-3 h-3 text-[#4C787E]" />
-                  </span>
+                {/* Main Content: Home Logo & Name | VS Center | Away Logo & Name */}
+                <div className="grid grid-cols-7 items-center text-center py-1">
+                  {/* Home Team */}
+                  <div className="col-span-2 flex flex-col items-center">
+                    <TeamLogo teamId={match.homeTeamId} size={36} />
+                    <p className="font-extrabold text-xs text-white mt-1 leading-tight truncate max-w-full">
+                      {home?.name || match.homeTeamId}
+                    </p>
+                    <span className="text-[9px] text-[#B7CEEC]/60 font-mono tracking-wider">
+                      {home?.shortName || match.homeTeamId.substring(0, 4).toUpperCase()}
+                    </span>
+                  </div>
+
+                  {/* Center VS & Status */}
+                  <div className="col-span-3 flex flex-col items-center justify-center space-y-0.5">
+                    <span className="text-xl font-black font-mono tracking-widest text-[#4C787E]">
+                      VS
+                    </span>
+                    <span className="text-[9px] font-mono font-bold text-gray-400 uppercase tracking-widest">
+                      Upcoming
+                    </span>
+                  </div>
+
+                  {/* Away Team */}
+                  <div className="col-span-2 flex flex-col items-center">
+                    <TeamLogo teamId={match.awayTeamId} size={36} />
+                    <p className="font-extrabold text-xs text-white mt-1 leading-tight truncate max-w-full">
+                      {away?.name || match.awayTeamId}
+                    </p>
+                    <span className="text-[9px] text-[#B7CEEC]/60 font-mono tracking-wider">
+                      {away?.shortName || match.awayTeamId.substring(0, 4).toUpperCase()}
+                    </span>
+                  </div>
                 </div>
               </TiltCard>
             );
