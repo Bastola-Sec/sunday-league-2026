@@ -29,7 +29,7 @@ import {
   FileText,
   CheckCircle2,
 } from 'lucide-react';
-import { Player, Team } from '../types';
+import { Player, Team, SpecialTournament, Match } from '../types';
 import { TeamLogo } from './TeamLogos';
 import { Player3DAvatar } from './Player3DAvatar';
 import { TiltCard } from './TiltCard';
@@ -44,6 +44,8 @@ interface PlayerProfileModalProps {
   isCommish?: boolean;
   onUpdateRoster?: (teamId: string, updatedRoster: Player[]) => void;
   onSelectAdminTeam?: (teamId: string | null) => void;
+  specialTournaments?: SpecialTournament[];
+  matches?: Match[];
 }
 
 export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
@@ -55,6 +57,8 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   isCommish = false,
   onUpdateRoster,
   onSelectAdminTeam,
+  specialTournaments = [],
+  matches = [],
 }) => {
   const roster = team?.roster && team.roster.length > 0 ? team.roster : player ? [player] : [];
   const initialIndex = player ? roster.findIndex((p) => p.id === player.id) : 0;
@@ -735,6 +739,59 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                     icon: '⭐',
                   });
                 }
+              }
+
+              // Dynamic Special Tournament Champions check (e.g. Dashain Cup 2026)
+              if (specialTournaments && specialTournaments.length > 0) {
+                specialTournaments.forEach((st) => {
+                  const tourneyMatches = (matches || []).filter(
+                    (m) =>
+                      m.tournamentId === st.id ||
+                      (m.matchType === 'Special Event' &&
+                        ((m.venue || '').toLowerCase().includes(st.name.toLowerCase()) ||
+                          st.name.toLowerCase().includes((m.venue || '').toLowerCase())))
+                  );
+
+                  const allFinished =
+                    st.isCompleted ||
+                    (tourneyMatches.length > 0 && tourneyMatches.every((m) => m.isFinished || m.status === 'ended'));
+
+                  if (allFinished) {
+                    let winnerTeamId = st.winnerTeamId;
+                    if (!winnerTeamId) {
+                      const finalMatch = tourneyMatches.find(
+                        (m) => m.id.includes('-FINAL') || m.venue?.toLowerCase().includes('final')
+                      );
+                      if (finalMatch && (finalMatch.isFinished || finalMatch.status === 'ended')) {
+                        winnerTeamId =
+                          finalMatch.homeScore > finalMatch.awayScore ? finalMatch.homeTeamId : finalMatch.awayTeamId;
+                      }
+                    }
+
+                    if (winnerTeamId) {
+                      const winningTourneyTeam = st.teams?.find((t) => t.id === winnerTeamId);
+                      const isPlayerInWinningSquad = winningTourneyTeam?.roster?.some(
+                        (p) => p.id === currentPlayer.id || p.name.toLowerCase().trim() === currentPlayer.name.toLowerCase().trim()
+                      );
+
+                      if (isPlayerInWinningSquad) {
+                        const hasStTrophy = rawTrophies.some(
+                          (t) => t.id.includes(st.id) || (t.title && t.title.toLowerCase().includes(st.name.toLowerCase()))
+                        );
+                        if (!hasStTrophy) {
+                          rawTrophies.push({
+                            id: `tr-st-win-${st.id}-${currentPlayer.id}`,
+                            title: st.name,
+                            seasonOrEvent: '2026',
+                            year: 2026,
+                            type: 'special_event',
+                            icon: '🏆',
+                          });
+                        }
+                      }
+                    }
+                  }
+                });
               }
 
               // Group and format trophies by category title (e.g. Sunday League, League Cup, Super Cup, Dashain Cup 2026)

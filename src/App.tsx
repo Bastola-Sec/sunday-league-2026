@@ -921,6 +921,8 @@ export default function App() {
         activeAdminTeamId={activeAdminTeamId}
         isCommish={activeAdminTeamId === 'all' || activeAdminTeamId === 'league_commish'}
         onUpdateRoster={handleUpdateRoster}
+        specialTournaments={specialTournaments}
+        matches={displayMatches}
         onSelectAdminTeam={(teamId) => setActiveAdminTeamId(teamId)}
       />
     </IPhoneFrame>
