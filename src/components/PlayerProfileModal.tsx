@@ -813,7 +813,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                             {tr.icon}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-[11px] font-black text-amber-300 leading-tight">
+                            <p className="text-[11px] sm:text-xs font-black text-amber-300 leading-tight break-words">
                               {tr.displayTitle}
                             </p>
                           </div>
