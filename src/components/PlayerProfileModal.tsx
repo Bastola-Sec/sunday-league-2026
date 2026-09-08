@@ -689,9 +689,24 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               const teamTrophies = team?.trophies || [];
               const rawTrophies = [...playerTrophies, ...teamTrophies];
 
-              // Automatically assign MoMo Strikers Season 1 League Cup Champion to MoMo roster players
-              const isMoMoTeam = team?.id === 'momo-strikers' || (team?.name || '').toLowerCase().includes('momo');
-              if (isMoMoTeam) {
+              // Historical Season 1 MoMo Strikers Champions Roster (Season 1 League Cup Winners)
+              const SEASON_1_MOMO_PLAYER_IDS = new Set(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8']);
+              const SEASON_1_MOMO_PLAYER_NAMES = new Set([
+                'sandesh shrestha',
+                'subodh khadka',
+                'bimal magar',
+                'bijay badal',
+                'bijay devkota',
+                'sudip giri',
+                'diwakar shrestha',
+                'roshan acharya',
+              ]);
+
+              const wasOnSeason1MoMoRoster =
+                SEASON_1_MOMO_PLAYER_IDS.has(currentPlayer.id) ||
+                SEASON_1_MOMO_PLAYER_NAMES.has((currentPlayer.name || '').toLowerCase().trim());
+
+              if (wasOnSeason1MoMoRoster) {
                 const hasMoMoCup = rawTrophies.some(
                   (t) => t.type === 'league_cup' || (t.title && t.title.toLowerCase().includes('league cup'))
                 );
