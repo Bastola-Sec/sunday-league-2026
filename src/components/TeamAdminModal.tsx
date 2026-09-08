@@ -631,25 +631,21 @@ export const TeamAdminModal: React.FC<TeamAdminModalProps> = ({
                 </div>
                 {/* CLUB TROPHY CABINET */}
                 {(() => {
-                  const clubTrophies = team.trophies || [];
-                  const defaultTrophies = clubTrophies.length > 0 ? clubTrophies : [
-                    {
-                      id: `tr-league-${team.id}`,
-                      title: 'Sunday League Member',
-                      seasonOrEvent: 'Season 1',
-                      year: 2026,
-                      type: 'league_champion' as const,
-                      icon: '🏆',
-                    },
-                    {
-                      id: `tr-cup-${team.id}`,
-                      title: 'League Cup Contender',
-                      seasonOrEvent: 'Season 1',
-                      year: 2026,
-                      type: 'league_cup' as const,
-                      icon: '🥇',
-                    },
-                  ];
+                  const clubTrophies = [...(team.trophies || [])];
+
+                  // MoMo Strikers Season 1 League Cup Champion auto-assignment
+                  if (team.id === 'momo-strikers' || team.name.toLowerCase().includes('momo')) {
+                    if (!clubTrophies.some((t) => t.type === 'league_cup' || t.title.toLowerCase().includes('league cup'))) {
+                      clubTrophies.push({
+                        id: `tr-momo-s1-cup-${team.id}`,
+                        title: 'League Cup',
+                        seasonOrEvent: 'Season 1',
+                        year: 2026,
+                        type: 'league_cup',
+                        icon: '🏆',
+                      });
+                    }
+                  }
 
                   return (
                     <div className="p-4 rounded-2xl bg-[#091420] border border-amber-400/40 space-y-3 shadow-lg">
@@ -657,7 +653,7 @@ export const TeamAdminModal: React.FC<TeamAdminModalProps> = ({
                         <div className="flex items-center gap-2 text-amber-300">
                           <Award className="w-4 h-4 text-amber-400 fill-amber-400 animate-pulse" />
                           <h4 className="text-xs font-black uppercase tracking-wider text-white">
-                            Club Trophy Cabinet ({defaultTrophies.length})
+                            Club Trophy Cabinet ({clubTrophies.length})
                           </h4>
                         </div>
                         <span className="text-[9px] font-mono text-amber-300 font-bold px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40">
@@ -665,26 +661,32 @@ export const TeamAdminModal: React.FC<TeamAdminModalProps> = ({
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
-                        {defaultTrophies.map((tr, tIdx) => (
-                          <div
-                            key={`club-tr-${tr.id}-${tIdx}`}
-                            className="p-2.5 rounded-xl bg-[#102032] border border-amber-400/30 flex items-center gap-2 shadow-sm"
-                          >
-                            <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-sm shrink-0">
-                              {tr.icon || '🏆'}
+                      {clubTrophies.length === 0 ? (
+                        <div className="py-3 px-2 text-center text-xs font-mono text-[#B7CEEC]/60 italic bg-[#080d14]/60 rounded-xl border border-white/5">
+                          No Official Club Trophies Won Yet
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {clubTrophies.map((tr, tIdx) => (
+                            <div
+                              key={`club-tr-${tr.id}-${tIdx}`}
+                              className="p-2.5 rounded-xl bg-[#102032] border border-amber-400/30 flex items-center gap-2 shadow-sm"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-sm shrink-0">
+                                {tr.icon || '🏆'}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-[11px] font-black text-amber-300 truncate leading-tight">
+                                  {tr.title}
+                                </p>
+                                <p className="text-[9px] text-[#B7CEEC]/70 font-mono truncate">
+                                  {tr.seasonOrEvent} • {tr.year}
+                                </p>
+                              </div>
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-[11px] font-black text-amber-300 truncate leading-tight">
-                                {tr.title}
-                              </p>
-                              <p className="text-[9px] text-[#B7CEEC]/80 font-mono truncate">
-                                {tr.seasonOrEvent} • {tr.year}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
