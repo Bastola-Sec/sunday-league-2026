@@ -7,7 +7,8 @@ import { Team, Match, SpecialTournament } from '../types';
  */
 export function computeStandingsAndFinalsMatch(
   teamsList: Team[],
-  matchesList: Match[]
+  matchesList: Match[],
+  allMatchesList?: Match[]
 ): { updatedTeams: Team[]; updatedMatches: Match[] } {
   // Separate regular/group matches from knockout cups & playoffs
   const regularMatches = matchesList.filter((m) => {
@@ -27,6 +28,8 @@ export function computeStandingsAndFinalsMatch(
       m.id.endsWith('-SEMI2');
     return !isKnockoutMatch;
   });
+
+  const matchesForCareer = allMatchesList && allMatchesList.length > 0 ? allMatchesList : matchesList;
 
   // Re-calculate stats for each team strictly from completed regular season matches & events
   const recalculatedTeams: Team[] = teamsList.map((team) => {
@@ -76,7 +79,7 @@ export function computeStandingsAndFinalsMatch(
     let allTimeGoalsFor = 0;
     let allTimeGoalsAgainst = 0;
 
-    matchesList.forEach((m) => {
+    matchesForCareer.forEach((m) => {
       const isFinished = m.isFinished === true || m.status === 'ended';
       if (!isFinished) return;
 
@@ -195,6 +198,56 @@ export function computeStandingsAndFinalsMatch(
           });
         }
       });
+
+      // Calculate All-Time Career Totals across ALL matches (matchesForCareer)
+      let careerGoalsFromMatches = 0;
+      let careerAssistsFromMatches = 0;
+      let careerYellowsFromMatches = 0;
+      let careerRedsFromMatches = 0;
+      let careerMotmFromMatches = 0;
+      let careerGamesFromMatches = 0;
+
+      matchesForCareer.forEach((m) => {
+        const isMatchStarted = m.isFinished || m.status === 'ended' || m.isLive || m.homeScore > 0 || m.awayScore > 0 || (m.events && m.events.length > 0);
+        const isTeamInMatch = m.homeTeamId === team.id || m.awayTeamId === team.id;
+        
+        if (isTeamInMatch && isMatchStarted) {
+          const isHome = m.homeTeamId === team.id;
+          const lineup = isHome ? m.homeStartingPlayerIds : m.awayStartingPlayerIds;
+          const subs = isHome ? m.homeSubstitutePlayerIds : m.awaySubstitutePlayerIds;
+          
+          if (!lineup || lineup.length === 0 || lineup.includes(player.id) || (subs && subs.includes(player.id))) {
+            careerGamesFromMatches += 1;
+          }
+        }
+
+        if (m.isFinished || m.status === 'ended' || m.homeScore > 0 || m.awayScore > 0) {
+          if (m.motmPlayerId && m.motmPlayerId === player.id) {
+            careerMotmFromMatches += 1;
+          } else if (m.motmPlayerName && m.motmPlayerName.toLowerCase().trim() === player.name.toLowerCase().trim()) {
+            careerMotmFromMatches += 1;
+          }
+        }
+
+        (m.events || []).forEach((evt) => {
+          const isGoal = evt.type === 'goal';
+          const isYellow = evt.type === 'yellow_card';
+          const isRed = evt.type === 'red_card';
+
+          const isPlayerMatch =
+            evt.player &&
+            (evt.player === player.id || evt.player.toLowerCase().trim() === player.name.toLowerCase().trim());
+
+          const isAssistMatch =
+            evt.assistPlayer &&
+            (evt.assistPlayer === player.id || evt.assistPlayer.toLowerCase().trim() === player.name.toLowerCase().trim());
+
+          if (isGoal && isPlayerMatch) careerGoalsFromMatches += 1;
+          if (isGoal && isAssistMatch) careerAssistsFromMatches += 1;
+          if (isYellow && isPlayerMatch) careerYellowsFromMatches += 1;
+          if (isRed && isPlayerMatch) careerRedsFromMatches += 1;
+        });
+      });
       
       const last5Stats = playerRecentStats.slice(-5);
 
@@ -210,12 +263,12 @@ export function computeStandingsAndFinalsMatch(
         redCards: telemetryReds,
         motmAwards: telemetryMotm,
         matchesPlayed: playerGamesCount,
-        careerGoals: Math.max(player.careerGoals || 0, telemetryGoals),
-        careerAssists: Math.max(player.careerAssists || 0, telemetryAssists),
-        careerYellowCards: Math.max(player.careerYellowCards || 0, telemetryYellows),
-        careerRedCards: Math.max(player.careerRedCards || 0, telemetryReds),
-        careerMotmAwards: Math.max(player.careerMotmAwards || 0, telemetryMotm),
-        careerMatches: Math.max(player.careerMatches || 0, playerGamesCount),
+        careerGoals: Math.max(player.careerGoals || 0, careerGoalsFromMatches),
+        careerAssists: Math.max(player.careerAssists || 0, careerAssistsFromMatches),
+        careerYellowCards: Math.max(player.careerYellowCards || 0, careerYellowsFromMatches),
+        careerRedCards: Math.max(player.careerRedCards || 0, careerRedsFromMatches),
+        careerMotmAwards: Math.max(player.careerMotmAwards || 0, careerMotmFromMatches),
+        careerMatches: Math.max(player.careerMatches || 0, careerGamesFromMatches),
         lastMatchesStats: last5Stats,
       };
     });

@@ -193,7 +193,7 @@ export const State4TopClubs: React.FC<State4TopClubsProps> = ({
     ? activeSpecialTournament.teams
     : (regularLeagueTeams.length > 0 ? regularLeagueTeams : teams);
 
-  const { updatedTeams: seasonTeams } = computeStandingsAndFinalsMatch(targetTeams, seasonMatches);
+  const { updatedTeams: seasonTeams } = computeStandingsAndFinalsMatch(targetTeams, seasonMatches, matches);
   const displayTeams = seasonTeams.length > 0 ? seasonTeams : targetTeams;
 
   // Dynamically sort teams by standings (points > goalDifference > goalsFor > won > rank)

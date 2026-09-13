@@ -270,7 +270,8 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
   // Compute season-isolated standings and player telemetry for selected season/tournament
   const { updatedTeams: seasonTeams } = computeStandingsAndFinalsMatch(
     targetTeams,
-    seasonMatches
+    seasonMatches,
+    matches
   );
 
   const displayTeams = seasonTeams.length > 0 ? seasonTeams : targetTeams;
