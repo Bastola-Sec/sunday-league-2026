@@ -29,13 +29,23 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
     return (a.rank || 99) - (b.rank || 99);
   });
 
-  const regularMatches = matches.filter(
-    (m) =>
-      (m.matchType === 'Regular' || !m.matchType || m.matchType === 'Regular Season') &&
-      m.id !== 'FIX-007' &&
-      m.id !== 'FIX-008' &&
-      m.id !== 'FIX-009'
-  );
+  const regularMatches = matches.filter((m) => {
+    const isKnockoutMatch =
+      m.matchType === 'League Cup' ||
+      m.matchType === 'Super Cup Qualifier' ||
+      m.matchType === 'Super Cup Final' ||
+      m.matchType === 'Finals' ||
+      m.matchType === 'Grand Final' ||
+      m.matchType === 'Knockout' ||
+      m.matchType === 'Playoff' ||
+      m.id === 'FIX-007' ||
+      m.id === 'FIX-008' ||
+      m.id === 'FIX-009' ||
+      m.id.endsWith('-FINAL') ||
+      m.id.endsWith('-SEMI1') ||
+      m.id.endsWith('-SEMI2');
+    return !isKnockoutMatch;
+  });
 
   const isLeagueComplete =
     regularMatches.length > 0

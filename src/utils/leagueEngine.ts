@@ -9,14 +9,24 @@ export function computeStandingsAndFinalsMatch(
   teamsList: Team[],
   matchesList: Match[]
 ): { updatedTeams: Team[]; updatedMatches: Match[] } {
-  // Separate regular matches from knockout cups & test friendlies
-  const regularMatches = matchesList.filter(
-    (m) =>
-      (m.matchType === 'Regular' || !m.matchType) &&
-      m.id !== 'FIX-007' &&
-      m.id !== 'FIX-008' &&
-      m.id !== 'FIX-009'
-  );
+  // Separate regular/group matches from knockout cups & playoffs
+  const regularMatches = matchesList.filter((m) => {
+    const isKnockoutMatch =
+      m.matchType === 'League Cup' ||
+      m.matchType === 'Super Cup Qualifier' ||
+      m.matchType === 'Super Cup Final' ||
+      m.matchType === 'Finals' ||
+      m.matchType === 'Grand Final' ||
+      m.matchType === 'Knockout' ||
+      m.matchType === 'Playoff' ||
+      m.id === 'FIX-007' ||
+      m.id === 'FIX-008' ||
+      m.id === 'FIX-009' ||
+      m.id.endsWith('-FINAL') ||
+      m.id.endsWith('-SEMI1') ||
+      m.id.endsWith('-SEMI2');
+    return !isKnockoutMatch;
+  });
 
   // Re-calculate stats for each team strictly from completed regular season matches & events
   const recalculatedTeams: Team[] = teamsList.map((team) => {
