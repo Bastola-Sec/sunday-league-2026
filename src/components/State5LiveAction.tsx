@@ -275,7 +275,40 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
   const finishedMatches = sortedMatches.filter((m) => m.isFinished || m.status === 'ended');
   const nextMatch = upcomingMatches[0] || sortedMatches[0];
 
-  const getTeam = (id: string) => teams.find((t) => t.id === id);
+  const getTeam = (id: string): Team => {
+    const found = teams.find((t) => t.id === id);
+    if (found) return found;
+
+    let displayName = id || 'TBD';
+    if (id === '1st Place' || id?.toLowerCase().includes('1st')) displayName = '1st Place (TBD)';
+    else if (id === '2nd Place' || id?.toLowerCase().includes('2nd')) displayName = '2nd Place (TBD)';
+    else if (id === '3rd Place' || id?.toLowerCase().includes('3rd')) displayName = '3rd Place (TBD)';
+    else if (id === '4th Place' || id?.toLowerCase().includes('4th')) displayName = '4th Place (TBD)';
+
+    return {
+      id: id || 'tbd',
+      name: displayName,
+      shortName: displayName.substring(0, 4).toUpperCase(),
+      motto: 'Pure passion for football ⚽',
+      colorPrimary: '#4C787E',
+      colorSecondary: '#3498DB',
+      textColor: '#FFFFFF',
+      rank: 1,
+      played: 0,
+      won: 0,
+      drawn: 0,
+      lost: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      goalDifference: 0,
+      points: 0,
+      form: [],
+      topScorer: 'N/A',
+      squadCount: 10,
+      adminName: 'Tournament Admin',
+      roster: [],
+    };
+  };
 
   // Helper to render Clean Venue string without parenthesized tournament tag
   const renderVenueWithGoldTournament = (venueStr?: string) => {
@@ -567,8 +600,8 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                             <span className="text-gray-400">HT Score</span>
                             <span className="text-amber-300">
                               {(() => {
-                                const htHome = (match.events || []).filter(e => e.type === 'goal' && e.teamId === match.homeTeamId && (e.period === '1st_half' || e.minute <= (match.halfDurationMinutes || 20))).length;
-                                const htAway = (match.events || []).filter(e => e.type === 'goal' && e.teamId === match.awayTeamId && (e.period === '1st_half' || e.minute <= (match.halfDurationMinutes || 20))).length;
+                                const htHome = (match.events || []).filter(e => ((e.type === 'goal' && e.teamId === match.homeTeamId) || (e.type === 'own_goal' && e.teamId === match.awayTeamId)) && (e.period === '1st_half' || e.minute <= (match.halfDurationMinutes || 20))).length;
+                                const htAway = (match.events || []).filter(e => ((e.type === 'goal' && e.teamId === match.awayTeamId) || (e.type === 'own_goal' && e.teamId === match.homeTeamId)) && (e.period === '1st_half' || e.minute <= (match.halfDurationMinutes || 20))).length;
                                 return `${htHome} - ${htAway}`;
                               })()}
                             </span>
@@ -601,6 +634,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                           // Determine event icon
                           const icon =
                             evt.type === 'goal' ? '⚽' :
+                            evt.type === 'own_goal' ? '🔴⚽' :
                             evt.type === 'yellow_card' ? '🟨' :
                             evt.type === 'red_card' ? '🟥' :
                             evt.type === 'sub' ? '🔄' :
@@ -609,9 +643,10 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                             evt.type === 'corner' ? '🚩' : '⚡';
 
                           // Determine clean display title (Player name or event category)
-                          let displayTitle = evt.player;
+                          let displayTitle = evt.type === 'own_goal' ? `${evt.player || 'Player'} (OG)` : evt.player;
                           if (!displayTitle || displayTitle === 'Match Official') {
                             if (evt.type === 'goal') displayTitle = '⚽ GOAL!';
+                            else if (evt.type === 'own_goal') displayTitle = '🔴⚽ OWN GOAL (OG)';
                             else if (evt.type === 'yellow_card') displayTitle = '🟨 Yellow Card';
                             else if (evt.type === 'red_card') displayTitle = '🟥 Red Card';
                             else if (evt.type === 'sub') displayTitle = '🔄 Substitution';
@@ -637,7 +672,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                                   <div className="flex items-center gap-1.5 text-left">
                                     <span className="text-sm">{icon}</span>
                                     <span className="font-bold text-white text-xs">{displayTitle}</span>
-                                    {evt.type === 'goal' && (
+                                    {evt.type === 'own_goal' ? (
+                                      <span className="font-mono font-black text-rose-500 text-xs ml-1">
+                                        OWN GOAL!
+                                      </span>
+                                    ) : evt.type === 'goal' && (
                                       <span className="font-mono font-black text-emerald-400 text-xs ml-1">
                                         GOAL!
                                       </span>
@@ -649,7 +688,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
                                 {!isHomeEvent ? (
                                   <div className="flex items-center gap-1.5 text-right ml-auto">
-                                    {evt.type === 'goal' && (
+                                    {evt.type === 'own_goal' ? (
+                                      <span className="font-mono font-black text-rose-500 text-xs mr-1">
+                                        OWN GOAL!
+                                      </span>
+                                    ) : evt.type === 'goal' && (
                                       <span className="font-mono font-black text-emerald-400 text-xs mr-1">
                                         GOAL!
                                       </span>
@@ -1084,7 +1127,7 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                         {/* Timeline Summary Table (FlashScore Style) */}
                         {(() => {
                           const keyMatchEvents = (match.events || []).filter(
-                            (e) => e.type === 'goal' || e.type === 'yellow_card' || e.type === 'red_card' || e.type === 'sub'
+                            (e) => e.type === 'goal' || e.type === 'own_goal' || e.type === 'yellow_card' || e.type === 'red_card' || e.type === 'sub'
                           );
 
                           if (keyMatchEvents.length === 0) {
@@ -1101,7 +1144,9 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                                 const isHomeEvent = evt.teamId === match.homeTeamId;
                                 const isTeamNameLabel = evt.player === home?.name || evt.player === away?.name;
                                 const icon =
-                                  evt.type === 'goal'
+                                  evt.type === 'own_goal'
+                                    ? '🔴⚽'
+                                    : evt.type === 'goal'
                                     ? '⚽'
                                     : evt.type === 'yellow_card'
                                     ? '🟨'
@@ -1111,7 +1156,9 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                                     ? '🔄'
                                     : '⚡';
 
-                                const displayLabel = isTeamNameLabel
+                                const displayLabel = evt.type === 'own_goal'
+                                  ? `${evt.player || 'Player'} (OG)`
+                                  : isTeamNameLabel
                                   ? evt.description || evt.player
                                   : evt.player;
 
@@ -1122,7 +1169,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
                                         <span className="font-bold text-gray-400 text-[10px]">{evt.minute}'</span>
                                         <span className="text-sm">{icon}</span>
                                         <span className="font-bold text-white text-xs">{displayLabel}</span>
-                                        {evt.type === 'goal' && displayLabel !== 'GOAL!' && (
+                                        {evt.type === 'own_goal' ? (
+                                          <span className="font-mono font-black text-rose-500 text-xs ml-1">
+                                            OWN GOAL!
+                                          </span>
+                                        ) : evt.type === 'goal' && displayLabel !== 'GOAL!' && (
                                           <span className="font-mono font-black text-emerald-400 text-xs ml-1">
                                             GOAL!
                                           </span>
@@ -1134,7 +1185,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
 
                                     {!isHomeEvent ? (
                                       <div className="flex items-center gap-1.5 text-right flex-1 justify-end">
-                                        {evt.type === 'goal' && displayLabel !== 'GOAL!' && (
+                                        {evt.type === 'own_goal' ? (
+                                          <span className="font-mono font-black text-rose-500 text-xs mr-1">
+                                            OWN GOAL!
+                                          </span>
+                                        ) : evt.type === 'goal' && displayLabel !== 'GOAL!' && (
                                           <span className="font-mono font-black text-emerald-400 text-xs mr-1">
                                             GOAL!
                                           </span>

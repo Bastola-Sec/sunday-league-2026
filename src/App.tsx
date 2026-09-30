@@ -249,6 +249,23 @@ export default function App() {
     return { displayTeams: updatedTeams, displayMatches: updatedMatches };
   }, [teams, matches]);
 
+  // Auto-persist resolved fixture team IDs to Firestore whenever standings settle
+  useEffect(() => {
+    if (!displayMatches || displayMatches.length === 0) return;
+    displayMatches.forEach((dm) => {
+      const orig = matches.find((m) => m.id === dm.id);
+      if (orig) {
+        if (orig.homeTeamId !== dm.homeTeamId || orig.awayTeamId !== dm.awayTeamId || orig.venue !== dm.venue) {
+          saveMatchToFirestore(dm.id, {
+            homeTeamId: dm.homeTeamId,
+            awayTeamId: dm.awayTeamId,
+            venue: dm.venue,
+          });
+        }
+      }
+    });
+  }, [displayMatches]);
+
   const currentSeasonNumber = matches.reduce((max, m) => Math.max(max, m.seasonNumber || 1), 1);
 
   const [userSelectedSeasonId, setUserSelectedSeasonId] = useState<string | null>(null);

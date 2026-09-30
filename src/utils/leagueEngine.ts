@@ -417,10 +417,201 @@ export function computeStandingsAndFinalsMatch(
     return m;
   });
 
+  const fullyResolvedMatches = resolveMatchesWithStandings(updatedMatches, rankedTeams.length > 0 ? rankedTeams : recalculatedTeams);
+
   return {
     updatedTeams: rankedTeams,
-    updatedMatches,
+    updatedMatches: fullyResolvedMatches,
   };
+}
+
+/**
+ * Resolves placeholder team IDs ('1st Place', '2nd Place', '3rd Place', '4th Place', 'TBD', etc.)
+ * in all playoff and cup knockout matches across regular seasons and special tournaments
+ * based on current league stage standings.
+ */
+export function resolveMatchesWithStandings(matchesList: Match[], teamsList: Team[]): Match[] {
+  if (!matchesList || matchesList.length === 0) return matchesList;
+
+  // Group matches by tournamentId or seasonNumber/implied tournament
+  const tourneyGroups = new Map<string, Match[]>();
+
+  matchesList.forEach((m) => {
+    let key = `season-${m.seasonNumber || 1}`;
+    if (m.tournamentId) {
+      key = `tourney-${m.tournamentId}`;
+    } else if (m.matchType === 'Special Event' || m.matchType === 'Exhibition') {
+      const venueMatch = m.venue?.match(/\(([^)]+)\)/);
+      const nameFromVenue = venueMatch ? venueMatch[1] : 'special-event';
+      key = `tourney-implied-${nameFromVenue.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+    }
+    if (!tourneyGroups.has(key)) tourneyGroups.set(key, []);
+    tourneyGroups.get(key)!.push(m);
+  });
+
+  const updatedMatchesMap = new Map<string, Match>();
+
+  tourneyGroups.forEach((groupMatches) => {
+    // Separate regular/group matches from knockout/playoff matches
+    const regularGroupMatches = groupMatches.filter((m) => {
+      const isKnockoutMatch =
+        m.matchType === 'League Cup' ||
+        m.matchType === 'Super Cup Qualifier' ||
+        m.matchType === 'Super Cup Final' ||
+        m.matchType === 'Finals' ||
+        m.matchType === 'Grand Final' ||
+        m.matchType === 'Knockout' ||
+        m.matchType === 'Playoff' ||
+        m.id === 'FIX-007' ||
+        m.id === 'FIX-008' ||
+        m.id === 'FIX-009' ||
+        m.id.endsWith('-FINAL') ||
+        m.id.endsWith('-SEMI1') ||
+        m.id.endsWith('-SEMI2');
+      return !isKnockoutMatch;
+    });
+
+    // Get list of team IDs participating in regular matches for this group
+    const teamIdsInGroup = Array.from(new Set(regularGroupMatches.flatMap((m) => [m.homeTeamId, m.awayTeamId])));
+    const groupTeams = teamsList.filter((t) => teamIdsInGroup.includes(t.id));
+
+    // Calculate standings for this group
+    const standings = groupTeams.map((team) => {
+      let played = 0, won = 0, drawn = 0, lost = 0, goalsFor = 0, goalsAgainst = 0;
+      regularGroupMatches.forEach((m) => {
+        if (!m.isFinished && m.status !== 'ended') return;
+        const isHome = m.homeTeamId === team.id;
+        const isAway = m.awayTeamId === team.id;
+        if (!isHome && !isAway) return;
+        played += 1;
+        const teamScore = isHome ? m.homeScore : m.awayScore;
+        const oppScore = isHome ? m.awayScore : m.homeScore;
+        goalsFor += teamScore;
+        goalsAgainst += oppScore;
+        if (teamScore > oppScore) won += 1;
+        else if (teamScore === oppScore) drawn += 1;
+        else lost += 1;
+      });
+      const goalDifference = goalsFor - goalsAgainst;
+      const points = won * 3 + drawn;
+      return { team, played, won, drawn, lost, goalsFor, goalsAgainst, goalDifference, points };
+    });
+
+    // Sort standings: Points -> Goal Difference -> Goals For -> Wins
+    standings.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+      if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+      if (b.won !== a.won) return b.won - a.won;
+      return a.team.name.localeCompare(b.team.name);
+    });
+
+    const isGroupComplete = regularGroupMatches.length > 0
+      ? regularGroupMatches.every((m) => m.isFinished === true || m.status === 'ended')
+      : standings.length > 0;
+
+    const rank1 = (isGroupComplete && standings[0]) ? standings[0].team : (standings[0]?.team || null);
+    const rank2 = (isGroupComplete && standings[1]) ? standings[1].team : (standings[1]?.team || null);
+    const rank3 = (isGroupComplete && standings[2]) ? standings[2].team : (standings[2]?.team || null);
+    const rank4 = (isGroupComplete && standings[3]) ? standings[3].team : (standings[3]?.team || null);
+
+    groupMatches.forEach((m) => {
+      const isKnockoutMatch =
+        m.matchType === 'League Cup' ||
+        m.matchType === 'Super Cup Qualifier' ||
+        m.matchType === 'Super Cup Final' ||
+        m.matchType === 'Finals' ||
+        m.matchType === 'Grand Final' ||
+        m.matchType === 'Knockout' ||
+        m.matchType === 'Playoff' ||
+        m.id === 'FIX-007' ||
+        m.id === 'FIX-008' ||
+        m.id === 'FIX-009' ||
+        m.id.endsWith('-FINAL') ||
+        m.id.endsWith('-SEMI1') ||
+        m.id.endsWith('-SEMI2') ||
+        m.homeTeamId === '1st Place' ||
+        m.homeTeamId === '2nd Place' ||
+        m.homeTeamId === '3rd Place' ||
+        m.homeTeamId === '4th Place' ||
+        m.homeTeamId === 'TBD' ||
+        m.awayTeamId === '1st Place' ||
+        m.awayTeamId === '2nd Place' ||
+        m.awayTeamId === '3rd Place' ||
+        m.awayTeamId === '4th Place' ||
+        m.awayTeamId === 'TBD';
+
+      if (!isKnockoutMatch) {
+        updatedMatchesMap.set(m.id, m);
+        return;
+      }
+
+      let newHomeId = m.homeTeamId;
+      let newAwayId = m.awayTeamId;
+
+      const isFinal = m.id === 'FIX-007' || m.id.endsWith('-FINAL') || m.matchType === 'Finals' || m.matchType === 'Grand Final';
+      const isSemi1 = m.id.endsWith('-SEMI1');
+      const isSemi2 = m.id.endsWith('-SEMI2');
+      const isSuperQual = m.id === 'FIX-008' || m.matchType === 'Super Cup Qualifier';
+      const isSuperFinal = m.id === 'FIX-009' || m.matchType === 'Super Cup Final';
+
+      if (isFinal || m.homeTeamId === '1st Place' || m.homeTeamId === 'Seed 1' || m.homeTeamId === 'SEED #1') {
+        if (rank1) newHomeId = rank1.id;
+      }
+      if (isFinal || m.awayTeamId === '2nd Place' || m.awayTeamId === 'Seed 2' || m.awayTeamId === 'SEED #2') {
+        if (rank2) newAwayId = rank2.id;
+      }
+
+      if (isSemi1) {
+        if (rank1) newHomeId = rank1.id;
+        if (rank4) newAwayId = rank4.id;
+      }
+
+      if (isSemi2) {
+        if (rank2) newHomeId = rank2.id;
+        if (rank3) newAwayId = rank3.id;
+      }
+
+      if (isSuperQual) {
+        if (rank2) newHomeId = rank2.id;
+        if (rank3) newAwayId = rank3.id;
+      }
+
+      if (isSuperFinal) {
+        if (rank1) newHomeId = rank1.id;
+      }
+
+      // Explicit match for '1st Place', '2nd Place', '3rd Place', '4th Place'
+      if ((m.homeTeamId === '1st Place' || m.homeTeamId === '1st Place (TBD)') && rank1) newHomeId = rank1.id;
+      if ((m.homeTeamId === '2nd Place' || m.homeTeamId === '2nd Place (TBD)') && rank2) newHomeId = rank2.id;
+      if ((m.homeTeamId === '3rd Place' || m.homeTeamId === '3rd Place (TBD)') && rank3) newHomeId = rank3.id;
+      if ((m.homeTeamId === '4th Place' || m.homeTeamId === '4th Place (TBD)') && rank4) newHomeId = rank4.id;
+
+      if ((m.awayTeamId === '1st Place' || m.awayTeamId === '1st Place (TBD)') && rank1) newAwayId = rank1.id;
+      if ((m.awayTeamId === '2nd Place' || m.awayTeamId === '2nd Place (TBD)') && rank2) newAwayId = rank2.id;
+      if ((m.awayTeamId === '3rd Place' || m.awayTeamId === '3rd Place (TBD)') && rank3) newAwayId = rank3.id;
+      if ((m.awayTeamId === '4th Place' || m.awayTeamId === '4th Place (TBD)') && rank4) newAwayId = rank4.id;
+
+      // Clean up venue string if it contains placeholders
+      let newVenue = m.venue || 'De Anza Stadium';
+      if (rank1 && rank2 && (newVenue.includes('1st Place vs 2nd Place') || newVenue.includes('1st Place'))) {
+        const homeName = rank1.name;
+        const awayName = rank2.name;
+        if (newVenue.includes('1st Place vs 2nd Place')) {
+          newVenue = newVenue.replace('1st Place vs 2nd Place', `${homeName} vs ${awayName}`);
+        }
+      }
+
+      updatedMatchesMap.set(m.id, {
+        ...m,
+        homeTeamId: newHomeId,
+        awayTeamId: newAwayId,
+        venue: newVenue,
+      });
+    });
+  });
+
+  return matchesList.map((m) => updatedMatchesMap.get(m.id) || m);
 }
 
 /**

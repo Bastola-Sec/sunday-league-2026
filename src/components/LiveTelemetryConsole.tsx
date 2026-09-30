@@ -71,7 +71,7 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
 
   // Selected event type & form state
   const [inlineEventType, setInlineEventType] = useState<
-    'goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner'
+    'goal' | 'own_goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner'
   >('goal');
   const [inlineTeamId, setInlineTeamId] = useState<string>(match.homeTeamId);
   const [inlinePlayerName, setInlinePlayerName] = useState<string>('');
@@ -296,7 +296,12 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
     if (inlineEventType === 'goal') {
       if (isHome) newHomeScore += 1;
       else newAwayScore += 1;
+    } else if (inlineEventType === 'own_goal') {
+      if (isHome) newAwayScore += 1;
+      else newHomeScore += 1;
     }
+
+    const oppTeam = isHome ? awayTeam : homeTeam;
 
     const currentMin = getLiveMatchMinute(match, halfDuration);
     const newEvt: MatchEvent = {
@@ -310,6 +315,8 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
       description:
         inlineEventType === 'goal'
           ? `⚽ GOAL! ${inlinePlayerName} scores for ${activeTeam?.name}!${inlineAssistPlayerName ? ` (Assist: ${inlineAssistPlayerName})` : ''}`
+          : inlineEventType === 'own_goal'
+          ? `🔴⚽ OWN GOAL! ${inlinePlayerName} (OG) scores into own net! (+1 to ${oppTeam?.name || 'Opponent'})`
           : inlineEventType === 'yellow_card'
           ? `🟨 YELLOW CARD issued to ${inlinePlayerName}.`
           : inlineEventType === 'red_card'
@@ -347,9 +354,18 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
 
   const handleDeleteEvent = (eventId: string) => {
     const updatedEvents = (match.events || []).filter((evt) => evt.id !== eventId);
-    const goalEvents = updatedEvents.filter((evt) => evt.type === 'goal');
-    const calcHome = goalEvents.filter((evt) => evt.teamId === match.homeTeamId).length;
-    const calcAway = goalEvents.filter((evt) => evt.teamId === match.awayTeamId).length;
+    let calcHome = 0;
+    let calcAway = 0;
+
+    updatedEvents.forEach((evt) => {
+      if (evt.type === 'goal') {
+        if (evt.teamId === match.homeTeamId) calcHome++;
+        else calcAway++;
+      } else if (evt.type === 'own_goal') {
+        if (evt.teamId === match.homeTeamId) calcAway++;
+        else calcHome++;
+      }
+    });
 
     const update = {
       homeScore: calcHome,
@@ -514,6 +530,7 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold">
           {[
             { type: 'goal', label: '⚽ Goal', color: 'bg-emerald-500/20 border-emerald-400 text-emerald-300' },
+            { type: 'own_goal', label: '🔴⚽ Own Goal (OG)', color: 'bg-rose-500/20 border-rose-400 text-rose-300' },
             { type: 'yellow_card', label: '🟨 Yellow Card', color: 'bg-yellow-500/20 border-yellow-400 text-yellow-300' },
             { type: 'red_card', label: '🟥 Red Card', color: 'bg-rose-500/20 border-rose-400 text-rose-300' },
             { type: 'sub', label: '🔄 Substitution', color: 'bg-sky-500/20 border-sky-400 text-sky-300' },

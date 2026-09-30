@@ -116,7 +116,7 @@ export interface MatchEvent {
   id: string;
   minute: number;
   second?: number;
-  type: 'goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner' | 'kickoff' | 'halftime' | 'fulltime' | 'added_time';
+  type: 'goal' | 'own_goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner' | 'kickoff' | 'halftime' | 'fulltime' | 'added_time';
   teamId: string;
   player: string;
   description: string;

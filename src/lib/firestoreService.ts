@@ -243,12 +243,12 @@ export function sanitizeMatchesData(rawMatches: Match[]): Match[] {
 
         const effectiveEvents = m.events !== undefined ? m.events : (defaultFixture.events || []);
 
-        const goalEvents = effectiveEvents.filter((e) => e.type === 'goal');
+        const goalEvents = effectiveEvents.filter((e) => e.type === 'goal' || e.type === 'own_goal');
         const homeId = m.homeTeamId || defaultFixture.homeTeamId;
         const awayId = m.awayTeamId || defaultFixture.awayTeamId;
 
-        const calcHomeScore = goalEvents.filter((e) => e.teamId === homeId).length;
-        const calcAwayScore = goalEvents.filter((e) => e.teamId === awayId).length;
+        const calcHomeScore = goalEvents.filter((e) => (e.type === 'goal' && e.teamId === homeId) || (e.type === 'own_goal' && e.teamId === awayId)).length;
+        const calcAwayScore = goalEvents.filter((e) => (e.type === 'goal' && e.teamId === awayId) || (e.type === 'own_goal' && e.teamId === homeId)).length;
 
         // Respect live telemetry / user edits for scores, fallback to calculated goal count or default fixture score
         const finalHomeScore = m.homeScore !== undefined

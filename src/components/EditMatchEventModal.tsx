@@ -34,7 +34,7 @@ export const EditMatchEventModal: React.FC<EditMatchEventModalProps> = ({
   const homeTeam = teams.find((t) => t.id === match.homeTeamId) || teams[0];
   const awayTeam = teams.find((t) => t.id === match.awayTeamId) || teams[1];
 
-  const [eventType, setEventType] = useState<'goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner' | 'kickoff' | 'halftime' | 'fulltime'>('goal');
+  const [eventType, setEventType] = useState<'goal' | 'own_goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner' | 'kickoff' | 'halftime' | 'fulltime'>('goal');
   const [selectedTeamId, setSelectedTeamId] = useState<string>(homeTeam?.id || '');
   const [playerName, setPlayerName] = useState<string>('');
   const [assistPlayerName, setAssistPlayerName] = useState<string>('');
@@ -89,6 +89,9 @@ export const EditMatchEventModal: React.FC<EditMatchEventModalProps> = ({
       } else {
         finalDescription = `⚽ GOAL! ${playerName || 'Player'} scores for ${activeSelectedTeam?.name}!`;
       }
+    } else if (eventType === 'own_goal') {
+      const oppTeam = selectedTeamId === homeTeam?.id ? awayTeam : homeTeam;
+      finalDescription = `🔴⚽ OWN GOAL! ${playerName || 'Player'} (OG) scores into own net! (+1 to ${oppTeam?.name || 'Opponent'})`;
     } else if (!finalDescription) {
       finalDescription = eventType === 'yellow_card'
         ? `🟨 YELLOW CARD to ${playerName || 'Player'} (${activeSelectedTeam?.shortName})`
@@ -203,6 +206,7 @@ export const EditMatchEventModal: React.FC<EditMatchEventModalProps> = ({
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 text-xs font-bold">
                 {[
                   { type: 'goal', label: '⚽ Goal', color: 'bg-emerald-500/20 border-emerald-400 text-emerald-300' },
+                  { type: 'own_goal', label: '🔴⚽ Own Goal', color: 'bg-rose-500/20 border-rose-400 text-rose-300' },
                   { type: 'yellow_card', label: '🟨 Yellow Card', color: 'bg-yellow-500/20 border-yellow-400 text-yellow-300' },
                   { type: 'red_card', label: '🟥 Red Card', color: 'bg-rose-500/20 border-rose-400 text-rose-300' },
                   { type: 'sub', label: '🔄 Sub', color: 'bg-sky-500/20 border-sky-400 text-sky-300' },
@@ -214,7 +218,18 @@ export const EditMatchEventModal: React.FC<EditMatchEventModalProps> = ({
                   <button
                     key={`edit-cat-${item.type}`}
                     type="button"
-                    onClick={() => setEventType(item.type as any)}
+                    onClick={() => {
+                      setEventType(item.type as any);
+                      if (!eventToEdit) {
+                        if (item.type === 'goal') {
+                          if (selectedTeamId === homeTeam.id) setHomeScoreInput((prev) => prev + 1);
+                          else setAwayScoreInput((prev) => prev + 1);
+                        } else if (item.type === 'own_goal') {
+                          if (selectedTeamId === homeTeam.id) setAwayScoreInput((prev) => prev + 1);
+                          else setHomeScoreInput((prev) => prev + 1);
+                        }
+                      }
+                    }}
                     className={`py-2 px-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                       eventType === item.type
                         ? `${item.color} font-black ring-2 ring-amber-300 shadow-md scale-105`
@@ -229,7 +244,9 @@ export const EditMatchEventModal: React.FC<EditMatchEventModalProps> = ({
 
             {/* Team Selection Toggle */}
             <div className="space-y-1.5">
-              <label className="text-xs font-black uppercase text-[#B7CEEC]">2. Select Team</label>
+              <label className="text-xs font-black uppercase text-[#B7CEEC]">
+                {eventType === 'own_goal' ? '2. Select Team of Player Committing Own Goal' : '2. Select Team'}
+              </label>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <button
                   type="button"

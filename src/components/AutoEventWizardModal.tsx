@@ -25,10 +25,10 @@ export interface AutoEventWizardModalProps {
   match: Match;
   homeTeam: Team;
   awayTeam: Team;
-  initialEventType?: 'goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner';
+  initialEventType?: 'goal' | 'own_goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner';
   currentMatchMinute: number;
   onConfirmEvent: (eventData: {
-    type: 'goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner';
+    type: 'goal' | 'own_goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner';
     teamId: string;
     player: string;
     assistPlayer?: string;
@@ -52,7 +52,7 @@ export const AutoEventWizardModal: React.FC<AutoEventWizardModalProps> = ({
   onConfirmEvent,
 }) => {
   // Wizard State
-  const [eventType, setEventType] = useState<'goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner'>(initialEventType);
+  const [eventType, setEventType] = useState<'goal' | 'own_goal' | 'yellow_card' | 'red_card' | 'sub' | 'shot_on_target' | 'foul' | 'corner'>(initialEventType);
   const [selectedTeamId, setSelectedTeamId] = useState<string>(homeTeam?.id || '');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [assistPlayer, setAssistPlayer] = useState<Player | null>(null);
@@ -101,7 +101,7 @@ export const AutoEventWizardModal: React.FC<AutoEventWizardModalProps> = ({
     switch (eventType) {
       case 'goal':
         if (isOwnGoal) {
-          return `⚽ OWN GOAL! ${pName} (${teamShort}) accidentally redirects into own net!`;
+          return `🔴⚽ OWN GOAL! ${pName} (${teamShort}) accidentally redirects into own net!`;
         }
         if (isPenalty) {
           return `⚽ GOAL! ${pName} converts from the PENALTY SPOT for ${teamName}!`;
@@ -109,6 +109,9 @@ export const AutoEventWizardModal: React.FC<AutoEventWizardModalProps> = ({
         return `⚽ GOAL! ${pName} scores for ${teamName}!${
           assistPlayer ? ` (Assist: #${assistPlayer.number} ${assistPlayer.name})` : ''
         }`;
+
+      case 'own_goal':
+        return `🔴⚽ OWN GOAL! ${pName} (${teamShort}) accidentally redirects into own net!`;
 
       case 'yellow_card':
         return `🟨 YELLOW CARD issued to ${pName} (${teamShort}).`;

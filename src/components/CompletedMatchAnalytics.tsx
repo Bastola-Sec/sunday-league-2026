@@ -40,9 +40,9 @@ export const CompletedMatchAnalytics: React.FC<CompletedMatchAnalyticsProps> = (
 
   // Derive stats from live events
   const events = match.events || [];
-  const goalEvents = events.filter((e) => e.type === 'goal');
-  const homeGoals = goalEvents.filter((e) => e.teamId === match.homeTeamId);
-  const awayGoals = goalEvents.filter((e) => e.teamId === match.awayTeamId);
+  const goalEvents = events.filter((e) => e.type === 'goal' || e.type === 'own_goal');
+  const homeGoals = goalEvents.filter((e) => (e.type === 'goal' && e.teamId === match.homeTeamId) || (e.type === 'own_goal' && e.teamId === match.awayTeamId));
+  const awayGoals = goalEvents.filter((e) => (e.type === 'goal' && e.teamId === match.awayTeamId) || (e.type === 'own_goal' && e.teamId === match.homeTeamId));
 
   const yellowEvents = events.filter((e) => e.type === 'yellow_card');
   const redEvents = events.filter((e) => e.type === 'red_card');
@@ -331,6 +331,9 @@ export const CompletedMatchAnalytics: React.FC<CompletedMatchAnalyticsProps> = (
               if (evt.type === 'goal') {
                 iconSymbol = '⚽';
                 badgeColor = 'bg-emerald-500 text-slate-950 font-black';
+              } else if (evt.type === 'own_goal') {
+                iconSymbol = '🔴⚽';
+                badgeColor = 'bg-rose-500 text-white font-black';
               } else if (evt.type === 'yellow_card') {
                 iconSymbol = '🟨';
                 badgeColor = 'bg-amber-400';
@@ -522,6 +525,7 @@ export const CompletedMatchAnalytics: React.FC<CompletedMatchAnalyticsProps> = (
 
                   <span className="text-lg shrink-0">
                     {evt.type === 'goal' && '⚽'}
+                    {evt.type === 'own_goal' && '🔴⚽'}
                     {evt.type === 'yellow_card' && '🟨'}
                     {evt.type === 'red_card' && '🟥'}
                     {evt.type === 'shot_on_target' && '🎯'}
