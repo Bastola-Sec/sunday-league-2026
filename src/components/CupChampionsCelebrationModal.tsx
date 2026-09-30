@@ -301,29 +301,7 @@ export const CupChampionsCelebrationModal: React.FC<CupChampionsCelebrationModal
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              {onNavigateToBrackets && (
-                <button
-                  onClick={() => {
-                    onClose();
-                    onNavigateToBrackets();
-                  }}
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-[0_0_25px_rgba(245,158,11,0.5)] hover:brightness-110 transition-all flex items-center justify-center gap-2"
-                >
-                  <Trophy className="w-4 h-4" />
-                  <span>View Cup Bracket & Trophy Wall</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              )}
 
-              <button
-                onClick={onClose}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider border border-white/20 transition-all"
-              >
-                Close Poster
-              </button>
-            </div>
           </div>
         </motion.div>
       </div>
