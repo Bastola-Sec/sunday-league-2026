@@ -85,6 +85,7 @@ interface AdminPortalModalProps {
   onCreateSpecialTournament?: (tournament: SpecialTournament, generatedMatches: Match[]) => void;
   onDeleteSpecialTournament?: (tournamentId: string) => void;
   currentSeasonNumber?: number;
+  onOpenChampionsCelebration?: (match: Match) => void;
 }
 
 export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
@@ -109,6 +110,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   onCreateSpecialTournament,
   onDeleteSpecialTournament,
   currentSeasonNumber = 1,
+  onOpenChampionsCelebration,
 }) => {
   const [isCreateTournamentModalOpen, setIsCreateTournamentModalOpen] = useState(false);
   const [isSeasonSetupModalOpen, setIsSeasonSetupModalOpen] = useState(false);
@@ -2615,6 +2617,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                                     teams={teams}
                                     onUpdateFullMatch={onUpdateFullMatch}
                                     onSendPushNotification={onSendPushNotification}
+                                    onOpenChampionsCelebration={onOpenChampionsCelebration}
                                   />
                                 ) : (
                                   <div className="p-6 rounded-2xl bg-[#060b14]/90 border border-[#B7CEEC]/30 text-center space-y-4 shadow-[0_0_25px_rgba(76,120,126,0.15)] backdrop-blur-xl">

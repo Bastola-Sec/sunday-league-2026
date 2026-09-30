@@ -35,6 +35,7 @@ import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { CinematicClubModal } from './components/CinematicClubModal';
 import { PushNotificationToast } from './components/PushNotificationToast';
 import { PushNotificationPrompt } from './components/PushNotificationPrompt';
+import { CupChampionsCelebrationModal } from './components/CupChampionsCelebrationModal';
 import { IPhoneFrame } from './components/IPhoneFrame';
 import { computeStandingsAndFinalsMatch, rolloverToNewSeason, rolloverToNewSeasonWithOptions, SeasonSetupOptions, getDefaultSeasonId } from './utils/leagueEngine';
 
@@ -373,6 +374,9 @@ export default function App() {
   // Cinematic Club Showcase Modal & 3D Camera Sweep State
   const [selectedClubForCinematic, setSelectedClubForCinematic] = useState<Team | null>(null);
   const [cinematicTrigger, setCinematicTrigger] = useState<number>(0);
+
+  // 3D Cup Champions Poster Celebration Modal state
+  const [celebrationMatch, setCelebrationMatch] = useState<Match | null>(null);
 
   const handleSelectClubCinematic = (team: Team) => {
     setSelectedClubForCinematic(team);
@@ -794,6 +798,10 @@ export default function App() {
             onNext={() => handleJumpToState(2)} 
             onJumpToState={handleJumpToState} 
             championData={appConfig?.seasonChampion}
+            onOpenCelebration={() => {
+              const activeCupFinal = displayMatches.find((m) => (m.isFinished || m.status === 'ended') && (m.id === 'FIX-007' || m.matchType === 'Finals' || m.matchType === 'Super Cup Final' || m.id.endsWith('-FINAL'))) || displayMatches.find((m) => m.id === 'FIX-007') || displayMatches[0];
+              setCelebrationMatch(activeCupFinal || null);
+            }}
           />
         </div>
 
@@ -924,6 +932,7 @@ export default function App() {
         currentSeasonNumber={currentSeasonNumber}
         onCreateSpecialTournament={handleCreateSpecialTournament}
         onDeleteSpecialTournament={handleDeleteSpecialTournament}
+        onOpenChampionsCelebration={(m) => setCelebrationMatch(m)}
       />
 
       {/* 3D Player Profile Modal Overlay */}
@@ -942,6 +951,45 @@ export default function App() {
         matches={displayMatches}
         onSelectAdminTeam={(teamId) => setActiveAdminTeamId(teamId)}
       />
+
+      {/* 3D Cup Champions Poster Celebration Modal */}
+      {(() => {
+        const activeCelebrationMatch = celebrationMatch || displayMatches.find((m) => m.id === 'FIX-007' && (m.isFinished || m.status === 'ended')) || null;
+        
+        let winnerTeam: Team | null = null;
+        let runnerUpTeam: Team | null = null;
+
+        if (activeCelebrationMatch) {
+          const homeTeamObj = teams.find((t) => t.id === activeCelebrationMatch.homeTeamId);
+          const awayTeamObj = teams.find((t) => t.id === activeCelebrationMatch.awayTeamId);
+
+          if (activeCelebrationMatch.homeScore > activeCelebrationMatch.awayScore) {
+            winnerTeam = homeTeamObj || null;
+            runnerUpTeam = awayTeamObj || null;
+          } else if (activeCelebrationMatch.awayScore > activeCelebrationMatch.homeScore) {
+            winnerTeam = awayTeamObj || null;
+            runnerUpTeam = homeTeamObj || null;
+          } else if ((activeCelebrationMatch.homePenalties ?? 0) >= (activeCelebrationMatch.awayPenalties ?? 0)) {
+            winnerTeam = homeTeamObj || null;
+            runnerUpTeam = awayTeamObj || null;
+          } else {
+            winnerTeam = awayTeamObj || null;
+            runnerUpTeam = homeTeamObj || null;
+          }
+        }
+
+        return (
+          <CupChampionsCelebrationModal
+            isOpen={!!celebrationMatch}
+            onClose={() => setCelebrationMatch(null)}
+            match={activeCelebrationMatch}
+            winnerTeam={winnerTeam}
+            runnerUpTeam={runnerUpTeam}
+            tournamentTitle={activeCelebrationMatch?.tournamentName || 'DASHAIN CUP 2026'}
+            onNavigateToBrackets={() => handleJumpToState(2)}
+          />
+        );
+      })()}
     </IPhoneFrame>
   );
 }

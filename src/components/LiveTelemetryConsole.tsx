@@ -12,6 +12,7 @@ import {
   Plus,
   Trash2,
   AlertCircle,
+  Trophy,
 } from 'lucide-react';
 import { Match, Team, MatchEvent, Player } from '../types';
 import { TeamLogo } from './TeamLogos';
@@ -24,6 +25,7 @@ interface LiveTelemetryConsoleProps {
   onUpdateFullMatch?: (matchId: string, updatedFields: Partial<Match>) => void;
   onSendPushNotification?: (title: string, message: string, teamId?: string) => void;
   onClose?: () => void;
+  onOpenChampionsCelebration?: (match: Match) => void;
 }
 
 // Self-contained ticking clock component (prevents whole-modal re-renders)
@@ -66,6 +68,7 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
   onUpdateFullMatch,
   onSendPushNotification,
   onClose,
+  onOpenChampionsCelebration,
 }) => {
   const halfDuration = match.halfDurationMinutes || 20;
 
@@ -249,6 +252,11 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
       );
     }
     triggerFeedback('🏁 Full Time Concluded!');
+
+    if (onOpenChampionsCelebration) {
+      const fullMatch = { ...match, ...update };
+      onOpenChampionsCelebration(fullMatch);
+    }
   };
 
   const handleResetFixture = () => {
@@ -428,6 +436,19 @@ export const LiveTelemetryConsole: React.FC<LiveTelemetryConsoleProps> = ({
 
           {/* Wall-Clock Ticking Time Badge */}
           <LiveConsoleClock match={match} halfDuration={halfDuration} />
+
+          {/* Preview 3D Champions Poster Button */}
+          {onOpenChampionsCelebration && (
+            <button
+              type="button"
+              onClick={() => onOpenChampionsCelebration(match)}
+              className="px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/50 font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-md"
+              title="Preview 3D Champions Poster"
+            >
+              <Trophy className="w-3.5 h-3.5 text-amber-400" />
+              <span>3D Poster</span>
+            </button>
+          )}
 
           {/* Reset Button */}
           <button
