@@ -233,13 +233,17 @@ export const CupChampionsCelebrationModal: React.FC<CupChampionsCelebrationModal
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-2xl overflow-y-auto">
+      <div
+        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-2xl overflow-y-auto"
+        onClick={onClose}
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.85, y: 30 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.85, y: 30 }}
           transition={{ type: 'spring', bounce: 0.4, duration: 0.8 }}
-          className="relative w-full max-w-2xl overflow-hidden rounded-3xl border-2 border-amber-500/50 bg-[#030712] text-white shadow-[0_0_90px_rgba(245,158,11,0.4)]"
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-2xl overflow-hidden rounded-3xl border-2 border-amber-500/50 bg-[#030712] text-white shadow-[0_0_100px_rgba(245,158,11,0.5)]"
         >
           {/* Background Motion Video Loop */}
           <video
@@ -249,7 +253,7 @@ export const CupChampionsCelebrationModal: React.FC<CupChampionsCelebrationModal
             playsInline
             controls={false}
             preload="auto"
-            className="absolute inset-0 w-full h-full object-cover opacity-40 filter saturate-150 contrast-125 pointer-events-none"
+            className="absolute inset-0 w-full h-full object-cover opacity-50 filter saturate-150 contrast-125 pointer-events-none"
             src={videoUrl}
           />
 
