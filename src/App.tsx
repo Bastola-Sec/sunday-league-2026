@@ -986,6 +986,7 @@ export default function App() {
             winnerTeam={winnerTeam}
             runnerUpTeam={runnerUpTeam}
             tournamentTitle={activeCelebrationMatch?.tournamentName || 'DASHAIN CUP 2026'}
+            videoUrl={appConfig?.heroMediaUrl || undefined}
             onNavigateToBrackets={() => handleJumpToState(2)}
           />
         );

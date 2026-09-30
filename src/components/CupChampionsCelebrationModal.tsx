@@ -13,6 +13,7 @@ interface CupChampionsCelebrationModalProps {
   runnerUpTeam: Team | null;
   tournamentTitle?: string;
   mvpPlayer?: Player | null;
+  videoUrl?: string;
   onNavigateToBrackets?: () => void;
 }
 
@@ -24,6 +25,7 @@ export const CupChampionsCelebrationModal: React.FC<CupChampionsCelebrationModal
   runnerUpTeam,
   tournamentTitle = 'DASHAIN CUP 2026',
   mvpPlayer,
+  videoUrl = 'https://res.cloudinary.com/s87ouqnz/video/upload/v1785915477/Change_the_player_s_jersey_to_jiveo0.mp4',
   onNavigateToBrackets,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -237,19 +239,36 @@ export const CupChampionsCelebrationModal: React.FC<CupChampionsCelebrationModal
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.85, y: 30 }}
           transition={{ type: 'spring', bounce: 0.4, duration: 0.8 }}
-          className="relative w-full max-w-2xl overflow-hidden rounded-3xl border-2 border-amber-500/50 bg-gradient-to-b from-[#0a1526]/95 via-[#050b14]/95 to-[#020509]/98 text-white shadow-[0_0_80px_rgba(245,158,11,0.35)]"
+          className="relative w-full max-w-2xl overflow-hidden rounded-3xl border-2 border-amber-500/50 bg-[#030712] text-white shadow-[0_0_90px_rgba(245,158,11,0.4)]"
         >
+          {/* Background Motion Video Loop */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            controls={false}
+            preload="auto"
+            className="absolute inset-0 w-full h-full object-cover opacity-40 filter saturate-150 contrast-125 pointer-events-none"
+            src={videoUrl}
+          />
+
+          {/* Animated Motion Spotlight Beams & Glow Gradients */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a1526]/80 via-[#050b14]/70 to-[#020509]/95 pointer-events-none" />
+          <div className="absolute -top-32 -left-32 w-80 h-80 bg-amber-500/20 rounded-full blur-3xl animate-pulse pointer-events-none" />
+          <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-teal-500/20 rounded-full blur-3xl animate-pulse pointer-events-none" />
+
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 text-gray-300 hover:text-white hover:bg-white/20 transition-all border border-white/20"
+            className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/40 text-gray-300 hover:text-white hover:bg-black/70 transition-all border border-white/20 backdrop-blur-md"
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* 3D Canvas Container */}
           <div className="relative w-full h-[280px] sm:h-[340px] flex items-center justify-center overflow-hidden">
-            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-10" />
 
             {/* Glowing Backdrop Ray */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#020509] via-transparent to-amber-500/10 pointer-events-none" />
