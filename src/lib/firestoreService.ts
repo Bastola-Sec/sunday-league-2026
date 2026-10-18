@@ -149,6 +149,8 @@ export async function initializeFirestoreData(): Promise<void> {
 
 
       for (const match of INITIAL_MATCHES) {
+        // Skip disabled Season 1 Super Cup fixtures so they do not pollute Season 2
+        if (match.id === 'FIX-008' || match.id === 'FIX-009') continue;
         if (!existingMatchIds.has(match.id)) {
           await setDoc(doc(db, MATCHES_COL, match.id), sanitizeForFirestore(match));
         }

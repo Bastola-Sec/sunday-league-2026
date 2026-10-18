@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, User, Save, Upload, Star, Shield, Award, Camera, Sparkles, Video, CheckCircle2, Loader2, Lock } from 'lucide-react';
-import { Player } from '../types';
+import { X, User, Save, Upload, Star, Shield, Award, Camera, Sparkles, Video, CheckCircle2, Loader2, Lock, Plus, Trash2 } from 'lucide-react';
+import { Player, Trophy } from '../types';
 import { SecurePlayerVideo, parseAndSecureVideoUrl } from '../utils/videoSecurity';
 
 interface PlayerFormModalProps {
@@ -33,6 +33,8 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
   const [imageUrl, setImageUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [bio, setBio] = useState('');
+  const [trophies, setTrophies] = useState<Trophy[]>([]);
+  const [awardSeason, setAwardSeason] = useState('Season 1');
 
   // Video Upload Progress & Completion States
   const [isVideoUploading, setIsVideoUploading] = useState(false);
@@ -55,6 +57,11 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
       setImageUrl(playerToEdit.imageUrl || '');
       setVideoUrl(playerToEdit.videoUrl || '');
       setBio(playerToEdit.bio || '');
+      setTrophies(
+        (playerToEdit.trophies || []).filter(
+          (t) => t.type !== 'captain' && !(t.title && t.title.toLowerCase().includes('captain'))
+        )
+      );
       setUploadSuccess(Boolean(playerToEdit.videoUrl));
     } else {
       setName('');
@@ -71,6 +78,7 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
       setImageUrl('');
       setVideoUrl('');
       setBio('');
+      setTrophies([]);
       setUploadSuccess(false);
     }
   }, [playerToEdit, isOpen]);
@@ -151,6 +159,22 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
     }
   };
 
+  const handleAddTrophy = (type: Trophy['type'], title: string, icon: string) => {
+    const newTrophy: Trophy = {
+      id: `tr-custom-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      title,
+      seasonOrEvent: awardSeason,
+      year: 2026,
+      type,
+      icon,
+    };
+    setTrophies((prev) => [...prev, newTrophy]);
+  };
+
+  const handleRemoveTrophy = (id: string) => {
+    setTrophies((prev) => prev.filter((t) => t.id !== id));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -168,6 +192,7 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
     }
 
     const updatedPlayer: Player = {
+      ...(playerToEdit || {}),
       id: playerToEdit?.id || `p-${Date.now()}`,
       name: name.trim(),
       number: Number(number) || 1,
@@ -184,7 +209,14 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
       videoUrl: videoUrl.trim() || undefined,
       bio: bio.trim() || undefined,
       matchesPlayed: playerToEdit?.matchesPlayed ?? 0,
+      careerGoals: playerToEdit?.careerGoals,
+      careerAssists: playerToEdit?.careerAssists,
+      careerMotmAwards: playerToEdit?.careerMotmAwards,
+      careerYellowCards: playerToEdit?.careerYellowCards,
+      careerRedCards: playerToEdit?.careerRedCards,
+      careerMatches: playerToEdit?.careerMatches,
       lastMatchesStats: playerToEdit?.lastMatchesStats || [0, 1, 0, 1, 0],
+      trophies: trophies.filter((t) => t.type !== 'captain' && !(t.title && t.title.toLowerCase().includes('captain'))),
     };
 
     onSave(updatedPlayer);
@@ -366,6 +398,109 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Player Trophy Cabinet / Honours Section */}
+            <div className="p-3 rounded-2xl bg-[#091420] border border-amber-400/30 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-black text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-amber-400 fill-amber-400 animate-pulse" />
+                  <span>Official Honours & Trophies ({trophies.length})</span>
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-gray-400">Award Season:</span>
+                  <select
+                    value={awardSeason}
+                    onChange={(e) => setAwardSeason(e.target.value)}
+                    className="p-1 rounded-lg bg-[#040810] border border-amber-400/40 text-amber-300 font-bold text-[10px] focus:outline-none"
+                  >
+                    <option value="Season 1">Season 1</option>
+                    <option value="Season 2">Season 2</option>
+                    <option value="Season 3">Season 3</option>
+                    <option value="Special Cup 2026">Special Cup 2026</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Quick Add Honour Badges */}
+              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => handleAddTrophy('golden_boot', 'Golden Boot', '👟')}
+                  className="px-2 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>👟 + Golden Boot</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleAddTrophy('playmaker', 'Playmaker Award', '🪄')}
+                  className="px-2 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/30 font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>🪄 + Playmaker Award</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleAddTrophy('league_cup', 'League Cup', '🏆')}
+                  className="px-2 py-1 rounded-lg bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>🏆 + League Cup</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleAddTrophy('super_cup', 'Super Cup', '🏆')}
+                  className="px-2 py-1 rounded-lg bg-purple-500/20 border border-purple-500/40 text-purple-300 hover:bg-purple-500/30 font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>🏆 + Super Cup</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleAddTrophy('league_champion', 'Sunday League', '🏆')}
+                  className="px-2 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>🏆 + Sunday League</span>
+                </button>
+              </div>
+
+              {/* Trophies List on Player */}
+              {trophies.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+                  {trophies.map((tr) => (
+                    <div
+                      key={tr.id}
+                      className="p-2 rounded-xl bg-[#050c14] border border-amber-400/30 flex items-center justify-between text-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-base">{tr.icon || '🏆'}</span>
+                        <div className="min-w-0">
+                          <p className="font-bold text-amber-300 text-[11px] truncate">{tr.title}</p>
+                          <p className="text-[9px] text-[#B7CEEC]/70 font-mono">{tr.seasonOrEvent || 'Season 1'}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTrophy(tr.id)}
+                        className="p-1 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-colors cursor-pointer"
+                        title="Remove Honour"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[10px] text-gray-400 italic pt-1">
+                  No individual honours assigned yet. Use the quick buttons above to award Golden Boot, Playmaker Award, or Cups.
+                </p>
+              )}
             </div>
 
             {/* Trait & Photo */}

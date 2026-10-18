@@ -280,15 +280,30 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
     if (found) return found;
 
     let displayName = id || 'TBD';
-    if (id === '1st Place' || id?.toLowerCase().includes('1st')) displayName = '1st Place (TBD)';
-    else if (id === '2nd Place' || id?.toLowerCase().includes('2nd')) displayName = '2nd Place (TBD)';
-    else if (id === '3rd Place' || id?.toLowerCase().includes('3rd')) displayName = '3rd Place (TBD)';
-    else if (id === '4th Place' || id?.toLowerCase().includes('4th')) displayName = '4th Place (TBD)';
+    let displayShort = 'TBD';
+    if (id === '1st Place' || id?.toLowerCase().includes('1st')) {
+      displayName = '1st Place (TBD)';
+      displayShort = '#1 TBD';
+    } else if (id === '2nd Place' || id?.toLowerCase().includes('2nd')) {
+      displayName = '2nd Place (TBD)';
+      displayShort = '#2 TBD';
+    } else if (id === '3rd Place' || id?.toLowerCase().includes('3rd')) {
+      displayName = '3rd Place (TBD)';
+      displayShort = '#3 TBD';
+    } else if (id === '4th Place' || id?.toLowerCase().includes('4th')) {
+      displayName = '4th Place (TBD)';
+      displayShort = '#4 TBD';
+    } else if (id === 'tbd' || id?.toLowerCase().includes('winner') || id?.toLowerCase().includes('qualifier')) {
+      displayName = 'Winner (2nd vs 3rd)';
+      displayShort = 'QUAL';
+    } else {
+      displayShort = displayName.substring(0, 4).toUpperCase();
+    }
 
     return {
       id: id || 'tbd',
       name: displayName,
-      shortName: displayName.substring(0, 4).toUpperCase(),
+      shortName: displayShort,
       motto: 'Pure passion for football ⚽',
       colorPrimary: '#4C787E',
       colorSecondary: '#3498DB',
@@ -318,22 +333,24 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
     return <span className="truncate">{cleanVenue || 'DE ANZA STADIUM'}</span>;
   };
 
-  // Helper to get gold header tag (Special Event Name or Grand Final) for match cards
+  // Helper to get gold header tag (Special Event Name or Specific Cup Tag) for match cards
   const getMatchHeaderTag = (m?: Match | null) => {
     if (!m) return null;
 
-    // 1. Check if final match
-    const isFinal =
-      m.id === 'FIX-007' ||
-      m.id.includes('FIX-007') ||
-      m.id.endsWith('-FINAL') ||
-      m.id.includes('-FINAL') ||
-      m.matchType === 'Finals' ||
-      m.matchType === 'Grand Final' ||
-      (m.venue && m.venue.toLowerCase().includes('final'));
-
-    if (isFinal) {
+    if (m.matchType === 'League Cup') {
+      return 'League Cup Final';
+    }
+    if (m.matchType === 'Super Cup Qualifier') {
+      return 'Super Cup Qualifier';
+    }
+    if (m.matchType === 'Super Cup Final') {
+      return 'Super Cup Final';
+    }
+    if (m.matchType === 'Finals' || m.matchType === 'Grand Final') {
       return 'Grand Final';
+    }
+    if (m.id === 'FIX-007') {
+      return 'League Cup Final';
     }
 
     // 2. Special Event Name from tournamentId or venue
@@ -923,11 +940,30 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
               };
             }
 
+            if (m.matchType === 'League Cup') {
+              return {
+                label: '🏆 LEAGUE CUP FINAL',
+                style: 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]',
+              };
+            }
+
+            if (m.matchType === 'Super Cup Qualifier') {
+              return {
+                label: '⚡ SUPER CUP QUALIFIER',
+                style: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.2)]',
+              };
+            }
+
+            if (m.matchType === 'Super Cup Final') {
+              return {
+                label: '🏆 SUPER CUP FINAL',
+                style: 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]',
+              };
+            }
+
             if (
-              m.matchType === 'League Cup' ||
-              m.matchType === 'Super Cup Qualifier' ||
-              m.matchType === 'Super Cup Final' ||
               m.matchType === 'Finals' ||
+              m.matchType === 'Grand Final' ||
               m.matchType === 'Knockout' ||
               m.id.includes('FIX-007') ||
               m.id.includes('FIX-008') ||

@@ -29,7 +29,7 @@ import {
   FileText,
   CheckCircle2,
 } from 'lucide-react';
-import { Player, Team, SpecialTournament, Match } from '../types';
+import { Player, Team, SpecialTournament, Match, Trophy } from '../types';
 import { TeamLogo } from './TeamLogos';
 import { Player3DAvatar } from './Player3DAvatar';
 import { TiltCard } from './TiltCard';
@@ -38,6 +38,7 @@ import { PlayerFormModal } from './PlayerFormModal';
 interface PlayerProfileModalProps {
   player: Player | null;
   team: Team | null;
+  teams?: Team[];
   onClose: () => void;
   isSoundEnabled?: boolean;
   activeAdminTeamId?: string | null;
@@ -51,6 +52,7 @@ interface PlayerProfileModalProps {
 export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   player,
   team,
+  teams = [],
   onClose,
   isSoundEnabled = false,
   activeAdminTeamId,
@@ -688,10 +690,14 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
             {/* TROPHY CABINET SECTION */}
             {(() => {
-              // Collect all explicit player trophies & team trophies for player's current team
-              const playerTrophies = currentPlayer.trophies || [];
-              const teamTrophies = team?.trophies || [];
-              const rawTrophies = [...playerTrophies, ...teamTrophies];
+              // Collect explicit player trophies & team trophies, strictly filtering out any captain roles
+              const playerTrophies = (currentPlayer.trophies || []).filter(
+                (t) => t.type !== 'captain' && !(t.title && t.title.toLowerCase().includes('captain'))
+              );
+              const teamTrophies = (team?.trophies || []).filter(
+                (t) => t.type !== 'captain' && !(t.title && t.title.toLowerCase().includes('captain'))
+              );
+              const rawTrophies: Trophy[] = [...playerTrophies, ...teamTrophies];
 
               // Historical Season 1 MoMo Strikers Champions Roster (Season 1 League Cup Winners)
               const SEASON_1_MOMO_PLAYER_IDS = new Set(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8']);
@@ -706,9 +712,11 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                 'roshan acharya',
               ]);
 
+              const currPlayerNameLower = (currentPlayer.name || '').toLowerCase().trim();
+
               const wasOnSeason1MoMoRoster =
                 SEASON_1_MOMO_PLAYER_IDS.has(currentPlayer.id) ||
-                SEASON_1_MOMO_PLAYER_NAMES.has((currentPlayer.name || '').toLowerCase().trim());
+                SEASON_1_MOMO_PLAYER_NAMES.has(currPlayerNameLower);
 
               if (wasOnSeason1MoMoRoster) {
                 const hasMoMoCup = rawTrophies.some(
@@ -722,21 +730,6 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                     year: 2026,
                     type: 'league_cup',
                     icon: '🏆',
-                  });
-                }
-              }
-
-              // Captain honor if applicable
-              if (currentPlayer.isCaptain) {
-                const hasCaptain = rawTrophies.some((t) => t.type === 'captain');
-                if (!hasCaptain) {
-                  rawTrophies.push({
-                    id: `tr-captain-${currentPlayer.id}`,
-                    title: 'Club Captain',
-                    seasonOrEvent: 'Season 1',
-                    year: 2026,
-                    type: 'captain',
-                    icon: '⭐',
                   });
                 }
               }
@@ -771,7 +764,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                     if (winnerTeamId) {
                       const winningTourneyTeam = st.teams?.find((t) => t.id === winnerTeamId);
                       const isPlayerInWinningSquad = winningTourneyTeam?.roster?.some(
-                        (p) => p.id === currentPlayer.id || p.name.toLowerCase().trim() === currentPlayer.name.toLowerCase().trim()
+                        (p) => p.id === currentPlayer.id || p.name.toLowerCase().trim() === currPlayerNameLower
                       );
 
                       if (isPlayerInWinningSquad) {
@@ -794,7 +787,92 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                 });
               }
 
-              // Group and format trophies by category title (e.g. Sunday League, League Cup, Super Cup, Dashain Cup 2026)
+              // INDIVIDUAL AWARDS: Golden Boot (👟 top scorer) & Playmaker Award (🪄 top assists)
+              // Computed purely from goal events of each COMPLETED season and COMPLETED special tournament.
+              {
+                const isDone = (m: Match) => Boolean(m.isFinished || m.status === 'ended');
+                const isSpecialMatch = (m: Match) =>
+                  Boolean(m.tournamentId) || m.matchType === 'Special Event' || m.matchType === 'Exhibition';
+
+                // Canonicalize event player refs (ids or names) -> lowercase player name
+                const idToName = new Map<string, string>();
+                const registerRoster = (roster?: Player[]) =>
+                  (roster || []).forEach((p) => {
+                    if (p?.id && p?.name) idToName.set(p.id.toLowerCase().trim(), p.name.toLowerCase().trim());
+                  });
+                (teams || []).forEach((t) => registerRoster(t.roster));
+                registerRoster(team?.roster);
+                (specialTournaments || []).forEach((st) => (st.teams || []).forEach((t) => registerRoster(t.roster)));
+                const canon = (ref: string) => {
+                  const k = ref.toLowerCase().trim();
+                  return idToName.get(k) || k;
+                };
+                const myKey = currPlayerNameLower || canon(currentPlayer.id);
+
+                const competitions: { label: string; compMatches: Match[] }[] = [];
+
+                // League seasons (an earlier season is complete once a newer one exists)
+                const leagueMatches = (matches || []).filter((m) => !isSpecialMatch(m));
+                const seasonNums = Array.from(new Set(leagueMatches.map((m) => m.seasonNumber || 1))).sort((a, b) => a - b);
+                const latestSeason = seasonNums.length > 0 ? seasonNums[seasonNums.length - 1] : 0;
+                seasonNums.forEach((sNum) => {
+                  const sMatches = leagueMatches.filter((m) => (m.seasonNumber || 1) === sNum);
+                  const completed = sNum < latestSeason || (sMatches.length > 0 && sMatches.every(isDone));
+                  if (completed) competitions.push({ label: `Season ${sNum}`, compMatches: sMatches.filter(isDone) });
+                });
+
+                // Special tournaments (e.g. Dashain Cup 2026)
+                (specialTournaments || []).forEach((st) => {
+                  const tMatches = (matches || []).filter(
+                    (m) =>
+                      m.tournamentId === st.id ||
+                      (m.matchType === 'Special Event' &&
+                        ((m.venue || '').toLowerCase().includes(st.name.toLowerCase()) ||
+                          st.name.toLowerCase().includes((m.venue || '').toLowerCase())))
+                  );
+                  const completed = st.isCompleted || (tMatches.length > 0 && tMatches.every(isDone));
+                  if (completed) competitions.push({ label: st.name, compMatches: tMatches.filter(isDone) });
+                });
+
+                competitions.forEach(({ label, compMatches }) => {
+                  const goals = new Map<string, number>();
+                  const assists = new Map<string, number>();
+                  compMatches.forEach((m) =>
+                    (m.events || []).forEach((evt) => {
+                      if (evt.type !== 'goal') return;
+                      if (evt.player) {
+                        const k = canon(evt.player);
+                        goals.set(k, (goals.get(k) || 0) + 1);
+                      }
+                      if (evt.assistPlayer) {
+                        const k = canon(evt.assistPlayer);
+                        assists.set(k, (assists.get(k) || 0) + 1);
+                      }
+                    })
+                  );
+
+                  const award = (tally: Map<string, number>, type: Trophy['type'], title: string, icon: string) => {
+                    const max = Math.max(0, ...Array.from(tally.values()));
+                    if (max === 0 || (tally.get(myKey) || 0) !== max) return;
+                    const already = rawTrophies.some((t) => t.type === type && t.seasonOrEvent === label);
+                    if (!already) {
+                      rawTrophies.push({
+                        id: `tr-${type}-${label.toLowerCase().replace(/\s+/g, '-')}-${currentPlayer.id}`,
+                        title,
+                        seasonOrEvent: label,
+                        year: 2026,
+                        type,
+                        icon,
+                      });
+                    }
+                  };
+
+                  award(goals, 'golden_boot', 'Golden Boot', '👟');
+                  award(assists, 'playmaker', 'Playmaker Award', '🪄');
+                });
+              }
+
+              // Group and format trophies by category title (e.g. Sunday League, League Cup, Super Cup, Golden Boot, Playmaker Award, Dashain Cup 2026)
               const trophyGroups: {
                 [key: string]: {
                   title: string;
@@ -809,25 +887,36 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                 let normTitle = t.title || 'League Trophy';
                 let normSeason = t.seasonOrEvent || (t.year ? `${t.year}` : 'Season 1');
 
-                if (t.type === 'league_cup' || normTitle.toLowerCase().includes('league cup')) {
+                // Strictly filter out any captain honour as requested
+                if (t.type === 'captain' || normTitle.toLowerCase().includes('captain')) {
+                  return;
+                }
+
+                if (t.type === 'golden_boot' || normTitle.toLowerCase().includes('golden boot')) {
+                  normTitle = 'Golden Boot';
+                } else if (t.type === 'playmaker' || normTitle.toLowerCase().includes('playmaker')) {
+                  normTitle = 'Playmaker Award';
+                } else if (t.type === 'league_cup' || normTitle.toLowerCase().includes('league cup')) {
                   normTitle = 'League Cup';
                 } else if (t.type === 'super_cup' || normTitle.toLowerCase().includes('super cup')) {
                   normTitle = 'Super Cup';
                 } else if (t.type === 'league_champion' || normTitle.toLowerCase().includes('sunday league')) {
                   normTitle = 'Sunday League';
-                } else if (t.type === 'captain') {
-                  normTitle = 'Club Captain';
                 }
 
                 const key = normTitle.toLowerCase().trim();
 
                 if (!trophyGroups[key]) {
+                  let defaultIcon = '🏆';
+                  if (t.type === 'golden_boot' || normTitle === 'Golden Boot') defaultIcon = '👟';
+                  else if (t.type === 'playmaker' || normTitle === 'Playmaker Award') defaultIcon = '🪄';
+
                   trophyGroups[key] = {
                     title: normTitle,
                     count: 0,
                     seasons: [],
-                    type: t.type || 'league_champion',
-                    icon: t.icon || (t.type === 'captain' ? '⭐' : t.type === 'golden_boot' ? '👟' : t.type === 'playmaker' ? '🪄' : '🏆'),
+                    type: t.type || (normTitle === 'Golden Boot' ? 'golden_boot' : normTitle === 'Playmaker Award' ? 'playmaker' : 'league_champion'),
+                    icon: t.icon || defaultIcon,
                   };
                 }
 
@@ -837,15 +926,10 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                 }
               });
 
-              // Format into items: "Sunday League x 1 (Season 1)", "Dashain Cup x 1 (2026)", etc.
+              // Format into items: "Golden Boot x 1 (Season 1)", "Playmaker Award x 1 (Season 1)", "League Cup x 1 (Season 1)", etc.
               const formattedTrophies = Object.values(trophyGroups).map((g, idx) => {
                 const seasonsDetail = g.seasons.length > 0 ? `(${g.seasons.join(', ')})` : '';
-                let displayTitle = '';
-                if (g.type === 'captain') {
-                  displayTitle = `${g.title} ${seasonsDetail}`.trim();
-                } else {
-                  displayTitle = `${g.title} x ${g.count} ${seasonsDetail}`.trim();
-                }
+                const displayTitle = `${g.title} x ${g.count} ${seasonsDetail}`.trim();
 
                 return {
                   id: `fmt-tr-${idx}-${g.title.toLowerCase().replace(/\s+/g, '-')}`,

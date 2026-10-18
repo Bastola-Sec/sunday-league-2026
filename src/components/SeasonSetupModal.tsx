@@ -28,10 +28,10 @@ export const SeasonSetupModal: React.FC<SeasonSetupModalProps> = ({
   const [participatingTeams, setParticipatingTeams] = useState<Team[]>([...existingTeams]);
   const [matchFormat, setMatchFormat] = useState<'7v7' | '8v8' | '11v11'>('8v8');
   const [halfDurationMinutes, setHalfDurationMinutes] = useState<number>(20);
-  const [homeAwayRounds, setHomeAwayRounds] = useState<number>(1);
+  const [homeAwayRounds, setHomeAwayRounds] = useState<number>(4);
   const [includeCups, setIncludeCups] = useState<boolean>(true);
   const [includeSuperCup, setIncludeSuperCup] = useState<boolean>(false);
-  const [startDate, setStartDate] = useState<string>('2026-09-06');
+  const [startDate, setStartDate] = useState<string>('2026-10-25');
 
   // Inline "Add New Club" drawer state
   const [showAddClubDrawer, setShowAddClubDrawer] = useState<boolean>(false);
@@ -46,11 +46,15 @@ export const SeasonSetupModal: React.FC<SeasonSetupModalProps> = ({
   const numTeams = participatingTeams.length;
   const numRotations = numTeams % 2 === 0 ? numTeams - 1 : numTeams;
   const matchesPerRound = Math.floor(numTeams / 2);
-  const totalLeagueMatches = numTeams >= 2 ? numRotations * matchesPerRound * homeAwayRounds : 0;
+  const totalLeagueMatches = numTeams === 3
+    ? (homeAwayRounds <= 2 ? 6 : 12)
+    : (numTeams >= 2 ? numRotations * matchesPerRound * homeAwayRounds : 0);
   const totalCupMatches = includeCups ? 2 : 0;
   const totalPlayoffMatches = 1;
   const totalFixturesToGenerate = totalLeagueMatches + totalCupMatches + totalPlayoffMatches;
-  const estimatedWeeks = (numRotations * homeAwayRounds) + (includeCups ? 1 : 0) + 1;
+  const estimatedWeeks = numTeams === 3
+    ? ((homeAwayRounds <= 2 ? 3 : 6) + (includeCups ? 1 : 0) + 1)
+    : ((numRotations * homeAwayRounds) + (includeCups ? 1 : 0) + 1);
 
   // Add Club Handler
   const handleAddNewClub = (e: React.FormEvent) => {
@@ -432,8 +436,8 @@ export const SeasonSetupModal: React.FC<SeasonSetupModalProps> = ({
                 
                 <p className="text-[10px] text-gray-400 font-mono">
                   {includeCups
-                    ? (includeSuperCup ? 'Includes League Cup Knockouts, Super Cup Final, & Grand Final.' : 'Includes League Cup Knockouts & Grand Final (Super Cup Disabled).')
-                    : 'Includes regular League Season fixtures & Grand Final.'}
+                    ? (includeSuperCup ? 'Post-season: Week 7 League Cup Final, followed by Week 8 Super Cup Qualifier & Super Cup Final on same day.' : 'Post-season: Week 7 League Cup Final.')
+                    : 'Regular League Season fixtures only.'}
                 </p>
               </div>
             </div>

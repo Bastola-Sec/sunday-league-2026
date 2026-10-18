@@ -22,7 +22,7 @@ export const TeamLogo: React.FC<TeamLogoProps> = ({ teamId, logoUrl, className =
       />
     );
   }
-  if (teamId === '1st Place' || teamId === '1st-place' || teamId === '1st') {
+  if (typeof teamId === 'string' && (teamId.includes('1st') || teamId.includes('Seed 1') || teamId.includes('SEED #1'))) {
     return (
       <svg width={size} height={size} viewBox="0 0 200 200" className={`inline-block drop-shadow-md ${className}`} fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M100 10 L170 35 L160 145 Q100 195 100 195 Q100 195 40 145 L30 35 Z" fill="#D4AF37" stroke="#F1C40F" strokeWidth="6" />
@@ -34,7 +34,7 @@ export const TeamLogo: React.FC<TeamLogoProps> = ({ teamId, logoUrl, className =
     );
   }
 
-  if (teamId === '2nd Place' || teamId === '2nd-place' || teamId === '2nd') {
+  if (typeof teamId === 'string' && (teamId.includes('2nd') || teamId.includes('Seed 2') || teamId.includes('SEED #2'))) {
     return (
       <svg width={size} height={size} viewBox="0 0 200 200" className={`inline-block drop-shadow-md ${className}`} fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M100 10 L170 35 L160 145 Q100 195 100 195 Q100 195 40 145 L30 35 Z" fill="#7F8C8D" stroke="#BDC3C7" strokeWidth="6" />
@@ -46,7 +46,7 @@ export const TeamLogo: React.FC<TeamLogoProps> = ({ teamId, logoUrl, className =
     );
   }
 
-  if (teamId === '3rd Place' || teamId === '3rd-place' || teamId === '3rd') {
+  if (typeof teamId === 'string' && (teamId.includes('3rd') || teamId.includes('Seed 3') || teamId.includes('SEED #3'))) {
     return (
       <svg width={size} height={size} viewBox="0 0 200 200" className={`inline-block drop-shadow-md ${className}`} fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M100 10 L170 35 L160 145 Q100 195 100 195 Q100 195 40 145 L30 35 Z" fill="#CD7F32" stroke="#E5A059" strokeWidth="6" />

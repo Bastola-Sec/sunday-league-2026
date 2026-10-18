@@ -29,7 +29,11 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
     return (a.rank || 99) - (b.rank || 99);
   });
 
-  const regularMatches = matches.filter((m) => {
+  // Identify current active season number
+  const activeSeasonNum = matches.reduce((max, m) => Math.max(max, m.seasonNumber || 1), 1);
+  const activeSeasonMatches = matches.filter((m) => (m.seasonNumber || 1) === activeSeasonNum);
+
+  const regularMatches = activeSeasonMatches.filter((m) => {
     const isKnockoutMatch =
       m.matchType === 'League Cup' ||
       m.matchType === 'Super Cup Qualifier' ||
@@ -50,27 +54,27 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
   const isLeagueComplete =
     regularMatches.length > 0
       ? regularMatches.every((m) => m.isFinished === true || m.status === 'ended')
-      : teams.length > 0 && teams.every((t) => (t.played || 0) >= 4);
+      : false;
 
-  // Teams resolved dynamically or TBD depending on 4-game completion rule
+  // Teams resolved dynamically or TBD depending on league match completion
   const rank1Team = sortedTeams[0] || teams[0];
   const rank2Team = sortedTeams[1] || teams[1] || teams[0];
   const rank3Team = sortedTeams[2] || teams[2] || teams[0];
 
-  // Display names (Real Team Name if 4 games played by all teams, else "1st Place (TBD)", "2nd Place (TBD)", "3rd Place (TBD)")
+  // Display names (Real Team Name if all league matches complete, else "1st Place (TBD)", "2nd Place (TBD)", "3rd Place (TBD)")
   const displayLeagueTopperName = isLeagueComplete ? (rank1Team?.name || '1st Place') : '1st Place (TBD)';
   const displayRunnerUpName = isLeagueComplete ? (rank2Team?.name || '2nd Place') : '2nd Place (TBD)';
   const display3rdPlaceName = isLeagueComplete ? (rank3Team?.name || '3rd Place') : '3rd Place (TBD)';
 
-  // Find corresponding match fixtures in schedule if any exist
-  const leagueCupMatch = matches.find(
-    (m) => m.matchType === 'League Cup' || m.matchType === 'Finals' || m.id === 'FIX-007'
+  // Find corresponding match fixtures strictly in active season schedule
+  const leagueCupMatch = activeSeasonMatches.find(
+    (m) => m.matchType === 'League Cup' || m.matchType === 'Finals' || m.id.endsWith('013') || m.id === 'FIX-007'
   );
-  const superCupQualifier = matches.find(
-    (m) => m.matchType === 'Super Cup Qualifier' || m.id === 'FIX-008' || m.id === 'FIX-SC-QUAL'
+  const superCupQualifier = activeSeasonMatches.find(
+    (m) => m.matchType === 'Super Cup Qualifier' || m.id.endsWith('014') || m.id === 'FIX-SC-QUAL' || m.id === 'FIX-008'
   );
-  const superCupFinal = matches.find(
-    (m) => m.matchType === 'Super Cup Final' || m.id === 'FIX-009' || m.id === 'FIX-SC-FINAL'
+  const superCupFinal = activeSeasonMatches.find(
+    (m) => m.matchType === 'Super Cup Final' || m.id.endsWith('015') || m.id === 'FIX-SC-FINAL' || m.id === 'FIX-009'
   );
 
   // Helper to extract live telemetry & score details from match engine
@@ -218,7 +222,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                 {/* Kickoff Date & Time Header */}
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-amber-300 pb-2 border-b border-white/10 font-bold">
                   <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  <span>{leagueCupMatch?.startTime || 'Sun, Aug 30 • 9:00 AM'}</span>
+                  <span>{leagueCupMatch?.startTime || 'Sun, Dec 6 • 8:30 AM'}</span>
                 </div>
                 {/* 1st Place (League Topper) */}
                 <div className={`flex items-center justify-between p-2.5 rounded-lg border transition-all ${isLeagueComplete ? 'bg-[#05080c] border-amber-500/30' : 'bg-[#05080c]/60 border-white/10'}`}>
@@ -233,7 +237,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                     <div className="min-w-0">
                       <p className="text-xs font-black text-white truncate">{displayLeagueTopperName}</p>
                       <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
-                        {isLeagueComplete ? `${rank1Team?.points || 0} pts • GD ${rank1Team?.goalDifference > 0 ? `+${rank1Team.goalDifference}` : rank1Team?.goalDifference || 0}` : 'League Topper (Pending 4 games)'}
+                        {isLeagueComplete ? `${rank1Team?.points || 0} pts • GD ${rank1Team?.goalDifference > 0 ? `+${rank1Team.goalDifference}` : rank1Team?.goalDifference || 0}` : 'League Topper (Pending League Matches)'}
                       </p>
                     </div>
                   </div>
@@ -283,7 +287,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                     <div className="min-w-0">
                       <p className="text-xs font-black text-white truncate">{displayRunnerUpName}</p>
                       <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
-                        {isLeagueComplete ? `${rank2Team?.points || 0} pts • GD ${rank2Team?.goalDifference > 0 ? `+${rank2Team.goalDifference}` : rank2Team?.goalDifference || 0}` : 'Runner-Up (Pending 4 games)'}
+                        {isLeagueComplete ? `${rank2Team?.points || 0} pts • GD ${rank2Team?.goalDifference > 0 ? `+${rank2Team.goalDifference}` : rank2Team?.goalDifference || 0}` : 'Runner-Up (Pending League Matches)'}
                       </p>
                     </div>
                   </div>
@@ -329,7 +333,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                     <p className="text-xs font-black font-mono text-amber-300 uppercase tracking-wider leading-tight">
                       LEAGUE CUP CHAMPION
                     </p>
-                    <p className="text-[9px] text-[#B7CEEC]/60 font-mono">Season 2026</p>
+                    <p className="text-[9px] text-[#B7CEEC]/60 font-mono">Season {activeSeasonNum}</p>
                   </>
                 )}
               </div>
@@ -374,7 +378,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                     {/* Kickoff Date & Time Header */}
                     <div className="flex items-center gap-1 text-[9px] font-mono text-cyan-300 pb-1.5 border-b border-white/10 font-bold">
                       <Clock className="w-3 h-3 text-cyan-400 shrink-0" />
-                      <span>{superCupQualifier?.startTime || 'Sun, Sep 6 • 8:45 AM'}</span>
+                      <span>{superCupQualifier?.startTime || 'Sun, Dec 13 • 8:30 AM'}</span>
                     </div>
 
                     {/* Slot 1: 2nd Place */}
@@ -462,7 +466,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                     {/* Kickoff Date & Time Header */}
                     <div className="flex items-center gap-1 text-[9px] font-mono text-amber-300 pb-1.5 border-b border-white/10 font-bold">
                       <Clock className="w-3 h-3 text-amber-400 shrink-0" />
-                      <span>{superCupFinal?.startTime || 'Sun, Sep 6 • 10:00 AM'}</span>
+                      <span>{superCupFinal?.startTime || 'Sun, Dec 13 • 10:00 AM'}</span>
                     </div>
                     {/* Slot 1: 1st Place (Bye to Final) */}
                     <div className="flex items-center justify-between p-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30">
@@ -561,7 +565,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                     <p className="text-xs font-black font-mono text-amber-300 uppercase tracking-wider leading-tight">
                       SUPER CUP CHAMPION
                     </p>
-                    <p className="text-[9px] text-[#B7CEEC]/60 font-mono">Season 2026</p>
+                    <p className="text-[9px] text-[#B7CEEC]/60 font-mono">Season {activeSeasonNum}</p>
                   </>
                 )}
               </div>

@@ -508,12 +508,13 @@ export function resolveMatchesWithStandings(matchesList: Match[], teamsList: Tea
 
     const isGroupComplete = regularGroupMatches.length > 0
       ? regularGroupMatches.every((m) => m.isFinished === true || m.status === 'ended')
-      : standings.length > 0;
+      : false;
 
-    const rank1 = (isGroupComplete && standings[0]) ? standings[0].team : (standings[0]?.team || null);
-    const rank2 = (isGroupComplete && standings[1]) ? standings[1].team : (standings[1]?.team || null);
-    const rank3 = (isGroupComplete && standings[2]) ? standings[2].team : (standings[2]?.team || null);
-    const rank4 = (isGroupComplete && standings[3]) ? standings[3].team : (standings[3]?.team || null);
+    // Knockout teams MUST stay null placeholders until group/league matches are 100% complete
+    const rank1 = (isGroupComplete && standings[0]) ? standings[0].team : null;
+    const rank2 = (isGroupComplete && standings[1]) ? standings[1].team : null;
+    const rank3 = (isGroupComplete && standings[2]) ? standings[2].team : null;
+    const rank4 = (isGroupComplete && standings[3]) ? standings[3].team : null;
 
     groupMatches.forEach((m) => {
       const isKnockoutMatch =
@@ -549,48 +550,59 @@ export function resolveMatchesWithStandings(matchesList: Match[], teamsList: Tea
       let newHomeId = m.homeTeamId;
       let newAwayId = m.awayTeamId;
 
-      const isFinal = m.id === 'FIX-007' || m.id.endsWith('-FINAL') || m.matchType === 'Finals' || m.matchType === 'Grand Final';
+      const isFinal = m.id === 'FIX-007' || m.id.endsWith('-FINAL') || m.matchType === 'Finals' || m.matchType === 'Grand Final' || m.matchType === 'League Cup';
       const isSemi1 = m.id.endsWith('-SEMI1');
       const isSemi2 = m.id.endsWith('-SEMI2');
       const isSuperQual = m.id === 'FIX-008' || m.matchType === 'Super Cup Qualifier';
       const isSuperFinal = m.id === 'FIX-009' || m.matchType === 'Super Cup Final';
 
-      if (isFinal || m.homeTeamId === '1st Place' || m.homeTeamId === 'Seed 1' || m.homeTeamId === 'SEED #1') {
-        if (rank1) newHomeId = rank1.id;
-      }
-      if (isFinal || m.awayTeamId === '2nd Place' || m.awayTeamId === 'Seed 2' || m.awayTeamId === 'SEED #2') {
-        if (rank2) newAwayId = rank2.id;
+      if (isFinal) {
+        newHomeId = rank1 ? rank1.id : '1st Place';
+        newAwayId = rank2 ? rank2.id : '2nd Place';
       }
 
       if (isSemi1) {
-        if (rank1) newHomeId = rank1.id;
-        if (rank4) newAwayId = rank4.id;
+        newHomeId = rank1 ? rank1.id : '1st Place';
+        newAwayId = rank4 ? rank4.id : '4th Place';
       }
 
       if (isSemi2) {
-        if (rank2) newHomeId = rank2.id;
-        if (rank3) newAwayId = rank3.id;
+        newHomeId = rank2 ? rank2.id : '2nd Place';
+        newAwayId = rank3 ? rank3.id : '3rd Place';
       }
 
       if (isSuperQual) {
-        if (rank2) newHomeId = rank2.id;
-        if (rank3) newAwayId = rank3.id;
+        newHomeId = rank2 ? rank2.id : '2nd Place';
+        newAwayId = rank3 ? rank3.id : '3rd Place';
       }
 
       if (isSuperFinal) {
-        if (rank1) newHomeId = rank1.id;
+        newHomeId = rank1 ? rank1.id : '1st Place';
+        // Look up the qualifier match to see if it has concluded
+        const qualMatch = groupMatches.find(
+          (x) => x.matchType === 'Super Cup Qualifier' || x.id === 'FIX-008' || x.id.includes('FIX-SC-QUAL') || x.id.endsWith('014')
+        );
+        if (qualMatch && (qualMatch.isFinished || qualMatch.status === 'ended')) {
+          const qH = qualMatch.homeScore || 0;
+          const qA = qualMatch.awayScore || 0;
+          if (qH > qA) newAwayId = qualMatch.homeTeamId;
+          else if (qA > qH) newAwayId = qualMatch.awayTeamId;
+          else newAwayId = qualMatch.homeTeamId;
+        } else {
+          newAwayId = 'tbd';
+        }
       }
 
-      // Explicit match for '1st Place', '2nd Place', '3rd Place', '4th Place'
-      if ((m.homeTeamId === '1st Place' || m.homeTeamId === '1st Place (TBD)') && rank1) newHomeId = rank1.id;
-      if ((m.homeTeamId === '2nd Place' || m.homeTeamId === '2nd Place (TBD)') && rank2) newHomeId = rank2.id;
-      if ((m.homeTeamId === '3rd Place' || m.homeTeamId === '3rd Place (TBD)') && rank3) newHomeId = rank3.id;
-      if ((m.homeTeamId === '4th Place' || m.homeTeamId === '4th Place (TBD)') && rank4) newHomeId = rank4.id;
+      // Explicit fallback match for placeholder tokens
+      if (m.homeTeamId === '1st Place' || m.homeTeamId === '1st Place (TBD)') newHomeId = rank1 ? rank1.id : '1st Place';
+      if (m.homeTeamId === '2nd Place' || m.homeTeamId === '2nd Place (TBD)') newHomeId = rank2 ? rank2.id : '2nd Place';
+      if (m.homeTeamId === '3rd Place' || m.homeTeamId === '3rd Place (TBD)') newHomeId = rank3 ? rank3.id : '3rd Place';
+      if (m.homeTeamId === '4th Place' || m.homeTeamId === '4th Place (TBD)') newHomeId = rank4 ? rank4.id : '4th Place';
 
-      if ((m.awayTeamId === '1st Place' || m.awayTeamId === '1st Place (TBD)') && rank1) newAwayId = rank1.id;
-      if ((m.awayTeamId === '2nd Place' || m.awayTeamId === '2nd Place (TBD)') && rank2) newAwayId = rank2.id;
-      if ((m.awayTeamId === '3rd Place' || m.awayTeamId === '3rd Place (TBD)') && rank3) newAwayId = rank3.id;
-      if ((m.awayTeamId === '4th Place' || m.awayTeamId === '4th Place (TBD)') && rank4) newAwayId = rank4.id;
+      if (m.awayTeamId === '1st Place' || m.awayTeamId === '1st Place (TBD)') newAwayId = rank1 ? rank1.id : '1st Place';
+      if (m.awayTeamId === '2nd Place' || m.awayTeamId === '2nd Place (TBD)') newAwayId = rank2 ? rank2.id : '2nd Place';
+      if (m.awayTeamId === '3rd Place' || m.awayTeamId === '3rd Place (TBD)') newAwayId = rank3 ? rank3.id : '3rd Place';
+      if (m.awayTeamId === '4th Place' || m.awayTeamId === '4th Place (TBD)') newAwayId = rank4 ? rank4.id : '4th Place';
 
       // Clean up venue string if it contains placeholders
       let newVenue = m.venue || 'De Anza Stadium';
@@ -649,25 +661,70 @@ export function generateSeasonSchedule(options: SeasonSetupOptions): Match[] {
 
   if (n < 2) return matches;
 
-  let rotation = [...teamIds];
-  if (n % 2 !== 0) {
-    rotation.push('BYE');
+  let startD: Date;
+  if (startDate && startDate.includes('-')) {
+    const parts = startDate.split('-').map(Number);
+    startD = new Date(parts[0], parts[1] - 1, parts[2], 8, 30, 0);
+  } else {
+    startD = new Date(startDate || '2026-10-25T08:30:00');
   }
-
-  const numTeams = rotation.length;
-  const roundsPerCycle = numTeams - 1;
-  const matchesPerRound = numTeams / 2;
-
-  const startD = new Date(startDate || '2026-09-06');
-  if (isNaN(startD.getTime())) startD.setTime(Date.now() + 7 * 24 * 3600 * 1000);
+  if (isNaN(startD.getTime())) {
+    startD = new Date(2026, 9, 25, 8, 30, 0);
+  }
 
   let matchIndex = 1;
   let currentWeek = 1;
 
-  for (let cycle = 0; cycle < homeAwayRounds; cycle++) {
-    let currRotation = [...rotation];
+  if (n === 3) {
+    // 3-Team Sunday League Special Format:
+    // 2 games per week (8:30 AM and 9:30 AM).
+    // The second game features one team playing back-to-back ("tired legs")
+    // against the fresh 3rd team.
+    // Over a 2-cycle (6 weeks / 12 matches) quadruple round-robin, each team:
+    // - Plays in Game 1 (fresh) 4 times
+    // - Plays in Game 2 (fresh against tired team) exactly 2 times
+    // - Plays in Game 2 (tired back-to-back) exactly 2 times
+    // - Rests after Game 1 exactly 2 times
+    // Total 8 matches per team, 4 meetings against each opponent (2 Home, 2 Away).
+    const [teamA, teamB, teamC] = teamIds;
 
-    for (let r = 0; r < roundsPerCycle; r++) {
+    const threeTeamCycles = [
+      // Week 1 (Cycle 1): G1: A vs B (B tired), G2: C vs B (C fresh vs B tired)
+      [
+        { home: teamA, away: teamB, time: '8:30 AM' },
+        { home: teamC, away: teamB, time: '9:30 AM' },
+      ],
+      // Week 2 (Cycle 1): G1: C vs A (A tired), G2: B vs A (B fresh vs A tired)
+      [
+        { home: teamC, away: teamA, time: '8:30 AM' },
+        { home: teamB, away: teamA, time: '9:30 AM' },
+      ],
+      // Week 3 (Cycle 1): G1: B vs C (C tired), G2: A vs C (A fresh vs C tired)
+      [
+        { home: teamB, away: teamC, time: '8:30 AM' },
+        { home: teamA, away: teamC, time: '9:30 AM' },
+      ],
+      // Week 4 (Cycle 2): G1: B vs A (A tired), G2: C vs A (C fresh vs A tired)
+      [
+        { home: teamB, away: teamA, time: '8:30 AM' },
+        { home: teamC, away: teamA, time: '9:30 AM' },
+      ],
+      // Week 5 (Cycle 2): G1: C vs B (B tired), G2: A vs B (A fresh vs B tired)
+      [
+        { home: teamC, away: teamB, time: '8:30 AM' },
+        { home: teamA, away: teamB, time: '9:30 AM' },
+      ],
+      // Week 6 (Cycle 2): G1: A vs C (C tired), G2: B vs C (B fresh vs C tired)
+      [
+        { home: teamA, away: teamC, time: '8:30 AM' },
+        { home: teamB, away: teamC, time: '9:30 AM' },
+      ],
+    ];
+
+    const weeksToGenerate = homeAwayRounds <= 2 ? 3 : 6;
+
+    for (let w = 0; w < weeksToGenerate; w++) {
+      const weekPattern = threeTeamCycles[w % threeTeamCycles.length];
       const matchDate = new Date(startD.getTime() + (currentWeek - 1) * 7 * 24 * 3600 * 1000);
       const formattedDateStr = matchDate.toLocaleDateString('en-US', {
         weekday: 'short',
@@ -675,62 +732,116 @@ export function generateSeasonSchedule(options: SeasonSetupOptions): Match[] {
         day: 'numeric',
       });
 
-      let timeIndex = 0;
-      const baseHours = 8;
-      const baseMinutes = 30;
-
-      for (let i = 0; i < matchesPerRound; i++) {
-        let homeId = currRotation[i];
-        let awayId = currRotation[numTeams - 1 - i];
-
-        if (homeId !== 'BYE' && awayId !== 'BYE') {
-          if (cycle % 2 === 1) {
-            const temp = homeId;
-            homeId = awayId;
-            awayId = temp;
-          }
-
-          const slotHour = baseHours + Math.floor((baseMinutes + timeIndex * 60) / 60);
-          const slotMin = (baseMinutes + timeIndex * 60) % 60;
-          const ampm = slotHour >= 12 ? 'PM' : 'AM';
-          const displayHour = slotHour > 12 ? slotHour - 12 : slotHour === 0 ? 12 : slotHour;
-          const formattedTime = `${displayHour}:${slotMin.toString().padStart(2, '0')} ${ampm}`;
-
-          matches.push({
-            id: `FIX-S${nextSeasonNumber}-${matchIndex.toString().padStart(3, '0')}`,
-            homeTeamId: homeId,
-            awayTeamId: awayId,
-            homeScore: 0,
-            awayScore: 0,
-            minute: 0,
-            isLive: false,
-            isFinished: false,
-            startTime: `${formattedDateStr} • ${formattedTime}`,
-            venue: 'De Anza Stadium (Pitch 1)',
-            possessionHome: 50,
-            possessionAway: 50,
-            shotsHome: 0,
-            shotsAway: 0,
-            shotsOnTargetHome: 0,
-            shotsOnTargetAway: 0,
-            foulsHome: 0,
-            foulsAway: 0,
-            events: [],
-            weekNumber: currentWeek,
-            matchType: 'Regular',
-            matchFormat: matchFormat,
-            halfDurationMinutes: halfDurationMinutes,
-            status: 'scheduled',
-            seasonNumber: nextSeasonNumber,
-          });
-
-          matchIndex++;
-          timeIndex++;
-        }
+      for (const m of weekPattern) {
+        matches.push({
+          id: `FIX-S${nextSeasonNumber}-${matchIndex.toString().padStart(3, '0')}`,
+          homeTeamId: m.home,
+          awayTeamId: m.away,
+          homeScore: 0,
+          awayScore: 0,
+          minute: 0,
+          isLive: false,
+          isFinished: false,
+          startTime: `${formattedDateStr} • ${m.time}`,
+          venue: 'De Anza Stadium (Pitch 1)',
+          possessionHome: 50,
+          possessionAway: 50,
+          shotsHome: 0,
+          shotsAway: 0,
+          shotsOnTargetHome: 0,
+          shotsOnTargetAway: 0,
+          foulsHome: 0,
+          foulsAway: 0,
+          events: [],
+          weekNumber: currentWeek,
+          matchType: 'Regular',
+          matchFormat: matchFormat,
+          halfDurationMinutes: halfDurationMinutes,
+          status: 'scheduled',
+          seasonNumber: nextSeasonNumber,
+        });
+        matchIndex++;
       }
-
       currentWeek++;
-      currRotation = [currRotation[0], currRotation[numTeams - 1], ...currRotation.slice(1, numTeams - 1)];
+    }
+  } else {
+    let rotation = [...teamIds];
+    if (n % 2 !== 0) {
+      rotation.push('BYE');
+    }
+
+    const numTeams = rotation.length;
+    const roundsPerCycle = numTeams - 1;
+    const matchesPerRound = numTeams / 2;
+
+    for (let cycle = 0; cycle < homeAwayRounds; cycle++) {
+      let currRotation = [...rotation];
+
+      for (let r = 0; r < roundsPerCycle; r++) {
+        const matchDate = new Date(startD.getTime() + (currentWeek - 1) * 7 * 24 * 3600 * 1000);
+        const formattedDateStr = matchDate.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        });
+
+        let timeIndex = 0;
+        const baseHours = 8;
+        const baseMinutes = 30;
+
+        for (let i = 0; i < matchesPerRound; i++) {
+          let homeId = currRotation[i];
+          let awayId = currRotation[numTeams - 1 - i];
+
+          if (homeId !== 'BYE' && awayId !== 'BYE') {
+            if (cycle % 2 === 1) {
+              const temp = homeId;
+              homeId = awayId;
+              awayId = temp;
+            }
+
+            const slotHour = baseHours + Math.floor((baseMinutes + timeIndex * 60) / 60);
+            const slotMin = (baseMinutes + timeIndex * 60) % 60;
+            const ampm = slotHour >= 12 ? 'PM' : 'AM';
+            const displayHour = slotHour > 12 ? slotHour - 12 : slotHour === 0 ? 12 : slotHour;
+            const formattedTime = `${displayHour}:${slotMin.toString().padStart(2, '0')} ${ampm}`;
+
+            matches.push({
+              id: `FIX-S${nextSeasonNumber}-${matchIndex.toString().padStart(3, '0')}`,
+              homeTeamId: homeId,
+              awayTeamId: awayId,
+              homeScore: 0,
+              awayScore: 0,
+              minute: 0,
+              isLive: false,
+              isFinished: false,
+              startTime: `${formattedDateStr} • ${formattedTime}`,
+              venue: 'De Anza Stadium (Pitch 1)',
+              possessionHome: 50,
+              possessionAway: 50,
+              shotsHome: 0,
+              shotsAway: 0,
+              shotsOnTargetHome: 0,
+              shotsOnTargetAway: 0,
+              foulsHome: 0,
+              foulsAway: 0,
+              events: [],
+              weekNumber: currentWeek,
+              matchType: 'Regular',
+              matchFormat: matchFormat,
+              halfDurationMinutes: halfDurationMinutes,
+              status: 'scheduled',
+              seasonNumber: nextSeasonNumber,
+            });
+
+            matchIndex++;
+            timeIndex++;
+          }
+        }
+
+        currentWeek++;
+        currRotation = [currRotation[0], currRotation[numTeams - 1], ...currRotation.slice(1, numTeams - 1)];
+      }
     }
   }
 
@@ -738,20 +849,18 @@ export function generateSeasonSchedule(options: SeasonSetupOptions): Match[] {
     const cupDate = new Date(startD.getTime() + (currentWeek - 1) * 7 * 24 * 3600 * 1000);
     const cupDateStr = cupDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-    const homeSeed = teamIds[0] || '1st Place';
-    const awaySeed = teamIds[1] || '2nd Place';
-
+    // Week 7: League Cup Final (1st vs 2nd)
     matches.push({
       id: `FIX-S${nextSeasonNumber}-${matchIndex.toString().padStart(3, '0')}`,
-      homeTeamId: homeSeed,
-      awayTeamId: awaySeed,
+      homeTeamId: '1st Place',
+      awayTeamId: '2nd Place',
       homeScore: 0,
       awayScore: 0,
       minute: 0,
       isLive: false,
       isFinished: false,
       startTime: `${cupDateStr} • 8:30 AM`,
-      venue: `De Anza Stadium (League Cup Final: ${homeSeed} vs ${awaySeed})`,
+      venue: 'De Anza Stadium (Pitch 1)',
       possessionHome: 50,
       possessionAway: 50,
       shotsHome: 0,
@@ -769,19 +878,55 @@ export function generateSeasonSchedule(options: SeasonSetupOptions): Match[] {
       seasonNumber: nextSeasonNumber,
     });
     matchIndex++;
+    currentWeek++;
 
+    // Week 8: Super Cup Qualifier first, Super Cup Final last on the SAME DAY
     if (includeSuperCup) {
+      const superCupDate = new Date(startD.getTime() + (currentWeek - 1) * 7 * 24 * 3600 * 1000);
+      const superCupDateStr = superCupDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+      // Match 1: Qualifier (2nd vs 3rd)
       matches.push({
         id: `FIX-S${nextSeasonNumber}-${matchIndex.toString().padStart(3, '0')}`,
-        homeTeamId: homeSeed,
-        awayTeamId: teamIds[2] || awaySeed,
+        homeTeamId: '2nd Place',
+        awayTeamId: '3rd Place',
         homeScore: 0,
         awayScore: 0,
         minute: 0,
         isLive: false,
         isFinished: false,
-        startTime: `${cupDateStr} • 10:00 AM`,
-        venue: `De Anza Stadium (Super Cup Final)`,
+        startTime: `${superCupDateStr} • 8:30 AM`,
+        venue: 'De Anza Stadium (Pitch 1)',
+        possessionHome: 50,
+        possessionAway: 50,
+        shotsHome: 0,
+        shotsAway: 0,
+        shotsOnTargetHome: 0,
+        shotsOnTargetAway: 0,
+        foulsHome: 0,
+        foulsAway: 0,
+        events: [],
+        weekNumber: currentWeek,
+        matchType: 'Super Cup Qualifier',
+        matchFormat: matchFormat,
+        halfDurationMinutes: halfDurationMinutes,
+        status: 'scheduled',
+        seasonNumber: nextSeasonNumber,
+      });
+      matchIndex++;
+
+      // Match 2: Super Cup Final (1st vs Winner 2nd vs 3rd) on the SAME DAY
+      matches.push({
+        id: `FIX-S${nextSeasonNumber}-${matchIndex.toString().padStart(3, '0')}`,
+        homeTeamId: '1st Place',
+        awayTeamId: 'tbd',
+        homeScore: 0,
+        awayScore: 0,
+        minute: 0,
+        isLive: false,
+        isFinished: false,
+        startTime: `${superCupDateStr} • 10:00 AM`,
+        venue: 'De Anza Stadium (Pitch 1)',
         possessionHome: 50,
         possessionAway: 50,
         shotsHome: 0,
@@ -799,40 +944,9 @@ export function generateSeasonSchedule(options: SeasonSetupOptions): Match[] {
         seasonNumber: nextSeasonNumber,
       });
       matchIndex++;
+      currentWeek++;
     }
-    currentWeek++;
   }
-
-  const finalDate = new Date(startD.getTime() + (currentWeek - 1) * 7 * 24 * 3600 * 1000);
-  const finalDateStr = finalDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-
-  matches.push({
-    id: `FIX-S${nextSeasonNumber}-${matchIndex.toString().padStart(3, '0')}`,
-    homeTeamId: '1st Place',
-    awayTeamId: '2nd Place',
-    homeScore: 0,
-    awayScore: 0,
-    minute: 0,
-    isLive: false,
-    isFinished: false,
-    startTime: `${finalDateStr} • 9:00 AM`,
-    venue: 'De Anza Stadium (Grand Finals)',
-    possessionHome: 50,
-    possessionAway: 50,
-    shotsHome: 0,
-    shotsAway: 0,
-    shotsOnTargetHome: 0,
-    shotsOnTargetAway: 0,
-    foulsHome: 0,
-    foulsAway: 0,
-    events: [],
-    weekNumber: currentWeek,
-    matchType: 'Finals',
-    matchFormat: matchFormat,
-    halfDurationMinutes: halfDurationMinutes,
-    status: 'scheduled',
-    seasonNumber: nextSeasonNumber,
-  });
 
   return matches;
 }
@@ -848,26 +962,78 @@ export function rolloverToNewSeasonWithOptions(
   const sorted = [...allTeams].sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference);
   const champion = sorted[0];
 
+  const maxSeasonGoals = Math.max(0, ...allTeams.flatMap((t) => (t.roster || []).map((p) => p.goals || 0)));
+  const maxSeasonAssists = Math.max(0, ...allTeams.flatMap((t) => (t.roster || []).map((p) => p.assists || 0)));
+
   const updatedTeams: Team[] = options.participatingTeams.map((team) => {
     const isChamp = champion && team.id === champion.id;
     const existingAchievements = team.achievements || [];
     const newAchievement = isChamp ? `Season ${currentSeasonNumber} League Champions 🏆` : null;
 
-    const updatedRoster = (team.roster || []).map((player) => ({
-      ...player,
-      careerGoals: (player.careerGoals ?? 0) + (player.goals || 0),
-      careerAssists: (player.careerAssists ?? 0) + (player.assists || 0),
-      careerMatches: (player.careerMatches ?? 0) + (player.matchesPlayed || 0),
-      careerYellowCards: (player.careerYellowCards ?? 0) + (player.yellowCards || 0),
-      careerRedCards: (player.careerRedCards ?? 0) + (player.redCards || 0),
-      careerMotmAwards: (player.careerMotmAwards ?? 0) + (player.motmAwards || 0),
-      goals: 0,
-      assists: 0,
-      yellowCards: 0,
-      redCards: 0,
-      motmAwards: 0,
-      matchesPlayed: 0,
-    }));
+    const updatedRoster = (team.roster || []).map((player) => {
+      const playerTrophies = [...(player.trophies || [])].filter(
+        (t) => t.type !== 'captain' && !(t.title && t.title.toLowerCase().includes('captain'))
+      );
+
+      // Award Golden Boot if top scorer
+      if (maxSeasonGoals > 0 && (player.goals || 0) === maxSeasonGoals) {
+        if (!playerTrophies.some((t) => t.type === 'golden_boot' && t.seasonOrEvent === `Season ${currentSeasonNumber}`)) {
+          playerTrophies.push({
+            id: `tr-s${currentSeasonNumber}-boot-${player.id}`,
+            title: 'Golden Boot',
+            seasonOrEvent: `Season ${currentSeasonNumber}`,
+            year: 2026,
+            type: 'golden_boot',
+            icon: '👟',
+          });
+        }
+      }
+
+      // Award Playmaker Award if top assist provider
+      if (maxSeasonAssists > 0 && (player.assists || 0) === maxSeasonAssists) {
+        if (!playerTrophies.some((t) => t.type === 'playmaker' && t.seasonOrEvent === `Season ${currentSeasonNumber}`)) {
+          playerTrophies.push({
+            id: `tr-s${currentSeasonNumber}-playmaker-${player.id}`,
+            title: 'Playmaker Award',
+            seasonOrEvent: `Season ${currentSeasonNumber}`,
+            year: 2026,
+            type: 'playmaker',
+            icon: '🪄',
+          });
+        }
+      }
+
+      // Award Sunday League Champion if player is on the winning team
+      if (isChamp) {
+        if (!playerTrophies.some((t) => t.type === 'league_champion' && t.seasonOrEvent === `Season ${currentSeasonNumber}`)) {
+          playerTrophies.push({
+            id: `tr-s${currentSeasonNumber}-champ-${player.id}`,
+            title: 'Sunday League',
+            seasonOrEvent: `Season ${currentSeasonNumber}`,
+            year: 2026,
+            type: 'league_champion',
+            icon: '🏆',
+          });
+        }
+      }
+
+      return {
+        ...player,
+        careerGoals: (player.careerGoals ?? 0) + (player.goals || 0),
+        careerAssists: (player.careerAssists ?? 0) + (player.assists || 0),
+        careerMatches: (player.careerMatches ?? 0) + (player.matchesPlayed || 0),
+        careerYellowCards: (player.careerYellowCards ?? 0) + (player.yellowCards || 0),
+        careerRedCards: (player.careerRedCards ?? 0) + (player.redCards || 0),
+        careerMotmAwards: (player.careerMotmAwards ?? 0) + (player.motmAwards || 0),
+        trophies: playerTrophies,
+        goals: 0,
+        assists: 0,
+        yellowCards: 0,
+        redCards: 0,
+        motmAwards: 0,
+        matchesPlayed: 0,
+      };
+    });
 
     return {
       ...team,

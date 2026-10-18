@@ -317,7 +317,16 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
   // Category Filter State for Admin Match Selector (Upcoming | Past)
   const [adminFixtureFilter, setAdminFixtureFilter] = useState<'upcoming' | 'past'>('upcoming');
+  const [adminSeasonFilter, setAdminSeasonFilter] = useState<number | 'all'>(currentSeasonNumber);
   const [selectedAdminSpecialTourneyId, setSelectedAdminSpecialTourneyId] = useState<string>('all');
+
+  useEffect(() => {
+    setAdminSeasonFilter(currentSeasonNumber);
+  }, [currentSeasonNumber]);
+
+  const availableSeasons = Array.from(
+    new Set(matches.map((m) => m.seasonNumber || 1))
+  ).sort((a: number, b: number) => b - a);
 
   const [transferPlayer, setTransferPlayer] = useState<Player | null>(null);
   const [transferSourceTeamId, setTransferSourceTeamId] = useState<string | null>(null);
@@ -331,10 +340,11 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       if (stTeam) return stTeam;
     }
 
-    if (id === '1st Place' || id === '1st') return { id, name: '1st Place', shortName: '1ST', colorPrimary: '#D4AF37' } as Team;
-    if (id === '2nd Place' || id === '2nd') return { id, name: '2nd Place', shortName: '2ND', colorPrimary: '#7F8C8D' } as Team;
-    if (id === '3rd Place' || id === '3rd') return { id, name: '3rd Place', shortName: '3RD', colorPrimary: '#CD7F32' } as Team;
-    if (id === '4th Place' || id === '4th') return { id, name: '4th Place', shortName: '4TH', colorPrimary: '#8C531B' } as Team;
+    if (id === '1st Place' || id === '1st' || id?.toLowerCase().includes('1st')) return { id, name: '1st Place (TBD)', shortName: '#1 TBD', colorPrimary: '#D4AF37' } as Team;
+    if (id === '2nd Place' || id === '2nd' || id?.toLowerCase().includes('2nd')) return { id, name: '2nd Place (TBD)', shortName: '#2 TBD', colorPrimary: '#7F8C8D' } as Team;
+    if (id === '3rd Place' || id === '3rd' || id?.toLowerCase().includes('3rd')) return { id, name: '3rd Place (TBD)', shortName: '#3 TBD', colorPrimary: '#CD7F32' } as Team;
+    if (id === '4th Place' || id === '4th' || id?.toLowerCase().includes('4th')) return { id, name: '4th Place (TBD)', shortName: '#4 TBD', colorPrimary: '#8C531B' } as Team;
+    if (id === 'tbd' || id === 'TBD' || id?.toLowerCase().includes('winner') || id?.toLowerCase().includes('qualifier')) return { id, name: 'Winner (2nd vs 3rd)', shortName: 'QUAL', colorPrimary: '#00E5FF' } as Team;
 
     if (id.startsWith('spec-team-')) {
       const num = id.replace('spec-team-', '');
@@ -1594,9 +1604,16 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
 
   // Visible matches for active admin persona
   const rawVisibleMatches = matches.filter((m) => {
-    // Filter out Super Cup for Season 1
+    // Filter out disabled Season 1 Super Cup fixtures
     const isSuperCup = m.matchType === 'Super Cup Qualifier' || m.matchType === 'Super Cup Final' || m.id.includes('FIX-008') || m.id.includes('FIX-009') || m.id.includes('FIX-SC');
-    if (isSuperCup && currentSeasonNumber === 1) return false;
+    const isSeason1 = m.seasonNumber === 1 || m.id.includes('-S1-') || (!m.seasonNumber && m.id.startsWith('FIX-00'));
+    if (isSuperCup && isSeason1) return false;
+
+    // Filter by selected season (Special Events remain accessible)
+    if (adminSeasonFilter !== 'all' && m.matchType !== 'Special Event' && !m.tournamentId) {
+      const matchSeason = m.seasonNumber || 1;
+      if (matchSeason !== adminSeasonFilter) return false;
+    }
 
     if (currentAdmin && currentAdmin.teamId !== 'all') {
       return (
@@ -2069,11 +2086,30 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                         };
                       }
 
+                      if (m.matchType === 'League Cup') {
+                        return {
+                          label: '🏆 LEAGUE CUP FINAL',
+                          style: 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]',
+                        };
+                      }
+
+                      if (m.matchType === 'Super Cup Qualifier') {
+                        return {
+                          label: '⚡ SUPER CUP QUALIFIER',
+                          style: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.2)]',
+                        };
+                      }
+
+                      if (m.matchType === 'Super Cup Final') {
+                        return {
+                          label: '🏆 SUPER CUP FINAL',
+                          style: 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]',
+                        };
+                      }
+
                       if (
-                        m.matchType === 'League Cup' ||
-                        m.matchType === 'Super Cup Qualifier' ||
-                        m.matchType === 'Super Cup Final' ||
                         m.matchType === 'Finals' ||
+                        m.matchType === 'Grand Final' ||
                         m.matchType === 'Knockout' ||
                         m.id.includes('FIX-007') ||
                         m.id.includes('FIX-008') ||
@@ -2218,31 +2254,64 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                             </div>
                           </div>
 
-                        {/* 2-OPTION TOGGLE FILTER BAR IN ADMIN PORTAL */}
-                        <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[#080d15] border border-white/10 text-xs mb-4 shadow-md">
-                          <button
-                            type="button"
-                            onClick={() => setAdminFixtureFilter('upcoming')}
-                            className={`py-2 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                              adminFixtureFilter === 'upcoming'
-                                ? 'bg-gradient-to-r from-[#4C787E] to-teal-500 text-white shadow-md border border-teal-300/40'
-                                : 'text-gray-400 hover:text-white hover:bg-white/5'
-                            }`}
-                          >
-                            <span>📅 Upcoming Fixtures</span>
-                          </button>
+                        {/* 2-OPTION TOGGLE FILTER BAR & SEASON SELECTOR IN ADMIN PORTAL */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
+                          <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[#080d15] border border-white/10 text-xs shadow-md flex-1">
+                            <button
+                              type="button"
+                              onClick={() => setAdminFixtureFilter('upcoming')}
+                              className={`py-2 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                                adminFixtureFilter === 'upcoming'
+                                  ? 'bg-gradient-to-r from-[#4C787E] to-teal-500 text-white shadow-md border border-teal-300/40'
+                                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                              }`}
+                            >
+                              <span>📅 Upcoming Fixtures</span>
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => setAdminFixtureFilter('past')}
-                            className={`py-2 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                              adminFixtureFilter === 'past'
-                                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md border border-emerald-300/40'
-                                : 'text-gray-400 hover:text-white hover:bg-white/5'
-                            }`}
-                          >
-                            <span>✅ Past Results</span>
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => setAdminFixtureFilter('past')}
+                              className={`py-2 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                                adminFixtureFilter === 'past'
+                                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md border border-emerald-300/40'
+                                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                              }`}
+                            >
+                              <span>✅ Past Results</span>
+                            </button>
+                          </div>
+
+                          {availableSeasons.length > 1 && (
+                            <div className="flex items-center gap-1 p-1 rounded-2xl bg-[#080d15] border border-[#B7CEEC]/20 text-xs self-start sm:self-auto shrink-0 shadow-md">
+                              <span className="text-[10px] text-gray-400 font-mono font-bold px-1.5 uppercase">Season:</span>
+                              {availableSeasons.map((s) => (
+                                <button
+                                  key={`admin-season-pill-${s}`}
+                                  type="button"
+                                  onClick={() => setAdminSeasonFilter(s)}
+                                  className={`px-2.5 py-1.5 rounded-xl font-mono text-[11px] font-black transition-all cursor-pointer ${
+                                    adminSeasonFilter === s
+                                      ? 'bg-amber-400 text-slate-950 font-black shadow-md border border-amber-300'
+                                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                  }`}
+                                >
+                                  S{s} {s === currentSeasonNumber ? '★' : ''}
+                                </button>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => setAdminSeasonFilter('all')}
+                                className={`px-2 py-1.5 rounded-xl font-mono text-[11px] font-bold transition-all cursor-pointer ${
+                                  adminSeasonFilter === 'all'
+                                    ? 'bg-teal-500 text-slate-950 font-black shadow-md border border-teal-300'
+                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                }`}
+                              >
+                                All
+                              </button>
+                            </div>
+                          )}
                         </div>
 
                         {/* COMMISSIONER EXCLUSIVE SPECIAL EVENT SELECTOR & MANAGEMENT BAR */}

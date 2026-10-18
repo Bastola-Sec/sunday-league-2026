@@ -939,6 +939,7 @@ export default function App() {
       <PlayerProfileModal
         player={selectedPlayerForProfile}
         team={selectedTeamForPlayer}
+        teams={displayTeams}
         onClose={() => {
           setSelectedPlayerForProfile(null);
           setSelectedTeamForPlayer(null);

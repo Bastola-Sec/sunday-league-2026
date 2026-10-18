@@ -107,7 +107,7 @@ export interface Trophy {
   title: string;
   seasonOrEvent: string;
   year: string | number;
-  type: 'league_champion' | 'league_cup' | 'super_cup' | 'golden_boot' | 'playmaker' | 'fair_play' | 'captain';
+  type: 'league_champion' | 'league_cup' | 'super_cup' | 'golden_boot' | 'playmaker' | 'fair_play' | 'captain' | 'special_event';
   icon?: string;
   dateAwarded?: string;
 }
