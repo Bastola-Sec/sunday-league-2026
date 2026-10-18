@@ -34,6 +34,7 @@ import { TeamLogo } from './TeamLogos';
 import { Player3DAvatar } from './Player3DAvatar';
 import { TiltCard } from './TiltCard';
 import { PlayerFormModal } from './PlayerFormModal';
+import { CareerBreakdownModal } from './CareerBreakdownModal';
 
 interface PlayerProfileModalProps {
   player: Player | null;
@@ -86,6 +87,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
   // Edit & Auth Modal States
   const [isPlayerFormOpen, setIsPlayerFormOpen] = useState(false);
+  const [showCareerBreakdown, setShowCareerBreakdown] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [passcodeAttempt, setPasscodeAttempt] = useState('');
   const [passcodeError, setPasscodeError] = useState<string | null>(null);
@@ -490,12 +492,21 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                 </div>
 
                 {/* All-Time Lifetime Career Totals Grid */}
-                <div className="space-y-1 pt-1 border-t border-[#1a3244]/15">
+                <div
+                  onClick={() => setShowCareerBreakdown(true)}
+                  className="space-y-1 pt-1 border-t border-[#1a3244]/15 cursor-pointer group/career transition-transform active:scale-[0.99]"
+                  title="Click to view detailed career stats breakdown by competition"
+                >
                   <div className="flex items-center justify-between text-[10px] font-bold text-[#152a38] uppercase tracking-wider px-1">
-                    <span>All-Time Career Totals</span>
+                    <span className="flex items-center gap-1.5 group-hover/career:text-blue-900 transition-colors">
+                      <span>All-Time Career Totals</span>
+                      <span className="text-[9px] lowercase bg-[#152a38]/15 group-hover/career:bg-[#152a38]/30 text-[#152a38] px-2 py-0.5 rounded-full font-bold transition-all shadow-xs flex items-center gap-0.5">
+                        Breakdown ↗
+                      </span>
+                    </span>
                     <span className="font-mono text-[#152a38] font-extrabold">All Seasons</span>
                   </div>
-                  <div className="grid grid-cols-6 text-center py-2 bg-[#152a38]/15 rounded-2xl border border-[#152a38]/20 backdrop-blur-md gap-1">
+                  <div className="grid grid-cols-6 text-center py-2 bg-[#152a38]/15 group-hover/career:bg-[#152a38]/25 transition-all rounded-2xl border border-[#152a38]/20 group-hover/career:border-[#152a38]/40 backdrop-blur-md gap-1">
                     <div>
                       <span className="block text-[9px] font-extrabold text-[#2a455a]">C-Goals</span>
                       <span className="text-base font-black text-[#152a38]">
@@ -1194,6 +1205,17 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             }}
             playerToEdit={currentPlayer}
             teamName={team?.name}
+          />
+
+          {/* DETAILED ALL-TIME CAREER BREAKDOWN POPUP MODAL */}
+          <CareerBreakdownModal
+            isOpen={showCareerBreakdown}
+            onClose={() => setShowCareerBreakdown(false)}
+            player={currentPlayer}
+            team={team}
+            teams={teams}
+            matches={matches}
+            specialTournaments={specialTournaments}
           />
         </motion.div>
       </motion.div>

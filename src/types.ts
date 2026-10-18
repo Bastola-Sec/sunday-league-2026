@@ -39,6 +39,7 @@ export interface Player {
   careerRedCards?: number;
   careerMotmAwards?: number;
   trophies?: Trophy[];
+  teamId?: string;
 }
 
 export interface BoardMember {

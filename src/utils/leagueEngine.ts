@@ -1019,12 +1019,12 @@ export function rolloverToNewSeasonWithOptions(
 
       return {
         ...player,
-        careerGoals: (player.careerGoals ?? 0) + (player.goals || 0),
-        careerAssists: (player.careerAssists ?? 0) + (player.assists || 0),
-        careerMatches: (player.careerMatches ?? 0) + (player.matchesPlayed || 0),
-        careerYellowCards: (player.careerYellowCards ?? 0) + (player.yellowCards || 0),
-        careerRedCards: (player.careerRedCards ?? 0) + (player.redCards || 0),
-        careerMotmAwards: (player.careerMotmAwards ?? 0) + (player.motmAwards || 0),
+        careerGoals: player.careerGoals ?? player.goals ?? 0,
+        careerAssists: player.careerAssists ?? player.assists ?? 0,
+        careerMatches: player.careerMatches ?? player.matchesPlayed ?? 0,
+        careerYellowCards: player.careerYellowCards ?? player.yellowCards ?? 0,
+        careerRedCards: player.careerRedCards ?? player.redCards ?? 0,
+        careerMotmAwards: player.careerMotmAwards ?? player.motmAwards ?? 0,
         trophies: playerTrophies,
         goals: 0,
         assists: 0,
