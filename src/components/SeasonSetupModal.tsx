@@ -31,7 +31,7 @@ export const SeasonSetupModal: React.FC<SeasonSetupModalProps> = ({
   const [homeAwayRounds, setHomeAwayRounds] = useState<number>(4);
   const [includeCups, setIncludeCups] = useState<boolean>(true);
   const [includeSuperCup, setIncludeSuperCup] = useState<boolean>(false);
-  const [startDate, setStartDate] = useState<string>('2026-10-25');
+  const [startDate, setStartDate] = useState<string>('2026-11-01');
 
   // Inline "Add New Club" drawer state
   const [showAddClubDrawer, setShowAddClubDrawer] = useState<boolean>(false);

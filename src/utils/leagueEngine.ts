@@ -666,10 +666,10 @@ export function generateSeasonSchedule(options: SeasonSetupOptions): Match[] {
     const parts = startDate.split('-').map(Number);
     startD = new Date(parts[0], parts[1] - 1, parts[2], 8, 30, 0);
   } else {
-    startD = new Date(startDate || '2026-10-25T08:30:00');
+    startD = new Date(startDate || '2026-11-01T08:30:00');
   }
   if (isNaN(startD.getTime())) {
-    startD = new Date(2026, 9, 25, 8, 30, 0);
+    startD = new Date(2026, 10, 1, 8, 30, 0);
   }
 
   let matchIndex = 1;

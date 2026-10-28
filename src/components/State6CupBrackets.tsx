@@ -222,7 +222,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                 {/* Kickoff Date & Time Header */}
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-amber-300 pb-2 border-b border-white/10 font-bold">
                   <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  <span>{leagueCupMatch?.startTime || 'Sun, Dec 6 • 8:30 AM'}</span>
+                  <span>{leagueCupMatch?.startTime || 'Sun, Dec 13 • 8:30 AM'}</span>
                 </div>
                 {/* 1st Place (League Topper) */}
                 <div className={`flex items-center justify-between p-2.5 rounded-lg border transition-all ${isLeagueComplete ? 'bg-[#05080c] border-amber-500/30' : 'bg-[#05080c]/60 border-white/10'}`}>
@@ -378,7 +378,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                     {/* Kickoff Date & Time Header */}
                     <div className="flex items-center gap-1 text-[9px] font-mono text-cyan-300 pb-1.5 border-b border-white/10 font-bold">
                       <Clock className="w-3 h-3 text-cyan-400 shrink-0" />
-                      <span>{superCupQualifier?.startTime || 'Sun, Dec 13 • 8:30 AM'}</span>
+                      <span>{superCupQualifier?.startTime || 'Sun, Dec 20 • 8:30 AM'}</span>
                     </div>
 
                     {/* Slot 1: 2nd Place */}
@@ -466,7 +466,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                     {/* Kickoff Date & Time Header */}
                     <div className="flex items-center gap-1 text-[9px] font-mono text-amber-300 pb-1.5 border-b border-white/10 font-bold">
                       <Clock className="w-3 h-3 text-amber-400 shrink-0" />
-                      <span>{superCupFinal?.startTime || 'Sun, Dec 13 • 10:00 AM'}</span>
+                      <span>{superCupFinal?.startTime || 'Sun, Dec 20 • 10:00 AM'}</span>
                     </div>
                     {/* Slot 1: 1st Place (Bye to Final) */}
                     <div className="flex items-center justify-between p-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30">
