@@ -444,20 +444,11 @@ export const PlayerFormModal: React.FC<PlayerFormModalProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => handleAddTrophy('league_cup', 'League Cup', '🏆')}
-                  className="px-2 py-1 rounded-lg bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>🏆 + League Cup</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleAddTrophy('super_cup', 'Super Cup', '🏆')}
+                  onClick={() => handleAddTrophy('super_cup', 'Super Sunday Cup', '🏆')}
                   className="px-2 py-1 rounded-lg bg-purple-500/20 border border-purple-500/40 text-purple-300 hover:bg-purple-500/30 font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
                 >
                   <Plus className="w-3 h-3" />
-                  <span>🏆 + Super Cup</span>
+                  <span>🏆 + Super Sunday Cup</span>
                 </button>
 
                 <button

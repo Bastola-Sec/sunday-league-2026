@@ -50,11 +50,10 @@ export const SeasonSetupModal: React.FC<SeasonSetupModalProps> = ({
     ? (homeAwayRounds <= 2 ? 6 : 12)
     : (numTeams >= 2 ? numRotations * matchesPerRound * homeAwayRounds : 0);
   const totalCupMatches = includeCups ? 2 : 0;
-  const totalPlayoffMatches = 1;
-  const totalFixturesToGenerate = totalLeagueMatches + totalCupMatches + totalPlayoffMatches;
+  const totalFixturesToGenerate = totalLeagueMatches + totalCupMatches;
   const estimatedWeeks = numTeams === 3
-    ? ((homeAwayRounds <= 2 ? 3 : 6) + (includeCups ? 1 : 0) + 1)
-    : ((numRotations * homeAwayRounds) + (includeCups ? 1 : 0) + 1);
+    ? ((homeAwayRounds <= 2 ? 3 : 6) + (includeCups ? 1 : 0))
+    : ((numRotations * homeAwayRounds) + (includeCups ? 1 : 0));
 
   // Add Club Handler
   const handleAddNewClub = (e: React.FormEvent) => {
@@ -414,29 +413,13 @@ export const SeasonSetupModal: React.FC<SeasonSetupModalProps> = ({
                         : 'bg-[#040810] text-gray-300 border-[#B7CEEC]/20 hover:border-amber-400/40'
                     }`}
                   >
-                    <span>🏆 League + Cup Knockouts</span>
+                    <span>🏆 League + Super Sunday Cup</span>
                   </button>
                 </div>
                 
-                {includeCups && (
-                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#B7CEEC]/15">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={includeSuperCup}
-                        onChange={(e) => setIncludeSuperCup(e.target.checked)}
-                        className="w-4 h-4 rounded text-amber-400 accent-amber-400 focus:ring-0 cursor-pointer"
-                      />
-                      <span className="font-bold text-amber-300 text-xs">
-                        Include Super Cup Match (Wait until next season to enable)
-                      </span>
-                    </label>
-                  </div>
-                )}
-                
                 <p className="text-[10px] text-gray-400 font-mono">
                   {includeCups
-                    ? (includeSuperCup ? 'Post-season: Week 7 League Cup Final, followed by Week 8 Super Cup Qualifier & Super Cup Final on same day.' : 'Post-season: Week 7 League Cup Final.')
+                    ? 'Post-season: Super Sunday Cup Qualifier (2nd vs 3rd) & Super Sunday Cup Final (1st vs Qualifier Winner) on the same day.'
                     : 'Regular League Season fixtures only.'}
                 </p>
               </div>

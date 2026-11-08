@@ -244,11 +244,22 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
     return null;
   };
 
-  // Filter out Super Cup fixtures for Season 1 since it's disabled
+  // Filter out Super Cup fixtures for Season 1 (disabled) and filter out League Cup fixtures from Season 2+ going forward
   const validMatches = seasonMatches.filter(m => {
-    const isSuperCup = m.matchType === 'Super Cup Qualifier' || m.matchType === 'Super Cup Final' || m.id.includes('FIX-008') || m.id.includes('FIX-009') || m.id.includes('FIX-SC');
+    const isSuperCup =
+      m.matchType === 'Super Cup Qualifier' ||
+      m.matchType === 'Super Cup Final' ||
+      m.matchType === 'Super Sunday Cup Qualifier' ||
+      m.matchType === 'Super Sunday Cup Final' ||
+      m.id.includes('FIX-008') ||
+      m.id.includes('FIX-009') ||
+      m.id.includes('FIX-SC');
     const isSeason1 = m.seasonNumber === 1 || m.id.includes('-S1-') || (!m.seasonNumber && m.id.startsWith('FIX-00'));
     if (isSuperCup && isSeason1) return false;
+
+    const isLeagueCup = m.matchType === 'League Cup' || m.id === 'FIX-S2-013';
+    if (isLeagueCup && !isSeason1) return false;
+
     return true;
   });
 
@@ -340,11 +351,11 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
     if (m.matchType === 'League Cup') {
       return 'League Cup Final';
     }
-    if (m.matchType === 'Super Cup Qualifier') {
-      return 'Super Cup Qualifier';
+    if (m.matchType === 'Super Cup Qualifier' || m.matchType === 'Super Sunday Cup Qualifier') {
+      return 'Super Sunday Cup Qualifier';
     }
-    if (m.matchType === 'Super Cup Final') {
-      return 'Super Cup Final';
+    if (m.matchType === 'Super Cup Final' || m.matchType === 'Super Sunday Cup Final') {
+      return 'Super Sunday Cup Final';
     }
     if (m.matchType === 'Finals' || m.matchType === 'Grand Final') {
       return 'Grand Final';
@@ -947,16 +958,16 @@ export const State5LiveAction: React.FC<State5LiveActionProps> = ({
               };
             }
 
-            if (m.matchType === 'Super Cup Qualifier') {
+            if (m.matchType === 'Super Cup Qualifier' || m.matchType === 'Super Sunday Cup Qualifier') {
               return {
-                label: '⚡ SUPER CUP QUALIFIER',
+                label: '⚡ SUPER SUNDAY CUP QUALIFIER',
                 style: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.2)]',
               };
             }
 
-            if (m.matchType === 'Super Cup Final') {
+            if (m.matchType === 'Super Cup Final' || m.matchType === 'Super Sunday Cup Final') {
               return {
-                label: '🏆 SUPER CUP FINAL',
+                label: '🏆 SUPER SUNDAY CUP FINAL',
                 style: 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]',
               };
             }

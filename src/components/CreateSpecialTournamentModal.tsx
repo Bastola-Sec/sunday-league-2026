@@ -840,17 +840,17 @@ export const CreateSpecialTournamentModal: React.FC<CreateSpecialTournamentModal
                     >
                       <option value="top_2_final">🥇 Top 2 Grand Final (1st vs 2nd)</option>
                       <option value="top_4_knockout">⚡ Top 4 Knockout (Semis & Final)</option>
-                      <option value="super_cup">👑 Super Cup (League Cup + Super Cup)</option>
+                      <option value="super_cup">👑 Super Sunday Cup (Qualifier + Final)</option>
                     </select>
                   </div>
                 )}
               </div>
 
-              {/* Super Cup Enable Toggle for Special Event */}
+              {/* Super Sunday Cup Enable Toggle for Special Event */}
               <div className="p-3.5 rounded-2xl bg-[#03060a] border border-cyan-500/30 flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-extrabold text-cyan-300 uppercase tracking-wider">⚡ Include Super Cup?</p>
-                  <p className="text-[10px] text-gray-400">If enabled, a Super Cup bracket & winner card will be created for this event.</p>
+                  <p className="text-xs font-extrabold text-cyan-300 uppercase tracking-wider">⚡ Include Super Sunday Cup?</p>
+                  <p className="text-[10px] text-gray-400">If enabled, a Super Sunday Cup bracket & winner card will be created for this event.</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input

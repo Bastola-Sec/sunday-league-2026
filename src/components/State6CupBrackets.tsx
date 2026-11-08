@@ -18,7 +18,12 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
   onNext,
   onOpenMatchModal,
 }) => {
-  const [activeTab, setActiveTab] = useState<'league_cup' | 'super_cup'>('league_cup');
+  // Identify current active season number
+  const activeSeasonNum = matches.reduce((max, m) => Math.max(max, m.seasonNumber || 1), 1);
+  const activeSeasonMatches = matches.filter((m) => (m.seasonNumber || 1) === activeSeasonNum);
+  const hasLeagueCup = activeSeasonNum === 1;
+
+  const [activeTab, setActiveTab] = useState<'league_cup' | 'super_cup'>(hasLeagueCup ? 'league_cup' : 'super_cup');
 
   // Dynamically sort teams by standings: Points > Goal Difference > Goals For > Won
   const sortedTeams = [...teams].sort((a, b) => {
@@ -29,15 +34,13 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
     return (a.rank || 99) - (b.rank || 99);
   });
 
-  // Identify current active season number
-  const activeSeasonNum = matches.reduce((max, m) => Math.max(max, m.seasonNumber || 1), 1);
-  const activeSeasonMatches = matches.filter((m) => (m.seasonNumber || 1) === activeSeasonNum);
-
   const regularMatches = activeSeasonMatches.filter((m) => {
     const isKnockoutMatch =
       m.matchType === 'League Cup' ||
       m.matchType === 'Super Cup Qualifier' ||
       m.matchType === 'Super Cup Final' ||
+      m.matchType === 'Super Sunday Cup Qualifier' ||
+      m.matchType === 'Super Sunday Cup Final' ||
       m.matchType === 'Finals' ||
       m.matchType === 'Grand Final' ||
       m.matchType === 'Knockout' ||
@@ -67,14 +70,26 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
   const display3rdPlaceName = isLeagueComplete ? (rank3Team?.name || '3rd Place') : '3rd Place (TBD)';
 
   // Find corresponding match fixtures strictly in active season schedule
-  const leagueCupMatch = activeSeasonMatches.find(
-    (m) => m.matchType === 'League Cup' || m.matchType === 'Finals' || m.id.endsWith('013') || m.id === 'FIX-007'
-  );
+  const leagueCupMatch = hasLeagueCup
+    ? activeSeasonMatches.find(
+        (m) => m.matchType === 'League Cup' || m.matchType === 'Finals' || m.id === 'FIX-007'
+      )
+    : undefined;
   const superCupQualifier = activeSeasonMatches.find(
-    (m) => m.matchType === 'Super Cup Qualifier' || m.id.endsWith('014') || m.id === 'FIX-SC-QUAL' || m.id === 'FIX-008'
+    (m) =>
+      m.matchType === 'Super Sunday Cup Qualifier' ||
+      m.matchType === 'Super Cup Qualifier' ||
+      m.id.endsWith('014') ||
+      m.id === 'FIX-SC-QUAL' ||
+      m.id === 'FIX-008'
   );
   const superCupFinal = activeSeasonMatches.find(
-    (m) => m.matchType === 'Super Cup Final' || m.id.endsWith('015') || m.id === 'FIX-SC-FINAL' || m.id === 'FIX-009'
+    (m) =>
+      m.matchType === 'Super Sunday Cup Final' ||
+      m.matchType === 'Super Cup Final' ||
+      m.id.endsWith('015') ||
+      m.id === 'FIX-SC-FINAL' ||
+      m.id === 'FIX-009'
   );
 
   // Helper to extract live telemetry & score details from match engine
@@ -154,7 +169,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl sm:text-2xl font-black text-white f1-header tracking-wider">
-                SUNDAY CUPS FIXTURES AND RESULTS
+                {hasLeagueCup ? 'SUNDAY CUPS FIXTURES AND RESULTS' : 'SUPER SUNDAY CUP FIXTURES AND RESULTS'}
               </h2>
               <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black font-mono bg-[#4C787E]/20 text-[#B7CEEC] border border-[#4C787E]/40 uppercase tracking-widest">
                 CUP PHASE
@@ -167,33 +182,35 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
         </div>
 
         {/* Navigation Tabs (Mobile Compact layout) */}
-        <div className="grid grid-cols-2 gap-1.5 p-1.5 my-4 rounded-xl bg-[#080d14] border border-[#B7CEEC]/15">
-          <button
-            onClick={() => setActiveTab('league_cup')}
-            className={`py-2 px-2 rounded-lg text-xs font-bold font-mono transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeTab === 'league_cup'
-                ? 'bg-[#4C787E] text-white shadow-md shadow-[#4C787E]/30'
-                : 'text-[#B7CEEC]/70 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Trophy className="w-3.5 h-3.5 text-amber-400" />
-            <span className="truncate">League Cup</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('super_cup')}
-            className={`py-2 px-2 rounded-lg text-xs font-bold font-mono transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeTab === 'super_cup'
-                ? 'bg-[#4C787E] text-white shadow-md shadow-[#4C787E]/30'
-                : 'text-[#B7CEEC]/70 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="truncate">Super Cup</span>
-          </button>
-        </div>
+        {hasLeagueCup && (
+          <div className="grid grid-cols-2 gap-1.5 p-1.5 my-4 rounded-xl bg-[#080d14] border border-[#B7CEEC]/15">
+            <button
+              onClick={() => setActiveTab('league_cup')}
+              className={`py-2 px-2 rounded-lg text-xs font-bold font-mono transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === 'league_cup'
+                  ? 'bg-[#4C787E] text-white shadow-md shadow-[#4C787E]/30'
+                  : 'text-[#B7CEEC]/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Trophy className="w-3.5 h-3.5 text-amber-400" />
+              <span className="truncate">League Cup</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('super_cup')}
+              className={`py-2 px-2 rounded-lg text-xs font-bold font-mono transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === 'super_cup'
+                  ? 'bg-[#4C787E] text-white shadow-md shadow-[#4C787E]/30'
+                  : 'text-[#B7CEEC]/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="truncate">Super Sunday Cup</span>
+            </button>
+          </div>
+        )}
 
         {/* TAB 1: LEAGUE CUP VISUAL BRACKET */}
-        {activeTab === 'league_cup' && (
+        {hasLeagueCup && activeTab === 'league_cup' && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -341,25 +358,25 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
           </motion.div>
         )}
 
-        {/* TAB 2: SUPER CUP VISUAL BRACKET TREE */}
-        {activeTab === 'super_cup' && (
+        {/* TAB 2: SUPER SUNDAY CUP VISUAL BRACKET TREE */}
+        {(!hasLeagueCup || activeTab === 'super_cup') && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="space-y-3"
+            className="space-y-3 mt-4"
           >
             {/* Header info banner */}
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-cyan-400" />
                 <h3 className="text-xs sm:text-sm font-extrabold text-white f1-header tracking-wide">
-                  SUPER CUP TOURNAMENT BRACKET
+                  SUPER SUNDAY CUP TOURNAMENT BRACKET
                 </h3>
               </div>
             </div>
 
-            {/* VISUAL BRACKET CONTAINER FOR SUPER CUP */}
+            {/* VISUAL BRACKET CONTAINER FOR SUPER SUNDAY CUP */}
             <div className="p-3 sm:p-4 rounded-2xl bg-[#080d14]/90 border border-cyan-500/30 shadow-xl space-y-3">
               {/* Bracket Tree Row (Qualifier -> Connector -> Final) */}
               <div className="grid grid-cols-1 sm:grid-cols-11 gap-2 items-center">
@@ -378,7 +395,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                     {/* Kickoff Date & Time Header */}
                     <div className="flex items-center gap-1 text-[9px] font-mono text-cyan-300 pb-1.5 border-b border-white/10 font-bold">
                       <Clock className="w-3 h-3 text-cyan-400 shrink-0" />
-                      <span>{superCupQualifier?.startTime || 'Sun, Dec 20 • 8:30 AM'}</span>
+                      <span>{superCupQualifier?.startTime || 'Sun, Dec 13 • 8:30 AM'}</span>
                     </div>
 
                     {/* Slot 1: 2nd Place */}
@@ -452,11 +469,11 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                   <div className="hidden sm:block w-full h-0.5 bg-gradient-to-r from-cyan-500 to-amber-500" />
                 </div>
 
-                {/* ROUND 2: SUPER CUP FINAL MATCH BOX */}
+                {/* ROUND 2: SUPER SUNDAY CUP FINAL MATCH BOX */}
                 <div className="sm:col-span-5 space-y-1">
                   <div className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider mb-1 flex items-center gap-1">
                     <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                    <span>SUPER CUP FINAL</span>
+                    <span>SUPER SUNDAY CUP FINAL</span>
                   </div>
 
                   <TiltCard
@@ -466,7 +483,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                     {/* Kickoff Date & Time Header */}
                     <div className="flex items-center gap-1 text-[9px] font-mono text-amber-300 pb-1.5 border-b border-white/10 font-bold">
                       <Clock className="w-3 h-3 text-amber-400 shrink-0" />
-                      <span>{superCupFinal?.startTime || 'Sun, Dec 20 • 10:00 AM'}</span>
+                      <span>{superCupFinal?.startTime || 'Sun, Dec 13 • 10:00 AM'}</span>
                     </div>
                     {/* Slot 1: 1st Place (Bye to Final) */}
                     <div className="flex items-center justify-between p-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30">
@@ -546,7 +563,7 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
               </div>
 
               {/* Centered Trophy Box brought down */}
-              <div className="mx-auto max-w-[220px] p-3 rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-600/10 to-[#05080c] border border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.3)] text-center space-y-1">
+              <div className="mx-auto max-w-[230px] p-3 rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-600/10 to-[#05080c] border border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.3)] text-center space-y-1">
                 <Trophy className="w-7 h-7 text-amber-400 mx-auto animate-pulse" />
                 {superCupChampion ? (
                   <>
@@ -557,13 +574,13 @@ export const State6CupBrackets: React.FC<State6CupBracketsProps> = ({
                       </p>
                     </div>
                     <p className="text-[10px] font-extrabold text-emerald-400 font-mono">
-                      SUPER CUP CHAMPION 2026 🏆
+                      SUPER SUNDAY CUP CHAMPION 2026 🏆
                     </p>
                   </>
                 ) : (
                   <>
                     <p className="text-xs font-black font-mono text-amber-300 uppercase tracking-wider leading-tight">
-                      SUPER CUP CHAMPION
+                      SUPER SUNDAY CUP CHAMPION
                     </p>
                     <p className="text-[9px] text-[#B7CEEC]/60 font-mono">Season {activeSeasonNum}</p>
                   </>

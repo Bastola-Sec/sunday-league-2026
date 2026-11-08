@@ -1379,6 +1379,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       editingMatch.matchType === 'Finals' || 
       editingMatch.matchType === 'League Cup' || 
       editingMatch.matchType === 'Super Cup Final' || 
+      editingMatch.matchType === 'Super Sunday Cup Final' || 
       editingMatch.id === 'FIX-007'
     ) {
       let winnerName = null;
@@ -1605,9 +1606,20 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   // Visible matches for active admin persona
   const rawVisibleMatches = matches.filter((m) => {
     // Filter out disabled Season 1 Super Cup fixtures
-    const isSuperCup = m.matchType === 'Super Cup Qualifier' || m.matchType === 'Super Cup Final' || m.id.includes('FIX-008') || m.id.includes('FIX-009') || m.id.includes('FIX-SC');
+    const isSuperCup =
+      m.matchType === 'Super Cup Qualifier' ||
+      m.matchType === 'Super Cup Final' ||
+      m.matchType === 'Super Sunday Cup Qualifier' ||
+      m.matchType === 'Super Sunday Cup Final' ||
+      m.id.includes('FIX-008') ||
+      m.id.includes('FIX-009') ||
+      m.id.includes('FIX-SC');
     const isSeason1 = m.seasonNumber === 1 || m.id.includes('-S1-') || (!m.seasonNumber && m.id.startsWith('FIX-00'));
     if (isSuperCup && isSeason1) return false;
+
+    // Filter out removed League Cup fixtures from Season 2+ going forward
+    const isLeagueCup = m.matchType === 'League Cup' || m.id === 'FIX-S2-013';
+    if (isLeagueCup && !isSeason1) return false;
 
     // Filter by selected season (Special Events remain accessible)
     if (adminSeasonFilter !== 'all' && m.matchType !== 'Special Event' && !m.tournamentId) {
@@ -1622,6 +1634,8 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
         m.matchType === 'League Cup' ||
         m.matchType === 'Super Cup Qualifier' ||
         m.matchType === 'Super Cup Final' ||
+        m.matchType === 'Super Sunday Cup Qualifier' ||
+        m.matchType === 'Super Sunday Cup Final' ||
         m.matchType === 'Finals'
       );
     }
@@ -2093,16 +2107,16 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                         };
                       }
 
-                      if (m.matchType === 'Super Cup Qualifier') {
+                      if (m.matchType === 'Super Cup Qualifier' || m.matchType === 'Super Sunday Cup Qualifier') {
                         return {
-                          label: '⚡ SUPER CUP QUALIFIER',
+                          label: '⚡ SUPER SUNDAY CUP QUALIFIER',
                           style: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.2)]',
                         };
                       }
 
-                      if (m.matchType === 'Super Cup Final') {
+                      if (m.matchType === 'Super Cup Final' || m.matchType === 'Super Sunday Cup Final') {
                         return {
-                          label: '🏆 SUPER CUP FINAL',
+                          label: '🏆 SUPER SUNDAY CUP FINAL',
                           style: 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]',
                         };
                       }
@@ -3679,9 +3693,8 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                     className="w-full bg-[#080d14] border border-[#B7CEEC]/30 rounded-xl px-2 py-2 text-white text-xs font-semibold focus:border-[#4C787E] focus:outline-none"
                   >
                     <option value="Regular">League (Regular)</option>
-                    <option value="League Cup">League Cup</option>
-                    <option value="Super Cup Qualifier">Super Cup Qualifier</option>
-                    <option value="Super Cup Final">Super Cup Final</option>
+                    <option value="Super Sunday Cup Qualifier">Super Sunday Cup Qualifier</option>
+                    <option value="Super Sunday Cup Final">Super Sunday Cup Final</option>
                     <option value="Special Event">Special Event</option>
                     <option value="Friendly">Friendly / Exhibition</option>
                   </select>

@@ -909,8 +909,8 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   normTitle = 'Playmaker Award';
                 } else if (t.type === 'league_cup' || normTitle.toLowerCase().includes('league cup')) {
                   normTitle = 'League Cup';
-                } else if (t.type === 'super_cup' || normTitle.toLowerCase().includes('super cup')) {
-                  normTitle = 'Super Cup';
+                } else if (t.type === 'super_cup' || normTitle.toLowerCase().includes('super cup') || normTitle.toLowerCase().includes('super sunday cup')) {
+                  normTitle = 'Super Sunday Cup';
                 } else if (t.type === 'league_champion' || normTitle.toLowerCase().includes('sunday league')) {
                   normTitle = 'Sunday League';
                 }

@@ -16,6 +16,8 @@ export function computeStandingsAndFinalsMatch(
       m.matchType === 'League Cup' ||
       m.matchType === 'Super Cup Qualifier' ||
       m.matchType === 'Super Cup Final' ||
+      m.matchType === 'Super Sunday Cup Qualifier' ||
+      m.matchType === 'Super Sunday Cup Final' ||
       m.matchType === 'Finals' ||
       m.matchType === 'Grand Final' ||
       m.matchType === 'Knockout' ||
@@ -294,6 +296,41 @@ export function computeStandingsAndFinalsMatch(
       }
     }
 
+    const clubAchievements = [...(team.achievements || [])];
+    const clubTrophies = [...(team.trophies || [])];
+
+    if (team.id === 'momo-strikers' || team.name.toLowerCase().includes('momo')) {
+      if (!clubAchievements.some((a) => a.toLowerCase().includes('league cup'))) {
+        clubAchievements.push('Season 1 League Cup Champion 🏆');
+      }
+      if (!clubTrophies.some((t) => t.type === 'league_cup' || t.title.toLowerCase().includes('league cup'))) {
+        clubTrophies.push({
+          id: `tr-momo-s1-cup-${team.id}`,
+          title: 'League Cup',
+          seasonOrEvent: 'Season 1',
+          year: 2026,
+          type: 'league_cup',
+          icon: '🏆',
+        });
+      }
+    }
+
+    if (team.id === 'jhyap-warriors' || team.name.toLowerCase().includes('jhyap')) {
+      if (!clubAchievements.some((a) => a.toLowerCase().includes('season 1 league champion'))) {
+        clubAchievements.push('Season 1 League Champions 🏆');
+      }
+      if (!clubTrophies.some((t) => t.type === 'league_champion' && t.seasonOrEvent === 'Season 1')) {
+        clubTrophies.push({
+          id: `tr-jhyap-s1-league-${team.id}`,
+          title: 'Sunday League',
+          seasonOrEvent: 'Season 1',
+          year: 2026,
+          type: 'league_champion',
+          icon: '🏆',
+        });
+      }
+    }
+
     return {
       ...team,
       played,
@@ -314,6 +351,8 @@ export function computeStandingsAndFinalsMatch(
       allTimeWinPercentage,
       form,
       topScorer,
+      achievements: clubAchievements,
+      trophies: clubTrophies,
       roster: updatedRoster,
     };
   });
@@ -342,9 +381,12 @@ export function computeStandingsAndFinalsMatch(
   const top2Team = isRegularSeasonFinished ? (rankedTeams[1] || recalculatedTeams[1]) : null;
   const top3Team = isRegularSeasonFinished ? (rankedTeams[2] || recalculatedTeams[2]) : null;
 
-  // Determine Super Cup Qualifier (FIX-008) Winner if completed
+  // Determine Super Sunday Cup Qualifier (FIX-008 / FIX-S2-014) Winner if completed
   const fix008Match = matchesList.find(
-    (m) => m.id === 'FIX-008' || m.matchType === 'Super Cup Qualifier'
+    (m) =>
+      m.id === 'FIX-008' ||
+      m.matchType === 'Super Cup Qualifier' ||
+      m.matchType === 'Super Sunday Cup Qualifier'
   );
   let qualifierWinnerTeamId = 'tbd';
   let qualifierWinnerName = 'Qualifier Winner';
@@ -361,7 +403,7 @@ export function computeStandingsAndFinalsMatch(
     }
   }
 
-  // Update Cup Knockout Matches (FIX-007, FIX-008, FIX-009) with dynamic top teams or TBD placeholders
+  // Update Cup Knockout Matches with dynamic top teams or TBD placeholders
   const updatedMatches = matchesList.map((m) => {
     if (m.id === 'FIX-007' || m.matchType === 'League Cup' || m.matchType === 'Finals') {
       if (top1Team && top2Team) {
@@ -380,37 +422,37 @@ export function computeStandingsAndFinalsMatch(
       };
     }
 
-    if (m.id === 'FIX-008' || m.matchType === 'Super Cup Qualifier') {
+    if (m.id === 'FIX-008' || m.matchType === 'Super Cup Qualifier' || m.matchType === 'Super Sunday Cup Qualifier') {
       if (top2Team && top3Team) {
         return {
           ...m,
           homeTeamId: top2Team.id,
           awayTeamId: top3Team.id,
-          venue: `De Anza Stadium (Super Cup Qualifier: ${top2Team.name} vs ${top3Team.name})`,
+          venue: `De Anza Stadium (Super Sunday Cup Qualifier: ${top2Team.name} vs ${top3Team.name})`,
         };
       }
       return {
         ...m,
         homeTeamId: '2nd Place',
         awayTeamId: '3rd Place',
-        venue: 'De Anza Stadium (Super Cup Qualifier: 2nd Place vs 3rd Place)',
+        venue: 'De Anza Stadium (Super Sunday Cup Qualifier: 2nd Place vs 3rd Place)',
       };
     }
 
-    if (m.id === 'FIX-009' || m.matchType === 'Super Cup Final') {
+    if (m.id === 'FIX-009' || m.matchType === 'Super Cup Final' || m.matchType === 'Super Sunday Cup Final') {
       if (top1Team) {
         return {
           ...m,
           homeTeamId: top1Team.id,
           awayTeamId: qualifierWinnerTeamId,
-          venue: `De Anza Stadium (Super Cup Final: ${top1Team.name} vs ${qualifierWinnerName})`,
+          venue: `De Anza Stadium (Super Sunday Cup Final: ${top1Team.name} vs ${qualifierWinnerName})`,
         };
       }
       return {
         ...m,
         homeTeamId: '1st Place',
         awayTeamId: qualifierWinnerTeamId,
-        venue: `De Anza Stadium (Super Cup Final: 1st Place vs ${qualifierWinnerName})`,
+        venue: `De Anza Stadium (Super Sunday Cup Final: 1st Place vs ${qualifierWinnerName})`,
       };
     }
 
@@ -458,6 +500,8 @@ export function resolveMatchesWithStandings(matchesList: Match[], teamsList: Tea
         m.matchType === 'League Cup' ||
         m.matchType === 'Super Cup Qualifier' ||
         m.matchType === 'Super Cup Final' ||
+        m.matchType === 'Super Sunday Cup Qualifier' ||
+        m.matchType === 'Super Sunday Cup Final' ||
         m.matchType === 'Finals' ||
         m.matchType === 'Grand Final' ||
         m.matchType === 'Knockout' ||
@@ -521,6 +565,8 @@ export function resolveMatchesWithStandings(matchesList: Match[], teamsList: Tea
         m.matchType === 'League Cup' ||
         m.matchType === 'Super Cup Qualifier' ||
         m.matchType === 'Super Cup Final' ||
+        m.matchType === 'Super Sunday Cup Qualifier' ||
+        m.matchType === 'Super Sunday Cup Final' ||
         m.matchType === 'Finals' ||
         m.matchType === 'Grand Final' ||
         m.matchType === 'Knockout' ||
@@ -553,8 +599,8 @@ export function resolveMatchesWithStandings(matchesList: Match[], teamsList: Tea
       const isFinal = m.id === 'FIX-007' || m.id.endsWith('-FINAL') || m.matchType === 'Finals' || m.matchType === 'Grand Final' || m.matchType === 'League Cup';
       const isSemi1 = m.id.endsWith('-SEMI1');
       const isSemi2 = m.id.endsWith('-SEMI2');
-      const isSuperQual = m.id === 'FIX-008' || m.matchType === 'Super Cup Qualifier';
-      const isSuperFinal = m.id === 'FIX-009' || m.matchType === 'Super Cup Final';
+      const isSuperQual = m.id === 'FIX-008' || m.matchType === 'Super Cup Qualifier' || m.matchType === 'Super Sunday Cup Qualifier';
+      const isSuperFinal = m.id === 'FIX-009' || m.matchType === 'Super Cup Final' || m.matchType === 'Super Sunday Cup Final';
 
       if (isFinal) {
         newHomeId = rank1 ? rank1.id : '1st Place';
@@ -580,7 +626,12 @@ export function resolveMatchesWithStandings(matchesList: Match[], teamsList: Tea
         newHomeId = rank1 ? rank1.id : '1st Place';
         // Look up the qualifier match to see if it has concluded
         const qualMatch = groupMatches.find(
-          (x) => x.matchType === 'Super Cup Qualifier' || x.id === 'FIX-008' || x.id.includes('FIX-SC-QUAL') || x.id.endsWith('014')
+          (x) =>
+            x.matchType === 'Super Cup Qualifier' ||
+            x.matchType === 'Super Sunday Cup Qualifier' ||
+            x.id === 'FIX-008' ||
+            x.id.includes('FIX-SC-QUAL') ||
+            x.id.endsWith('014')
         );
         if (qualMatch && (qualMatch.isFinished || qualMatch.status === 'ended')) {
           const qH = qualMatch.homeScore || 0;
@@ -845,21 +896,22 @@ export function generateSeasonSchedule(options: SeasonSetupOptions): Match[] {
     }
   }
 
-  if (includeCups) {
-    const cupDate = new Date(startD.getTime() + (currentWeek - 1) * 7 * 24 * 3600 * 1000);
-    const cupDateStr = cupDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  if (includeCups || includeSuperCup) {
+    // Post-season: Super Sunday Cup Qualifier first (2nd vs 3rd), Super Sunday Cup Final last (1st vs Qualifier Winner) on the SAME DAY
+    const superCupDate = new Date(startD.getTime() + (currentWeek - 1) * 7 * 24 * 3600 * 1000);
+    const superCupDateStr = superCupDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-    // Week 7: League Cup Final (1st vs 2nd)
+    // Match 1: Super Sunday Cup Qualifier (2nd vs 3rd)
     matches.push({
       id: `FIX-S${nextSeasonNumber}-${matchIndex.toString().padStart(3, '0')}`,
-      homeTeamId: '1st Place',
-      awayTeamId: '2nd Place',
+      homeTeamId: '2nd Place',
+      awayTeamId: '3rd Place',
       homeScore: 0,
       awayScore: 0,
       minute: 0,
       isLive: false,
       isFinished: false,
-      startTime: `${cupDateStr} • 8:30 AM`,
+      startTime: `${superCupDateStr} • 8:30 AM`,
       venue: 'De Anza Stadium (Pitch 1)',
       possessionHome: 50,
       possessionAway: 50,
@@ -871,7 +923,37 @@ export function generateSeasonSchedule(options: SeasonSetupOptions): Match[] {
       foulsAway: 0,
       events: [],
       weekNumber: currentWeek,
-      matchType: 'League Cup',
+      matchType: 'Super Sunday Cup Qualifier',
+      matchFormat: matchFormat,
+      halfDurationMinutes: halfDurationMinutes,
+      status: 'scheduled',
+      seasonNumber: nextSeasonNumber,
+    });
+    matchIndex++;
+
+    // Match 2: Super Sunday Cup Final (1st vs Winner 2nd vs 3rd) on the SAME DAY
+    matches.push({
+      id: `FIX-S${nextSeasonNumber}-${matchIndex.toString().padStart(3, '0')}`,
+      homeTeamId: '1st Place',
+      awayTeamId: 'tbd',
+      homeScore: 0,
+      awayScore: 0,
+      minute: 0,
+      isLive: false,
+      isFinished: false,
+      startTime: `${superCupDateStr} • 10:00 AM`,
+      venue: 'De Anza Stadium (Pitch 1)',
+      possessionHome: 50,
+      possessionAway: 50,
+      shotsHome: 0,
+      shotsAway: 0,
+      shotsOnTargetHome: 0,
+      shotsOnTargetAway: 0,
+      foulsHome: 0,
+      foulsAway: 0,
+      events: [],
+      weekNumber: currentWeek,
+      matchType: 'Super Sunday Cup Final',
       matchFormat: matchFormat,
       halfDurationMinutes: halfDurationMinutes,
       status: 'scheduled',
@@ -879,73 +961,6 @@ export function generateSeasonSchedule(options: SeasonSetupOptions): Match[] {
     });
     matchIndex++;
     currentWeek++;
-
-    // Week 8: Super Cup Qualifier first, Super Cup Final last on the SAME DAY
-    if (includeSuperCup) {
-      const superCupDate = new Date(startD.getTime() + (currentWeek - 1) * 7 * 24 * 3600 * 1000);
-      const superCupDateStr = superCupDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-
-      // Match 1: Qualifier (2nd vs 3rd)
-      matches.push({
-        id: `FIX-S${nextSeasonNumber}-${matchIndex.toString().padStart(3, '0')}`,
-        homeTeamId: '2nd Place',
-        awayTeamId: '3rd Place',
-        homeScore: 0,
-        awayScore: 0,
-        minute: 0,
-        isLive: false,
-        isFinished: false,
-        startTime: `${superCupDateStr} • 8:30 AM`,
-        venue: 'De Anza Stadium (Pitch 1)',
-        possessionHome: 50,
-        possessionAway: 50,
-        shotsHome: 0,
-        shotsAway: 0,
-        shotsOnTargetHome: 0,
-        shotsOnTargetAway: 0,
-        foulsHome: 0,
-        foulsAway: 0,
-        events: [],
-        weekNumber: currentWeek,
-        matchType: 'Super Cup Qualifier',
-        matchFormat: matchFormat,
-        halfDurationMinutes: halfDurationMinutes,
-        status: 'scheduled',
-        seasonNumber: nextSeasonNumber,
-      });
-      matchIndex++;
-
-      // Match 2: Super Cup Final (1st vs Winner 2nd vs 3rd) on the SAME DAY
-      matches.push({
-        id: `FIX-S${nextSeasonNumber}-${matchIndex.toString().padStart(3, '0')}`,
-        homeTeamId: '1st Place',
-        awayTeamId: 'tbd',
-        homeScore: 0,
-        awayScore: 0,
-        minute: 0,
-        isLive: false,
-        isFinished: false,
-        startTime: `${superCupDateStr} • 10:00 AM`,
-        venue: 'De Anza Stadium (Pitch 1)',
-        possessionHome: 50,
-        possessionAway: 50,
-        shotsHome: 0,
-        shotsAway: 0,
-        shotsOnTargetHome: 0,
-        shotsOnTargetAway: 0,
-        foulsHome: 0,
-        foulsAway: 0,
-        events: [],
-        weekNumber: currentWeek,
-        matchType: 'Super Cup Final',
-        matchFormat: matchFormat,
-        halfDurationMinutes: halfDurationMinutes,
-        status: 'scheduled',
-        seasonNumber: nextSeasonNumber,
-      });
-      matchIndex++;
-      currentWeek++;
-    }
   }
 
   return matches;

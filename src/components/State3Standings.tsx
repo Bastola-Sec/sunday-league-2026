@@ -217,19 +217,23 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
   const activeSeasonOption = seasonOptions.find((opt) => opt.id === selectedSeasonId) || seasonOptions[0];
   const isSpecialEventActive = activeSeasonOption?.isSpecial || false;
   const activeSpecialTournament = activeSeasonOption?.tournament;
+  const activeSeasonNum = activeSeasonOption?.seasonNum || 1;
+  const hasLeagueCup = isSpecialEventActive || activeSeasonNum === 1;
   const showSuperCup = !isSpecialEventActive || Boolean(activeSpecialTournament?.hasSuperCup);
 
   // Sub-tabs for League Phase (6 categories + Honours)
   const [activeTab, setActiveTab] = useState<'standings' | 'scorers' | 'assists' | 'motm' | 'yellows' | 'reds' | 'honours'>('standings');
 
   // Sub-tabs for Cup Phase
-  const [cupTab, setCupTab] = useState<'league_cup' | 'super_cup'>('league_cup');
+  const [cupTab, setCupTab] = useState<'league_cup' | 'super_cup'>(hasLeagueCup ? 'league_cup' : 'super_cup');
 
   React.useEffect(() => {
-    if (!showSuperCup && cupTab === 'super_cup') {
+    if (!hasLeagueCup) {
+      setCupTab('super_cup');
+    } else if (!showSuperCup && cupTab === 'super_cup') {
       setCupTab('league_cup');
     }
-  }, [showSuperCup, cupTab]);
+  }, [hasLeagueCup, showSuperCup, cupTab]);
 
   // Filter matches strictly by selected season or special tournament
   const seasonMatches = matches.filter((m) => {
@@ -287,6 +291,8 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
       m.matchType === 'League Cup' ||
       m.matchType === 'Super Cup Qualifier' ||
       m.matchType === 'Super Cup Final' ||
+      m.matchType === 'Super Sunday Cup Qualifier' ||
+      m.matchType === 'Super Sunday Cup Final' ||
       m.matchType === 'Finals' ||
       m.matchType === 'Grand Final' ||
       m.matchType === 'Knockout' ||
@@ -314,15 +320,28 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
   const display3rdPlaceName = isLeagueComplete ? (rank3Team?.name || '3rd Place') : '3rd Place (TBD)';
 
   // Cup matches lookup strictly for selected season
-  const activeSeasonNum = activeSeasonOption?.seasonNum || 1;
-  const leagueCupMatch = seasonMatches.find(
-    (m) => m.matchType === 'League Cup' || m.matchType === 'Finals' || m.id === `FIX-S${activeSeasonNum}-007` || m.id === 'FIX-007'
-  );
+  const leagueCupMatch = hasLeagueCup
+    ? seasonMatches.find(
+        (m) => m.matchType === 'League Cup' || m.matchType === 'Finals' || m.id === `FIX-S${activeSeasonNum}-007` || m.id === 'FIX-007'
+      )
+    : undefined;
   const superCupQualifier = seasonMatches.find(
-    (m) => m.matchType === 'Super Cup Qualifier' || m.id === `FIX-S${activeSeasonNum}-008` || m.id === 'FIX-SC-QUAL' || m.id === 'FIX-008'
+    (m) =>
+      m.matchType === 'Super Sunday Cup Qualifier' ||
+      m.matchType === 'Super Cup Qualifier' ||
+      m.id === `FIX-S${activeSeasonNum}-014` ||
+      m.id === `FIX-S${activeSeasonNum}-008` ||
+      m.id === 'FIX-SC-QUAL' ||
+      m.id === 'FIX-008'
   );
   const superCupFinal = seasonMatches.find(
-    (m) => m.matchType === 'Super Cup Final' || m.id === `FIX-S${activeSeasonNum}-009` || m.id === 'FIX-SC-FINAL' || m.id === 'FIX-009'
+    (m) =>
+      m.matchType === 'Super Sunday Cup Final' ||
+      m.matchType === 'Super Cup Final' ||
+      m.id === `FIX-S${activeSeasonNum}-015` ||
+      m.id === `FIX-S${activeSeasonNum}-009` ||
+      m.id === 'FIX-SC-FINAL' ||
+      m.id === 'FIX-009'
   );
 
   // Aggregate all players across season team rosters for leaderboards
@@ -434,7 +453,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#B7CEEC]/20">
           <div>
             <h2 className="text-lg sm:text-2xl font-black f1-header tracking-[0.15em] uppercase text-white">
-              {currentPhase === 'league' ? 'SUNDAY LEAGUE' : 'SUNDAY CUPS'}
+              {currentPhase === 'league' ? 'SUNDAY LEAGUE' : (!hasLeagueCup ? 'SUPER SUNDAY CUP' : 'SUNDAY CUPS')}
             </h2>
             <div className="text-[11px] font-mono text-teal-300 font-bold tracking-widest mt-0.5">
               Est: 2026
@@ -902,9 +921,9 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                       </span>
                     </div>
                   ) : (
-                    /* FOR REGULAR LEAGUE SEASON: Display both League Winner (points table) and League Cup Winner */
+                    /* FOR REGULAR LEAGUE SEASON: Display League Top Winner (points table) and (if Season 1) League Cup Winner */
                     <>
-                      {/* 1. LEAGUE WINNER (Points Leader) */}
+                      {/* 1. LEAGUE TOP WINNER (Points Leader) */}
                       <div className="p-3 rounded-2xl bg-[#080d14] border border-amber-500/30 flex items-center justify-between shadow-md">
                         <div className="flex items-center gap-3">
                           {leagueWinner ? (
@@ -913,7 +932,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                             <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-300 text-sm">🏆</div>
                           )}
                           <div>
-                            <span className="text-[10px] font-mono text-amber-400 font-extrabold uppercase tracking-wider block">League Winner</span>
+                            <span className="text-[10px] font-mono text-amber-400 font-extrabold uppercase tracking-wider block">League Top Winner</span>
                             <p className="text-xs font-black text-white">{leagueWinner ? leagueWinner.name : 'In Progress (TBD)'}</p>
                             <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
                               {leagueWinner ? `${leagueWinner.points} PTS • GD: ${leagueWinner.goalDifference > 0 ? '+' : ''}${leagueWinner.goalDifference}` : 'Regular season matches active'}
@@ -925,30 +944,32 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                         </span>
                       </div>
 
-                      {/* 2. LEAGUE CUP WINNER */}
-                      <div className="p-3 rounded-2xl bg-[#080d14] border border-emerald-500/30 flex items-center justify-between shadow-md">
-                        <div className="flex items-center gap-3">
-                          {leagueCupWinner ? (
-                            <TeamLogo teamId={leagueCupWinner.id} size={32} />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-300 text-sm">🥇</div>
-                          )}
-                          <div>
-                            <span className="text-[10px] font-mono text-emerald-400 font-extrabold uppercase tracking-wider block">League Cup Winner</span>
-                            <p className="text-xs font-black text-white">{leagueCupWinner ? leagueCupWinner.name : 'Cup Knockout Pending'}</p>
-                            <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
-                              {leagueCupMatch && (leagueCupMatch.isFinished || leagueCupMatch.status === 'ended') ? `Final Result: ${leagueCupMatch.homeScore} - ${leagueCupMatch.awayScore}` : 'Week 4 Finals Fixture'}
-                            </p>
+                      {/* 2. LEAGUE CUP WINNER (Only for inaugural Season 1) */}
+                      {hasLeagueCup && (
+                        <div className="p-3 rounded-2xl bg-[#080d14] border border-emerald-500/30 flex items-center justify-between shadow-md">
+                          <div className="flex items-center gap-3">
+                            {leagueCupWinner ? (
+                              <TeamLogo teamId={leagueCupWinner.id} size={32} />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-300 text-sm">🥇</div>
+                            )}
+                            <div>
+                              <span className="text-[10px] font-mono text-emerald-400 font-extrabold uppercase tracking-wider block">League Cup Winner</span>
+                              <p className="text-xs font-black text-white">{leagueCupWinner ? leagueCupWinner.name : 'Cup Knockout Pending'}</p>
+                              <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
+                                {leagueCupMatch && (leagueCupMatch.isFinished || leagueCupMatch.status === 'ended') ? `Final Result: ${leagueCupMatch.homeScore} - ${leagueCupMatch.awayScore}` : 'Week 4 Finals Fixture'}
+                              </p>
+                            </div>
                           </div>
+                          <span className={`px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase ${leagueCupWinner ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-white/5 text-gray-400'}`}>
+                            {leagueCupWinner ? 'WINNER 🏆' : 'TBD'}
+                          </span>
                         </div>
-                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase ${leagueCupWinner ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-white/5 text-gray-400'}`}>
-                          {leagueCupWinner ? 'WINNER 🏆' : 'TBD'}
-                        </span>
-                      </div>
+                      )}
                     </>
                   )}
 
-                  {/* 3. SUPER CUP WINNER (Only rendered if showSuperCup is true) */}
+                  {/* 3. SUPER SUNDAY CUP WINNER (Only rendered if showSuperCup is true) */}
                   {showSuperCup && (
                     <div className="p-3 rounded-2xl bg-[#080d14] border border-cyan-500/30 flex items-center justify-between shadow-md">
                       <div className="flex items-center gap-3">
@@ -958,10 +979,10 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                           <div className="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-300 text-sm">👑</div>
                         )}
                         <div>
-                          <span className="text-[10px] font-mono text-cyan-400 font-extrabold uppercase tracking-wider block">Super Cup Winner</span>
-                          <p className="text-xs font-black text-white">{superCupWinner ? superCupWinner.name : 'Super Cup Final Pending'}</p>
+                          <span className="text-[10px] font-mono text-cyan-400 font-extrabold uppercase tracking-wider block">Super Sunday Cup Winner</span>
+                          <p className="text-xs font-black text-white">{superCupWinner ? superCupWinner.name : 'Super Sunday Cup Final Pending'}</p>
                           <p className="text-[10px] text-[#B7CEEC]/70 font-mono">
-                            {superCupFinal && (superCupFinal.isFinished || superCupFinal.status === 'ended') ? `Final Result: ${superCupFinal.homeScore} - ${superCupFinal.awayScore}` : 'Super Cup Showdown'}
+                            {superCupFinal && (superCupFinal.isFinished || superCupFinal.status === 'ended') ? `Final Result: ${superCupFinal.homeScore} - ${superCupFinal.awayScore}` : 'Super Sunday Cup Showdown'}
                           </p>
                         </div>
                       </div>
@@ -1049,14 +1070,28 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
         {/* PHASE 2: CUP PHASE CONTENT */}
         {currentPhase === 'cup' && (() => {
           // Find cup matches strictly for selected season / tournament
-          const leagueCupMatch = seasonMatches.find(
-            (m) => m.matchType === 'League Cup' || m.matchType === 'Finals' || m.id.endsWith('-FINAL') || (activeSeasonOption?.isSpecial && m.id.includes('-FINAL')) || m.id === `FIX-S${activeSeasonNum}-007` || m.id === 'FIX-007'
-          );
+          const leagueCupMatch = hasLeagueCup
+            ? seasonMatches.find(
+                (m) => m.matchType === 'League Cup' || m.matchType === 'Finals' || m.id.endsWith('-FINAL') || (activeSeasonOption?.isSpecial && m.id.includes('-FINAL')) || m.id === `FIX-S${activeSeasonNum}-007` || m.id === 'FIX-007'
+              )
+            : undefined;
           const superCupQualifier = seasonMatches.find(
-            (m) => m.matchType === 'Super Cup Qualifier' || m.id === `FIX-S${activeSeasonNum}-008` || m.id === 'FIX-SC-QUAL' || m.id === 'FIX-008'
+            (m) =>
+              m.matchType === 'Super Sunday Cup Qualifier' ||
+              m.matchType === 'Super Cup Qualifier' ||
+              m.id === `FIX-S${activeSeasonNum}-014` ||
+              m.id === `FIX-S${activeSeasonNum}-008` ||
+              m.id === 'FIX-SC-QUAL' ||
+              m.id === 'FIX-008'
           );
           const superCupFinal = seasonMatches.find(
-            (m) => m.matchType === 'Super Cup Final' || m.id === `FIX-S${activeSeasonNum}-009` || m.id === 'FIX-SC-FINAL' || m.id === 'FIX-009'
+            (m) =>
+              m.matchType === 'Super Sunday Cup Final' ||
+              m.matchType === 'Super Cup Final' ||
+              m.id === `FIX-S${activeSeasonNum}-015` ||
+              m.id === `FIX-S${activeSeasonNum}-009` ||
+              m.id === 'FIX-SC-FINAL' ||
+              m.id === 'FIX-009'
           );
 
           // Telemetry helper
@@ -1099,16 +1134,25 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
             superCupChampion = superCupFinalData.homeScore > superCupFinalData.awayScore ? rank1Team : oppTeam;
           }
 
+          const effectiveCupTab = !hasLeagueCup ? 'super_cup' : cupTab;
+
           return (
             <div className="space-y-4">
-              {/* Cup Sub-Tabs */}
-              {showSuperCup ? (
+              {/* Cup Sub-Tabs / Header Banner */}
+              {!hasLeagueCup ? (
+                <div className="p-2.5 rounded-2xl bg-[#080d15] border border-cyan-400/30 text-xs text-center">
+                  <span className="font-mono font-black text-cyan-300 uppercase tracking-widest flex items-center justify-center gap-2">
+                    <Zap className="w-4 h-4 text-cyan-400" />
+                    <span>OFFICIAL SUPER SUNDAY CUP KNOCKOUT BRACKET</span>
+                  </span>
+                </div>
+              ) : showSuperCup ? (
                 <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[#080d15] border border-white/10 text-xs">
                   <button
                     type="button"
                     onClick={() => setCupTab('league_cup')}
                     className={`py-2 rounded-xl font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      cupTab === 'league_cup'
+                      effectiveCupTab === 'league_cup'
                         ? 'bg-[#4C787E] text-white shadow-lg border border-[#4C787E]/50'
                         : 'text-gray-400 hover:text-white hover:bg-white/5'
                     }`}
@@ -1121,13 +1165,13 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                     type="button"
                     onClick={() => setCupTab('super_cup')}
                     className={`py-2 rounded-xl font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      cupTab === 'super_cup'
+                      effectiveCupTab === 'super_cup'
                         ? 'bg-[#4C787E] text-white shadow-lg border border-[#4C787E]/50'
                         : 'text-gray-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Super Cup</span>
+                    <span>Super Sunday Cup</span>
                   </button>
                 </div>
               ) : (
@@ -1139,8 +1183,8 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                 </div>
               )}
 
-              {/* LEAGUE CUP VISUAL BRACKET */}
-              {cupTab === 'league_cup' && (
+              {/* LEAGUE CUP VISUAL BRACKET (Only for Season 1 / Special Events) */}
+              {hasLeagueCup && effectiveCupTab === 'league_cup' && (
                 <div className="space-y-2">
                   <div className="text-[11px] font-mono font-bold text-amber-400 flex items-center justify-between">
                     <span>LEAGUE CUP GRAND FINAL BRACKET</span>
@@ -1264,11 +1308,11 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                 </div>
               )}
 
-              {/* SUPER CUP VISUAL BRACKET TREE */}
-              {cupTab === 'super_cup' && (
+              {/* SUPER SUNDAY CUP VISUAL BRACKET TREE */}
+              {effectiveCupTab === 'super_cup' && (
                 <div className="space-y-2">
                   <div className="text-[11px] font-mono font-bold text-cyan-400 flex items-center justify-between">
-                    <span>SUPER CUP TOURNAMENT BRACKET</span>
+                    <span>SUPER SUNDAY CUP TOURNAMENT BRACKET</span>
                   </div>
 
                   {((!superCupQualifier && !superCupFinal) || activeSeasonOption?.seasonNum === 1) ? (
@@ -1276,11 +1320,11 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                       <Lock className="w-10 h-10 text-cyan-500/60 mb-1" />
                       <h3 className="text-lg font-black font-mono text-cyan-400 uppercase tracking-widest">Coming Next Season</h3>
                       <p className="text-xs text-[#B7CEEC]/80 max-w-xs leading-relaxed">
-                        The Super Cup is disabled for the inaugural season. It will commence with an expanded format in Season 2!
+                        The Super Sunday Cup is disabled for the inaugural season. It commences in Season 2!
                       </p>
                     </div>
                   ) : (
-                    /* VISUAL BRACKET CONTAINER FOR SUPER CUP */
+                    /* VISUAL BRACKET CONTAINER FOR SUPER SUNDAY CUP */
                     <div className="p-2.5 sm:p-3 rounded-2xl bg-[#080d14]/90 border border-cyan-500/30 shadow-xl space-y-2">
                     {/* Bracket Tree Row (Qualifier -> Connector -> Final) */}
                     <div className="grid grid-cols-1 sm:grid-cols-11 gap-1.5 items-center">
@@ -1299,7 +1343,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                           {/* Kickoff Date & Time Header */}
                           <div className="flex items-center gap-1 text-[8px] font-mono text-cyan-300 pb-1 border-b border-white/10 font-bold">
                             <Clock className="w-2.5 h-2.5 text-cyan-400 shrink-0" />
-                            <span>{superCupQualifier?.startTime || 'Sun, Sep 6 • 8:45 AM'}</span>
+                            <span>{superCupQualifier?.startTime || 'Sun, Dec 13 • 8:30 AM'}</span>
                           </div>
 
                           {/* Slot 1: 2nd Place */}
@@ -1373,11 +1417,11 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                         <div className="hidden sm:block w-full h-0.5 bg-gradient-to-r from-cyan-500 to-amber-500" />
                       </div>
 
-                      {/* ROUND 2: SUPER CUP FINAL MATCH BOX */}
+                      {/* ROUND 2: SUPER SUNDAY CUP FINAL MATCH BOX */}
                       <div className="sm:col-span-5 space-y-1">
                         <div className="text-[9px] font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
                           <Trophy className="w-3 h-3 text-amber-400" />
-                          <span>SUPER CUP FINAL</span>
+                          <span>SUPER SUNDAY CUP FINAL</span>
                         </div>
 
                         <TiltCard
@@ -1387,7 +1431,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                           {/* Kickoff Date & Time Header */}
                           <div className="flex items-center gap-1 text-[8px] font-mono text-amber-300 pb-1 border-b border-white/10 font-bold">
                             <Clock className="w-2.5 h-2.5 text-amber-400 shrink-0" />
-                            <span>{superCupFinal?.startTime || 'Sun, Sep 6 • 10:00 AM'}</span>
+                            <span>{superCupFinal?.startTime || 'Sun, Dec 13 • 10:00 AM'}</span>
                           </div>
                           {/* Slot 1: 1st Place (Bye to Final) */}
                           <div className="flex items-center justify-between p-1 rounded-lg bg-amber-500/15 border border-amber-500/30">
@@ -1467,7 +1511,7 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                     </div>
 
                     {/* Centered Trophy Box brought down */}
-                    <div className="mx-auto max-w-[190px] p-2 rounded-xl bg-gradient-to-br from-amber-500/20 via-amber-600/10 to-[#05080c] border border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.3)] text-center space-y-0.5">
+                    <div className="mx-auto max-w-[200px] p-2 rounded-xl bg-gradient-to-br from-amber-500/20 via-amber-600/10 to-[#05080c] border border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.3)] text-center space-y-0.5">
                       <Trophy className="w-5 h-5 text-amber-400 mx-auto animate-pulse" />
                       {superCupChampion ? (
                         <>
@@ -1478,15 +1522,15 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
                             </p>
                           </div>
                           <p className="text-[9px] font-extrabold text-emerald-400 font-mono">
-                            SUPER CUP CHAMPION 🏆
+                            SUPER SUNDAY CUP CHAMPION 🏆
                           </p>
                         </>
                       ) : (
                         <>
                           <p className="text-[10px] font-black font-mono text-amber-300 uppercase tracking-wider leading-tight">
-                            SUPER CUP CHAMPION
+                            SUPER SUNDAY CUP CHAMPION
                           </p>
-                          <p className="text-[8px] text-[#B7CEEC]/60 font-mono">Season 1</p>
+                          <p className="text-[8px] text-[#B7CEEC]/60 font-mono">{activeSeasonOption?.label || `Season ${activeSeasonNum}`}</p>
                         </>
                       )}
                     </div>
@@ -1503,19 +1547,23 @@ export const State3Standings: React.FC<State3StandingsProps> = ({
           {activeTab === 'standings' ? (
             currentPhase === 'league' ? (
               <>
-                {/* Div 1: League Cup Qualification (Cyan Blue - First) */}
+                {/* Div 1: League Top Winner & Super Sunday Cup Final Qualification */}
                 <div className="flex items-center gap-2 bg-[#080d14] px-3 py-1 rounded-lg border border-cyan-500/30">
                   <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)] shrink-0" />
                   <span className="text-cyan-300 font-extrabold f1-sub-header text-[8.5px] sm:text-[9px] uppercase tracking-wide">
-                    TOP 2 CLUBS ADVANCE TO LEAGUE CUP FINAL
+                    {hasLeagueCup
+                      ? 'TOP 2 CLUBS ADVANCE TO LEAGUE CUP FINAL'
+                      : '1ST PLACE WINS LEAGUE TITLE & ADVANCES TO SUPER SUNDAY CUP FINAL'}
                   </span>
                 </div>
 
-                {/* Div 2: Super Cup Qualification (Emerald Green - Second) */}
+                {/* Div 2: Super Sunday Cup Qualification */}
                 <div className="flex items-center gap-2 bg-[#080d14] px-3 py-1 rounded-lg border border-emerald-500/30">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
                   <span className="text-emerald-300 font-extrabold f1-sub-header text-[8.5px] sm:text-[9px] uppercase tracking-wide">
-                    LEAGUE CHAMPION AUTOMATICALLY QUALIFIES FOR SUPER CUP FINAL
+                    {hasLeagueCup
+                      ? 'LEAGUE CHAMPION AUTOMATICALLY QUALIFIES FOR SUPER SUNDAY CUP FINAL'
+                      : '2ND & 3RD PLACE CLUBS PLAY IN SUPER SUNDAY CUP QUALIFIER'}
                   </span>
                 </div>
               </>

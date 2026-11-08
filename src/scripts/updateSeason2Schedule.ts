@@ -166,43 +166,29 @@ const schedule: MatchDef[] = [
     venue: 'De Anza Stadium (Pitch 1)',
   },
 
-  // --- Post-Season / Knockouts ---
-  // --- Post-Season / Knockout Cups ---
+  // --- Post-Season / Super Sunday Cup Knockouts ---
   // Week 7: Sun, Dec 13
-  // League Cup Final: 1st Place vs 2nd Place
+  // Match 1: Super Sunday Cup Qualifier (2nd Place vs 3rd Place) at 8:30 AM
   {
-    id: 'FIX-S2-013',
+    id: 'FIX-S2-014',
     weekNumber: 7,
     dateStr: 'Sun, Dec 13',
     timeStr: '8:30 AM',
-    homeTeamId: '1st Place',
-    awayTeamId: '2nd Place',
-    matchType: 'League Cup',
-    venue: 'De Anza Stadium (Pitch 1)',
-  },
-
-  // Week 8: Sun, Dec 20
-  // Match 1: Super Cup Qualifier (2nd Place vs 3rd Place) at 8:30 AM
-  {
-    id: 'FIX-S2-014',
-    weekNumber: 8,
-    dateStr: 'Sun, Dec 20',
-    timeStr: '8:30 AM',
     homeTeamId: '2nd Place',
     awayTeamId: '3rd Place',
-    matchType: 'Super Cup Qualifier',
+    matchType: 'Super Sunday Cup Qualifier',
     venue: 'De Anza Stadium (Pitch 1)',
   },
 
-  // Match 2: Super Cup Final (1st Place vs Winner of Qualifier) at 10:00 AM on the SAME DAY
+  // Match 2: Super Sunday Cup Final (1st Place vs Winner of Qualifier) at 10:00 AM on the SAME DAY
   {
     id: 'FIX-S2-015',
-    weekNumber: 8,
-    dateStr: 'Sun, Dec 20',
+    weekNumber: 7,
+    dateStr: 'Sun, Dec 13',
     timeStr: '10:00 AM',
     homeTeamId: '1st Place',
     awayTeamId: 'tbd',
-    matchType: 'Super Cup Final',
+    matchType: 'Super Sunday Cup Final',
     venue: 'De Anza Stadium (Pitch 1)',
   },
 ];
